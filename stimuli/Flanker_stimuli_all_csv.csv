@@ -1,0 +1,1443 @@
+﻿`item_nr,stimulus_untrimmed,stimulus,flanker_type,lexicality,condition
+1, lent ,lent,no,word,word/no
+2,ment drap ment,ment drap ment,unrelated,word,word/unrelated
+3,sabe cofi sabe,sabe cofi sabe,unrelated,nonword,nonword/unrelated
+4,uise uise uise,uise uise uise,related,nonword,nonword/related
+5,dire dire dire,dire dire dire,related,word,word/related
+6,flin uter flin,flin uter flin,unrelated,nonword,nonword/unrelated
+7,deux deux deux,deux deux deux,related,word,word/related
+8, oeuf ,oeuf,no,word,word/no
+9,amer amer amer,amer amer amer,related,word,word/related
+10,momb rers momb,momb rers momb,unrelated,nonword,nonword/unrelated
+11,juss fabe juss,juss fabe juss,unrelated,nonword,nonword/unrelated
+12,vice dodo vice,vice dodo vice,unrelated,word,word/unrelated
+13,hime hime hime,hime hime hime,related,nonword,nonword/related
+14,jive jive jive,jive jive jive,related,nonword,nonword/related
+15,glur vece glur,glur vece glur,unrelated,nonword,nonword/unrelated
+16, rici ,rici,no,nonword,nonword/no
+17,cube cube cube,cube cube cube,related,word,word/related
+18,bame pluo bame,bame pluo bame,unrelated,nonword,nonword/unrelated
+19,rame foin rame,rame foin rame,unrelated,word,word/unrelated
+20,rond juge rond,rond juge rond,unrelated,word,word/unrelated
+21,lube lube lube,lube lube lube,related,nonword,nonword/related
+22,flar flar flar,flar flar flar,related,nonword,nonword/related
+23,pote hall pote,pote hall pote,unrelated,word,word/unrelated
+24,posi posi posi,posi posi posi,related,nonword,nonword/related
+25,drac mexe drac,drac mexe drac,unrelated,nonword,nonword/unrelated
+26,flan ivre flan,flan ivre flan,unrelated,word,word/unrelated
+27, afmi ,afmi,no,nonword,nonword/no
+28,aste imci aste,aste imci aste,unrelated,nonword,nonword/unrelated
+29, gois ,gois,no,nonword,nonword/no
+30,ucun iers ucun,ucun iers ucun,unrelated,nonword,nonword/unrelated
+31,cent cent cent,cent cent cent,related,word,word/related
+32,sexy lait sexy,sexy lait sexy,unrelated,word,word/unrelated
+33, pluc ,pluc,no,nonword,nonword/no
+34,jage jage jage,jage jage jage,related,nonword,nonword/related
+35, groi ,groi,no,nonword,nonword/no
+36,sait jeux sait,sait jeux sait,unrelated,word,word/unrelated
+37,baie baie baie,baie baie baie,related,word,word/related
+38, onde ,onde,no,word,word/no
+39,voix grue voix,voix grue voix,unrelated,word,word/unrelated
+40,zors zors zors,zors zors zors,related,nonword,nonword/related
+41,idem jury idem,idem jury idem,unrelated,word,word/unrelated
+42, mime ,mime,no,word,word/no
+43,bral bral bral,bral bral bral,related,nonword,nonword/related
+44,cave cave cave,cave cave cave,related,word,word/related
+45,carc carc carc,carc carc carc,related,nonword,nonword/related
+46,brir brir brir,brir brir brir,related,nonword,nonword/related
+47, uage ,uage,no,nonword,nonword/no
+48, pain ,pain,no,word,word/no
+49, tion ,tion,no,nonword,nonword/no
+50,flot gage flot,flot gage flot,unrelated,word,word/unrelated
+51,bobo bobo bobo,bobo bobo bobo,related,word,word/related
+52,plat fier plat,plat fier plat,unrelated,word,word/unrelated
+53, lier ,lier,no,word,word/no
+54,alon bube alon,alon bube alon,unrelated,nonword,nonword/unrelated
+55, naze ,naze,no,word,word/no
+56,camp camp camp,camp camp camp,related,word,word/related
+57,azur joie azur,azur joie azur,unrelated,word,word/unrelated
+58,onue onue onue,onue onue onue,related,nonword,nonword/related
+59,nour sige nour,nour sige nour,unrelated,nonword,nonword/unrelated
+60, pile ,pile,no,word,word/no
+61,tort fixe tort,tort fixe tort,unrelated,word,word/unrelated
+62, uque ,uque,no,nonword,nonword/no
+63,atal coui atal,atal coui atal,unrelated,nonword,nonword/unrelated
+64, nord ,nord,no,word,word/no
+65, ster ,ster,no,nonword,nonword/no
+66,chen orir chen,chen orir chen,unrelated,nonword,nonword/unrelated
+67,guve guve guve,guve guve guve,related,nonword,nonword/related
+68,choc choc choc,choc choc choc,related,word,word/related
+69,spen spen spen,spen spen spen,related,nonword,nonword/related
+70, nuit ,nuit,no,word,word/no
+71, peut ,peut,no,word,word/no
+72, oile ,oile,no,nonword,nonword/no
+73,erle erle erle,erle erle erle,related,nonword,nonword/related
+74, muse ,muse,no,word,word/no
+75, insi ,insi,no,nonword,nonword/no
+76,muie muie muie,muie muie muie,related,nonword,nonword/related
+77,bloc idem bloc,bloc idem bloc,unrelated,word,word/unrelated
+78, ucun ,ucun,no,nonword,nonword/no
+79,vore vore vore,vore vore vore,related,nonword,nonword/related
+80,stin stin stin,stin stin stin,related,nonword,nonword/related
+81,abat abat abat,abat abat abat,related,word,word/related
+82,acte jour acte,acte jour acte,unrelated,word,word/unrelated
+83,eaux fini eaux,eaux fini eaux,unrelated,word,word/unrelated
+84, pape ,pape,no,word,word/no
+85, dets ,dets,no,nonword,nonword/no
+86,gric gric gric,gric gric gric,related,nonword,nonword/related
+87,purc vige purc,purc vige purc,unrelated,nonword,nonword/unrelated
+88,insi coge insi,insi coge insi,unrelated,nonword,nonword/unrelated
+89,boxe boxe boxe,boxe boxe boxe,related,word,word/related
+90, miel ,miel,no,word,word/no
+91, lion ,lion,no,word,word/no
+92,ifus mato ifus,ifus mato ifus,unrelated,nonword,nonword/unrelated
+93,glac yope glac,glac yope glac,unrelated,nonword,nonword/unrelated
+94,soit duel soit,soit duel soit,unrelated,word,word/unrelated
+95,tige faux tige,tige faux tige,unrelated,word,word/unrelated
+96,lion huer lion,lion huer lion,unrelated,word,word/unrelated
+97,lait joue lait,lait joue lait,unrelated,word,word/unrelated
+98, poil ,poil,no,word,word/no
+99,abir abir abir,abir abir abir,related,nonword,nonword/related
+100,fave fave fave,fave fave fave,related,nonword,nonword/related
+101,aime aime aime,aime aime aime,related,word,word/related
+102,brin brin brin,brin brin brin,related,word,word/related
+103, muet ,muet,no,word,word/no
+104, stue ,stue,no,nonword,nonword/no
+105, rans ,rans,no,nonword,nonword/no
+106,orve orve orve,orve orve orve,related,nonword,nonword/related
+107,gouf diel gouf,gouf diel gouf,unrelated,nonword,nonword/unrelated
+108, cres ,cres,no,nonword,nonword/no
+109,suit elle suit,suit elle suit,unrelated,word,word/unrelated
+110, perd ,perd,no,word,word/no
+111,puif puif puif,puif puif puif,related,nonword,nonword/related
+112,cuit cuit cuit,cuit cuit cuit,related,word,word/related
+113, nuce ,nuce,no,nonword,nonword/no
+114, uide ,uide,no,nonword,nonword/no
+115, parc ,parc,no,word,word/no
+116,june june june,june june june,related,nonword,nonword/related
+117,jine jine jine,jine jine jine,related,nonword,nonword/related
+118,cire cire cire,cire cire cire,related,word,word/related
+119,posi dave posi,posi dave posi,unrelated,nonword,nonword/unrelated
+120, pupe ,pupe,no,nonword,nonword/no
+121, lien ,lien,no,word,word/no
+122, ambe ,ambe,no,nonword,nonword/no
+123,sept irai sept,sept irai sept,unrelated,word,word/unrelated
+124,moce moce moce,moce moce moce,related,nonword,nonword/related
+125,juci vets juci,juci vets juci,unrelated,nonword,nonword/unrelated
+126, mise ,mise,no,word,word/no
+127,tuce tuce tuce,tuce tuce tuce,related,nonword,nonword/related
+128,ciel ciel ciel,ciel ciel ciel,related,word,word/related
+129, eige ,eige,no,nonword,nonword/no
+130, noce ,noce,no,word,word/no
+131,ogne adis ogne,ogne adis ogne,unrelated,nonword,nonword/unrelated
+132,boui perc boui,boui perc boui,unrelated,nonword,nonword/unrelated
+133, jave ,jave,no,nonword,nonword/no
+134,faux hier faux,faux hier faux,unrelated,word,word/unrelated
+135,igne igne igne,igne igne igne,related,nonword,nonword/related
+136,ange ange ange,ange ange ange,related,word,word/related
+137,agit agit agit,agit agit agit,related,word,word/related
+138, maxi ,maxi,no,word,word/no
+139,rude gant rude,rude gant rude,unrelated,word,word/unrelated
+140, psue ,psue,no,nonword,nonword/no
+141, onze ,onze,no,word,word/no
+142,dame folk dame,dame folk dame,unrelated,word,word/unrelated
+143,vuis acle vuis,vuis acle vuis,unrelated,nonword,nonword/unrelated
+144,cure cure cure,cure cure cure,related,word,word/related
+145,drai jote drai,drai jote drai,unrelated,nonword,nonword/unrelated
+146,huif huif huif,huif huif huif,related,nonword,nonword/related
+147,olde olde olde,olde olde olde,related,nonword,nonword/related
+148, ouve ,ouve,no,nonword,nonword/no
+149,gnai clec gnai,gnai clec gnai,unrelated,nonword,nonword/unrelated
+150,oche oche oche,oche oche oche,related,nonword,nonword/related
+151,uits rane uits,uits rane uits,unrelated,nonword,nonword/unrelated
+152,suel apin suel,suel apin suel,unrelated,nonword,nonword/unrelated
+153,boge chir boge,boge chir boge,unrelated,nonword,nonword/unrelated
+154,berf berf berf,berf berf berf,related,nonword,nonword/related
+155, loup ,loup,no,word,word/no
+156,erle vonc erle,erle vonc erle,unrelated,nonword,nonword/unrelated
+157, mare ,mare,no,word,word/no
+158, mine ,mine,no,word,word/no
+159, oeil ,oeil,no,word,word/no
+160,pluo adre pluo,pluo adre pluo,unrelated,nonword,nonword/unrelated
+161,banc banc banc,banc banc banc,related,word,word/related
+162,chic chic chic,chic chic chic,related,word,word/related
+163,clip clip clip,clip clip clip,related,word,word/related
+164, dier ,dier,no,nonword,nonword/no
+165,noil noil noil,noil noil noil,related,nonword,nonword/related
+166,zoom dite zoom,zoom dite zoom,unrelated,word,word/unrelated
+167,soti soti soti,soti soti soti,related,nonword,nonword/related
+168,alme uits alme,alme uits alme,unrelated,nonword,nonword/unrelated
+169,pril oute pril,pril oute pril,unrelated,nonword,nonword/unrelated
+170, mont ,mont,no,word,word/no
+171,bien foot bien,bien foot bien,unrelated,word,word/unrelated
+172, flir ,flir,no,nonword,nonword/no
+173,bain bain bain,bain bain bain,related,word,word/related
+174,sube sube sube,sube sube sube,related,nonword,nonword/related
+175,psin vute psin,psin vute psin,unrelated,nonword,nonword/unrelated
+176,clas uite clas,clas uite clas,unrelated,nonword,nonword/unrelated
+177,vert donc vert,vert donc vert,unrelated,word,word/unrelated
+178,tyle tyle tyle,tyle tyle tyle,related,nonword,nonword/related
+179,dame dame dame,dame dame dame,related,word,word/related
+180, peur ,peur,no,word,word/no
+181, pipi ,pipi,no,word,word/no
+182, inge ,inge,no,nonword,nonword/no
+183,cuce cuce cuce,cuce cuce cuce,related,nonword,nonword/related
+184,bres bres bres,bres bres bres,related,nonword,nonword/related
+185,tinq arer tinq,tinq arer tinq,unrelated,nonword,nonword/unrelated
+186, idue ,idue,no,nonword,nonword/no
+187,bile bile bile,bile bile bile,related,word,word/related
+188, paix ,paix,no,word,word/no
+189,tute gami tute,tute gami tute,unrelated,nonword,nonword/unrelated
+190,bout haie bout,bout haie bout,unrelated,word,word/unrelated
+191,muni face muni,muni face muni,unrelated,word,word/unrelated
+192,bise bise bise,bise bise bise,related,word,word/related
+193,puif stre puif,puif stre puif,unrelated,nonword,nonword/unrelated
+194,crie crie crie,crie crie crie,related,word,word/related
+195,abac nole abac,abac nole abac,unrelated,nonword,nonword/unrelated
+196,cent doux cent,cent doux cent,unrelated,word,word/unrelated
+197, sobe ,sobe,no,nonword,nonword/no
+198,cerf cerf cerf,cerf cerf cerf,related,word,word/related
+199,anue drir anue,anue drir anue,unrelated,nonword,nonword/unrelated
+200, pion ,pion,no,word,word/no
+201,gion gion gion,gion gion gion,related,nonword,nonword/related
+202,aide flux aide,aide flux aide,unrelated,word,word/unrelated
+203, spon ,spon,no,nonword,nonword/no
+204,rive faut rive,rive faut rive,unrelated,word,word/unrelated
+205, poce ,poce,no,nonword,nonword/no
+206, poge ,poge,no,nonword,nonword/no
+207,nobe ifus nobe,nobe ifus nobe,unrelated,nonword,nonword/unrelated
+208,rine rine rine,rine rine rine,related,nonword,nonword/related
+209,vore flid vore,vore flid vore,unrelated,nonword,nonword/unrelated
+210, leur ,leur,no,word,word/no
+211, dige ,dige,no,nonword,nonword/no
+212, part ,part,no,word,word/no
+213,tome juin tome,tome juin tome,unrelated,word,word/unrelated
+214, lage ,lage,no,nonword,nonword/no
+215,chat dure chat,chat dure chat,unrelated,word,word/unrelated
+216,arve juci arve,arve juci arve,unrelated,nonword,nonword/unrelated
+217, page ,page,no,word,word/no
+218,psus fien psus,psus fien psus,unrelated,nonword,nonword/unrelated
+219,daps daps daps,daps daps daps,related,nonword,nonword/related
+220, main ,main,no,word,word/no
+221,poxe poxe poxe,poxe poxe poxe,related,nonword,nonword/related
+222, hade ,hade,no,nonword,nonword/no
+223, noir ,noir,no,word,word/no
+224,aube aube aube,aube aube aube,related,word,word/related
+225, buge ,buge,no,nonword,nonword/no
+226,duve cing duve,duve cing duve,unrelated,nonword,nonword/unrelated
+227,apte apte apte,apte apte apte,related,word,word/related
+228, ment ,ment,no,word,word/no
+229,isir isir isir,isir isir isir,related,nonword,nonword/related
+230,prie judo prie,prie judo prie,unrelated,word,word/unrelated
+231,cage cage cage,cage cage cage,related,word,word/related
+232,nile nile nile,nile nile nile,related,nonword,nonword/related
+233,aide aide aide,aide aide aide,related,word,word/related
+234, duve ,duve,no,nonword,nonword/no
+235,bien bien bien,bien bien bien,related,word,word/related
+236,uite plar uite,uite plar uite,unrelated,nonword,nonword/unrelated
+237,casi rone casi,casi rone casi,unrelated,nonword,nonword/unrelated
+238,cool cool cool,cool cool cool,related,word,word/related
+239, note ,note,no,word,word/no
+240,user faim user,user faim user,unrelated,word,word/unrelated
+241, flin ,flin,no,nonword,nonword/no
+242,juif lard juif,juif lard juif,unrelated,word,word/unrelated
+243, pire ,pire,no,word,word/no
+244,taxi jure taxi,taxi jure taxi,unrelated,word,word/unrelated
+245, lire ,lire,no,word,word/no
+246,gine gine gine,gine gine gine,related,nonword,nonword/related
+247,bail feux bail,bail feux bail,unrelated,word,word/unrelated
+248,uste uste uste,uste uste uste,related,nonword,nonword/related
+249,acte acte acte,acte acte acte,related,word,word/related
+250,ceci ceci ceci,ceci ceci ceci,related,word,word/related
+251, glie ,glie,no,nonword,nonword/no
+252,moif moif moif,moif moif moif,related,nonword,nonword/related
+253, luxe ,luxe,no,word,word/no
+254, nobe ,nobe,no,nonword,nonword/no
+255, bome ,bome,no,nonword,nonword/no
+256,acun irme acun,acun irme acun,unrelated,nonword,nonword/unrelated
+257,cerf gain cerf,cerf gain cerf,unrelated,word,word/unrelated
+258, nage ,nage,no,word,word/no
+259,aral cien aral,aral cien aral,unrelated,nonword,nonword/unrelated
+260, oser ,oser,no,word,word/no
+261,durc iage durc,durc iage durc,unrelated,nonword,nonword/unrelated
+262, loin ,loin,no,word,word/no
+263,nord eaux nord,nord eaux nord,unrelated,word,word/unrelated
+264,coin coin coin,coin coin coin,related,word,word/related
+265, paye ,paye,no,word,word/no
+266,acci spel acci,acci spel acci,unrelated,nonword,nonword/unrelated
+267, suel ,suel,no,nonword,nonword/no
+268,lier fond lier,lier fond lier,unrelated,word,word/unrelated
+269,coup coup coup,coup coup coup,related,word,word/related
+270, vour ,vour,no,nonword,nonword/no
+271, grer ,grer,no,nonword,nonword/no
+272,brut brut brut,brut brut brut,related,word,word/related
+273,unie flot unie,unie flot unie,unrelated,word,word/unrelated
+274,vute clir vute,vute clir vute,unrelated,nonword,nonword/unrelated
+275, logo ,logo,no,word,word/no
+276,tese tese tese,tese tese tese,related,nonword,nonword/related
+277,vure vure vure,vure vure vure,related,nonword,nonword/related
+278,bouc bouc bouc,bouc bouc bouc,related,word,word/related
+279,mort lave mort,mort lave mort,unrelated,word,word/unrelated
+280,jage rour jage,jage rour jage,unrelated,nonword,nonword/unrelated
+281, doce ,doce,no,nonword,nonword/no
+282,bral hien bral,bral hien bral,unrelated,nonword,nonword/unrelated
+283,mype buin mype,mype buin mype,unrelated,nonword,nonword/unrelated
+284,moue kaki moue,moue kaki moue,unrelated,word,word/unrelated
+285,groi cupe groi,groi cupe groi,unrelated,nonword,nonword/unrelated
+286,gose gose gose,gose gose gose,related,nonword,nonword/related
+287,dute ilas dute,dute ilas dute,unrelated,nonword,nonword/unrelated
+288,avas avas avas,avas avas avas,related,nonword,nonword/related
+289, tute ,tute,no,nonword,nonword/no
+290,caie caie caie,caie caie caie,related,nonword,nonword/related
+291, nerf ,nerf,no,word,word/no
+292,chir bolk chir,chir bolk chir,unrelated,nonword,nonword/unrelated
+293, glin ,glin,no,nonword,nonword/no
+294,crec humi crec,crec humi crec,unrelated,nonword,nonword/unrelated
+295,base base base,base base base,related,word,word/related
+296, loge ,loge,no,word,word/no
+297, plat ,plat,no,word,word/no
+298,bair soge bair,bair soge bair,unrelated,nonword,nonword/unrelated
+299,avec avec avec,avec avec avec,related,word,word/related
+300, aser ,aser,no,nonword,nonword/no
+301,elle huit elle,elle huit elle,unrelated,word,word/unrelated
+302, veur ,veur,no,nonword,nonword/no
+303,taxe film taxe,taxe film taxe,unrelated,word,word/unrelated
+304,clef clef clef,clef clef clef,related,word,word/related
+305, nier ,nier,no,word,word/no
+306, rinc ,rinc,no,nonword,nonword/no
+307, mune ,mune,no,nonword,nonword/no
+308,chat chat chat,chat chat chat,related,word,word/related
+309,nouf nouf nouf,nouf nouf nouf,related,nonword,nonword/related
+310, nain ,nain,no,word,word/no
+311,cour cour cour,cour cour cour,related,word,word/related
+312, lune ,lune,no,word,word/no
+313, neuf ,neuf,no,word,word/no
+314, loto ,loto,no,word,word/no
+315, pied ,pied,no,word,word/no
+316, jurf ,jurf,no,nonword,nonword/no
+317,auto auto auto,auto auto auto,related,word,word/related
+318, long ,long,no,word,word/no
+319, euve ,euve,no,nonword,nonword/no
+320,brun foie brun,brun foie brun,unrelated,word,word/unrelated
+321,ocbo ocbo ocbo,ocbo ocbo ocbo,related,nonword,nonword/related
+322,tout fine tout,tout fine tout,unrelated,word,word/unrelated
+323,cion cion cion,cion cion cion,related,nonword,nonword/related
+324, moto ,moto,no,word,word/no
+325,loui gerf loui,loui gerf loui,unrelated,nonword,nonword/unrelated
+326,cher cher cher,cher cher cher,related,word,word/related
+327, bexe ,bexe,no,nonword,nonword/no
+328,mise four mise,mise four mise,unrelated,word,word/unrelated
+329,crie dont crie,crie dont crie,unrelated,word,word/unrelated
+330,vase kilo vase,vase kilo vase,unrelated,word,word/unrelated
+331,jeep flan jeep,jeep flan jeep,unrelated,word,word/unrelated
+332, ogre ,ogre,no,word,word/no
+333,boue boue boue,boue boue boue,related,word,word/related
+334, rese ,rese,no,nonword,nonword/no
+335,tade tade tade,tade tade tade,related,nonword,nonword/related
+336, lisi ,lisi,no,nonword,nonword/no
+337,pied haut pied,pied haut pied,unrelated,word,word/unrelated
+338,azur azur azur,azur azur azur,related,word,word/related
+339,loui loui loui,loui loui loui,related,nonword,nonword/related
+340,amie amie amie,amie amie amie,related,word,word/related
+341, moue ,moue,no,word,word/no
+342, fope ,fope,no,nonword,nonword/no
+343, noix ,noix,no,word,word/no
+344, paie ,paie,no,word,word/no
+345, pare ,pare,no,word,word/no
+346,gouf gouf gouf,gouf gouf gouf,related,nonword,nonword/related
+347,spho geuf spho,spho geuf spho,unrelated,nonword,nonword/unrelated
+348, mien ,mien,no,word,word/no
+349, reur ,reur,no,nonword,nonword/no
+350, cuse ,cuse,no,nonword,nonword/no
+351,cins cins cins,cins cins cins,related,nonword,nonword/related
+352,note juif note,note juif note,unrelated,word,word/unrelated
+353, jore ,jore,no,nonword,nonword/no
+354,trot jupe trot,trot jupe trot,unrelated,word,word/unrelated
+355,agir agir agir,agir agir agir,related,word,word/related
+356, mode ,mode,no,word,word/no
+357,grer muis grer,grer muis grer,unrelated,nonword,nonword/unrelated
+358,bail bail bail,bail bail bail,related,word,word/related
+359,muet golf muet,muet golf muet,unrelated,word,word/unrelated
+360, midi ,midi,no,word,word/no
+361, dade ,dade,no,nonword,nonword/no
+362, psub ,psub,no,nonword,nonword/no
+363,cote cote cote,cote cote cote,related,word,word/related
+364,peur doit peur,peur doit peur,unrelated,word,word/unrelated
+365,itie itie itie,itie itie itie,related,nonword,nonword/related
+366,diol diol diol,diol diol diol,related,nonword,nonword/related
+367,nomb nomb nomb,nomb nomb nomb,related,nonword,nonword/related
+368, mule ,mule,no,word,word/no
+369, ince ,ince,no,nonword,nonword/no
+370,tess boui tess,tess boui tess,unrelated,nonword,nonword/unrelated
+371, pras ,pras,no,nonword,nonword/no
+372, oral ,oral,no,word,word/no
+373,durc durc durc,durc durc durc,related,nonword,nonword/related
+374, luge ,luge,no,word,word/no
+375,dent dent dent,dent dent dent,related,word,word/related
+376,cuit gare cuit,cuit gare cuit,unrelated,word,word/unrelated
+377,daud iser daud,daud iser daud,unrelated,nonword,nonword/unrelated
+378,diol vare diol,diol vare diol,unrelated,nonword,nonword/unrelated
+379, arve ,arve,no,nonword,nonword/no
+380,flir sute flir,flir sute flir,unrelated,nonword,nonword/unrelated
+381,chef chef chef,chef chef chef,related,word,word/related
+382,drif chen drif,drif chen drif,unrelated,nonword,nonword/unrelated
+383, oque ,oque,no,nonword,nonword/no
+384,clip dose clip,clip dose clip,unrelated,word,word/unrelated
+385, vrec ,vrec,no,nonword,nonword/no
+386,frum olis frum,frum olis frum,unrelated,nonword,nonword/unrelated
+387,cuir cuir cuir,cuir cuir cuir,related,word,word/related
+388,nage flic nage,nage flic nage,unrelated,word,word/unrelated
+389,luxe gang luxe,luxe gang luxe,unrelated,word,word/unrelated
+390,sauf grec sauf,sauf grec sauf,unrelated,word,word/unrelated
+391,goir ches goir,goir ches goir,unrelated,nonword,nonword/unrelated
+392,brun brun brun,brun brun brun,related,word,word/related
+393, fler ,fler,no,nonword,nonword/no
+394, ocre ,ocre,no,word,word/no
+395,imer imer imer,imer imer imer,related,nonword,nonword/related
+396,glac glac glac,glac glac glac,related,nonword,nonword/related
+397, plie ,plie,no,word,word/no
+398,psin psin psin,psin psin psin,related,nonword,nonword/related
+399, oste ,oste,no,nonword,nonword/no
+400,sode arni sode,sode arni sode,unrelated,nonword,nonword/unrelated
+401,case case case,case case case,related,word,word/related
+402,chef joli chef,chef joli chef,unrelated,word,word/unrelated
+403,scol scol scol,scol scol scol,related,nonword,nonword/related
+404,giel giel giel,giel giel giel,related,nonword,nonword/related
+405,boit boit boit,boit boit boit,related,word,word/related
+406,cour gaie cour,cour gaie cour,unrelated,word,word/unrelated
+407,rime font rime,rime font rime,unrelated,word,word/unrelated
+408, orge ,orge,no,word,word/no
+409,nuit expo nuit,nuit expo nuit,unrelated,word,word/unrelated
+410,cash cash cash,cash cash cash,related,word,word/related
+411,bout bout bout,bout bout bout,related,word,word/related
+412,boge boge boge,boge boge boge,related,nonword,nonword/related
+413,base fort base,base fort base,unrelated,word,word/unrelated
+414,sale dort sale,sale dort sale,unrelated,word,word/unrelated
+415,club club club,club club club,related,word,word/related
+416, mari ,mari,no,word,word/no
+417,bref bref bref,bref bref bref,related,word,word/related
+418,nans ucre nans,nans ucre nans,unrelated,nonword,nonword/unrelated
+419,gord saze gord,gord saze gord,unrelated,nonword,nonword/unrelated
+420,bord bord bord,bord bord bord,related,word,word/related
+421, aive ,aive,no,nonword,nonword/no
+422,bond bond bond,bond bond bond,related,word,word/related
+423, ponc ,ponc,no,nonword,nonword/no
+424,code code code,code code code,related,word,word/related
+425, orie ,orie,no,nonword,nonword/no
+426,nanc glui nanc,nanc glui nanc,unrelated,nonword,nonword/unrelated
+427,juin labo juin,juin labo juin,unrelated,word,word/unrelated
+428,cuve cuve cuve,cuve cuve cuve,related,word,word/related
+429,cinq cinq cinq,cinq cinq cinq,related,word,word/related
+430,ceux ceux ceux,ceux ceux ceux,related,word,word/related
+431,bloc bloc bloc,bloc bloc bloc,related,word,word/related
+432,chut chut chut,chut chut chut,related,word,word/related
+433,cape cape cape,cape cape cape,related,word,word/related
+434,bome glur bome,bome glur bome,unrelated,nonword,nonword/unrelated
+435, hore ,hore,no,nonword,nonword/no
+436,oute didi oute,oute didi oute,unrelated,nonword,nonword/unrelated
+437, dide ,dide,no,nonword,nonword/no
+438,dort exil dort,dort exil dort,unrelated,word,word/unrelated
+439, lynx ,lynx,no,word,word/no
+440,date date date,date date date,related,word,word/related
+441,carc deno carc,carc deno carc,unrelated,nonword,nonword/unrelated
+442,dose fait dose,dose fait dose,unrelated,word,word/unrelated
+443,abri abri abri,abri abri abri,related,word,word/related
+444, isar ,isar,no,nonword,nonword/no
+445, mort ,mort,no,word,word/no
+446,gami sper gami,gami sper gami,unrelated,nonword,nonword/unrelated
+447,cude cude cude,cude cude cude,related,nonword,nonword/related
+448,crue crue crue,crue crue crue,related,word,word/related
+449,vave vave vave,vave vave vave,related,nonword,nonword/related
+450,sort fade sort,sort fade sort,unrelated,word,word/unrelated
+451,duis duis duis,duis duis duis,related,nonword,nonword/related
+452,naze fuir naze,naze fuir naze,unrelated,word,word/unrelated
+453, pipe ,pipe,no,word,word/no
+454,demi demi demi,demi demi demi,related,word,word/related
+455, muni ,muni,no,word,word/no
+456,coui arne coui,coui arne coui,unrelated,nonword,nonword/unrelated
+457,arme arme arme,arme arme arme,related,word,word/related
+458,clan clan clan,clan clan clan,related,word,word/related
+459, zour ,zour,no,nonword,nonword/no
+460,pure laid pure,pure laid pure,unrelated,word,word/unrelated
+461,perd fuit perd,perd fuit perd,unrelated,word,word/unrelated
+462,drac drac drac,drac drac drac,related,nonword,nonword/related
+463,rour ilie rour,rour ilie rour,unrelated,nonword,nonword/unrelated
+464, ogne ,ogne,no,nonword,nonword/no
+465, roge ,roge,no,nonword,nonword/no
+466,jupe info jupe,jupe info jupe,unrelated,word,word/unrelated
+467,bame bame bame,bame bame bame,related,nonword,nonword/related
+468, ibac ,ibac,no,nonword,nonword/no
+469, plan ,plan,no,word,word/no
+470, noie ,noie,no,word,word/no
+471,dise dise dise,dise dise dise,related,word,word/related
+472,camp dune camp,camp dune camp,unrelated,word,word/unrelated
+473,sabe sabe sabe,sabe sabe sabe,related,nonword,nonword/related
+474,ande ande ande,ande ande ande,related,nonword,nonword/related
+475,veul veul veul,veul veul veul,related,nonword,nonword/related
+476, chud ,chud,no,nonword,nonword/no
+477,coui coui coui,coui coui coui,related,nonword,nonword/related
+478,jive nour jive,jive nour jive,unrelated,nonword,nonword/unrelated
+479, ique ,ique,no,nonword,nonword/no
+480,anue anue anue,anue anue anue,related,nonword,nonword/related
+481,varc varc varc,varc varc varc,related,nonword,nonword/related
+482, nire ,nire,no,nonword,nonword/no
+483,haid jore haid,haid jore haid,unrelated,nonword,nonword/unrelated
+484,pipi case pipi,pipi case pipi,unrelated,word,word/unrelated
+485,plie plie plie,plie plie plie,related,word,word/related
+486,oste oste oste,oste oste oste,related,nonword,nonword/related
+487,spui tade spui,spui tade spui,unrelated,nonword,nonword/unrelated
+488,daps gric daps,daps gric daps,unrelated,nonword,nonword/unrelated
+489, deno ,deno,no,nonword,nonword/no
+490, nole ,nole,no,nonword,nonword/no
+491,bain ceux bain,bain ceux bain,unrelated,word,word/unrelated
+492, ifus ,ifus,no,nonword,nonword/no
+493, foot ,foot,no,word,word/no
+494, folk ,folk,no,word,word/no
+495, dont ,dont,no,word,word/no
+496, fuir ,fuir,no,word,word/no
+497, gaie ,gaie,no,word,word/no
+498,cher agit cher,cher agit cher,unrelated,word,word/unrelated
+499, perc ,perc,no,nonword,nonword/no
+500,kilo bref kilo,kilo bref kilo,unrelated,word,word/unrelated
+501, golf ,golf,no,word,word/no
+502,ande brir ande,ande brir ande,unrelated,nonword,nonword/unrelated
+503,dent cool dent,dent cool dent,unrelated,word,word/unrelated
+504, dodo ,dodo,no,word,word/no
+505,coin date coin,coin date coin,unrelated,word,word/unrelated
+506,imin vore imin,imin vore imin,unrelated,nonword,nonword/unrelated
+507, rour ,rour,no,nonword,nonword/no
+508, fien ,fien,no,nonword,nonword/no
+509,mule mule mule,mule mule mule,related,word,word/related
+510,orge orge orge,orge orge orge,related,word,word/related
+511, huit ,huit,no,word,word/no
+512,thym aube thym,thym aube thym,unrelated,word,word/unrelated
+513,drie nouf drie,drie nouf drie,unrelated,nonword,nonword/unrelated
+514,neuf neuf neuf,neuf neuf neuf,related,word,word/related
+515,oser oser oser,oser oser oser,related,word,word/related
+516,noix noix noix,noix noix noix,related,word,word/related
+517, jour ,jour,no,word,word/no
+518,ibac ibac ibac,ibac ibac ibac,related,nonword,nonword/related
+519,nire nire nire,nire nire nire,related,nonword,nonword/related
+520,paie brun paie,paie brun paie,unrelated,word,word/unrelated
+521, dure ,dure,no,word,word/no
+522,plar huif plar,plar huif plar,unrelated,nonword,nonword/unrelated
+523,tute tute tute,tute tute tute,related,nonword,nonword/related
+524,blai cude blai,blai cude blai,unrelated,nonword,nonword/unrelated
+525,zinc boue zinc,zinc boue zinc,unrelated,word,word/unrelated
+526, jure ,jure,no,word,word/no
+527, chen ,chen,no,nonword,nonword/no
+528,flur gose flur,flur gose flur,unrelated,nonword,nonword/unrelated
+529,oeuf oeuf oeuf,oeuf oeuf oeuf,related,word,word/related
+530,hier bout hier,hier bout hier,unrelated,word,word/unrelated
+531,yeux clip yeux,yeux clip yeux,unrelated,word,word/unrelated
+532, adre ,adre,no,nonword,nonword/no
+533,hien avas hien,hien avas hien,unrelated,nonword,nonword/unrelated
+534, diel ,diel,no,nonword,nonword/no
+535,jurf jurf jurf,jurf jurf jurf,related,nonword,nonword/related
+536,oser camp oser,oser camp oser,unrelated,word,word/unrelated
+537,fler fler fler,fler fler fler,related,nonword,nonword/related
+538,duve duve duve,duve duve duve,related,nonword,nonword/related
+539, kaki ,kaki,no,word,word/no
+540,banc demi banc,banc demi banc,unrelated,word,word/unrelated
+541,pile pile pile,pile pile pile,related,word,word/related
+542,pire pire pire,pire pire pire,related,word,word/related
+543, drir ,drir,no,nonword,nonword/no
+544,mise mise mise,mise mise mise,related,word,word/related
+545,rese rese rese,rese rese rese,related,nonword,nonword/related
+546, ilie ,ilie,no,nonword,nonword/no
+547,flir flir flir,flir flir flir,related,nonword,nonword/related
+548, juif ,juif,no,word,word/no
+549,chut aide chut,chut aide chut,unrelated,word,word/unrelated
+550,oque oque oque,oque oque oque,related,nonword,nonword/related
+551,cure bain cure,cure bain cure,unrelated,word,word/unrelated
+552, arni ,arni,no,nonword,nonword/no
+553,jave jave jave,jave jave jave,related,nonword,nonword/related
+554,sage choc sage,sage choc sage,unrelated,word,word/unrelated
+555,plan plan plan,plan plan plan,related,word,word/related
+556, yope ,yope,no,nonword,nonword/no
+557,soin brut soin,soin brut soin,unrelated,word,word/unrelated
+558, donc ,donc,no,word,word/no
+559,flin flin flin,flin flin flin,related,nonword,nonword/related
+560,pupe pupe pupe,pupe pupe pupe,related,nonword,nonword/related
+561,prix base prix,prix base prix,unrelated,word,word/unrelated
+562, juci ,juci,no,nonword,nonword/no
+563, elle ,elle,no,word,word/no
+564,eige eige eige,eige eige eige,related,nonword,nonword/related
+565,paie paie paie,paie paie paie,related,word,word/related
+566,gine ocbo gine,gine ocbo gine,unrelated,nonword,nonword/unrelated
+567, info ,info,no,word,word/no
+568,buge buge buge,buge buge buge,related,nonword,nonword/related
+569,bome bome bome,bome bome bome,related,nonword,nonword/related
+570, flic ,flic,no,word,word/no
+571,loin abat loin,loin abat loin,unrelated,word,word/unrelated
+572, four ,four,no,word,word/no
+573, fini ,fini,no,word,word/no
+574,varc igne varc,varc igne varc,unrelated,nonword,nonword/unrelated
+575,blus jine blus,blus jine blus,unrelated,nonword,nonword/unrelated
+576, lave ,lave,no,word,word/no
+577,chud chud chud,chud chud chud,related,nonword,nonword/related
+578,saxo crie saxo,saxo crie saxo,unrelated,word,word/unrelated
+579,vour vour vour,vour vour vour,related,nonword,nonword/related
+580,bexe bexe bexe,bexe bexe bexe,related,nonword,nonword/related
+581,mare mare mare,mare mare mare,related,word,word/related
+582, glur ,glur,no,nonword,nonword/no
+583,psub psub psub,psub psub psub,related,nonword,nonword/related
+584,loge loge loge,loge loge loge,related,word,word/related
+585,doce doce doce,doce doce doce,related,nonword,nonword/related
+586, kilo ,kilo,no,word,word/no
+587,nord nord nord,nord nord nord,related,word,word/related
+588,naze naze naze,naze naze naze,related,word,word/related
+589,bobo cher bobo,bobo cher bobo,unrelated,word,word/unrelated
+590,mari mari mari,mari mari mari,related,word,word/related
+591,noir cage noir,noir cage noir,unrelated,word,word/unrelated
+592, fabe ,fabe,no,nonword,nonword/no
+593,poif tese poif,poif tese poif,unrelated,nonword,nonword/unrelated
+594,muet muet muet,muet muet muet,related,word,word/related
+595,nier nier nier,nier nier nier,related,word,word/related
+596,poli crue poli,poli crue poli,unrelated,word,word/unrelated
+597, feux ,feux,no,word,word/no
+598,lien lien lien,lien lien lien,related,word,word/related
+599, hier ,hier,no,word,word/no
+600, rers ,rers,no,nonword,nonword/no
+601,fini code fini,fini code fini,unrelated,word,word/unrelated
+602,ogne ogne ogne,ogne ogne ogne,related,nonword,nonword/related
+603,paix paix paix,paix paix paix,related,word,word/related
+604, ivre ,ivre,no,word,word/no
+605,gnis orve gnis,gnis orve gnis,unrelated,nonword,nonword/unrelated
+606,uque uque uque,uque uque uque,related,nonword,nonword/related
+607, juin ,juin,no,word,word/no
+608,nain nain nain,nain nain nain,related,word,word/related
+609,nage nage nage,nage nage nage,related,word,word/related
+610, bolk ,bolk,no,nonword,nonword/no
+611, iers ,iers,no,nonword,nonword/no
+612,fuir dent fuir,fuir dent fuir,unrelated,word,word/unrelated
+613,cude nomb cude,cude nomb cude,unrelated,nonword,nonword/unrelated
+614, vige ,vige,no,nonword,nonword/no
+615,vace stin vace,vace stin vace,unrelated,nonword,nonword/unrelated
+616,veur veur veur,veur veur veur,related,nonword,nonword/related
+617,mode mode mode,mode mode mode,related,word,word/related
+618, mexe ,mexe,no,nonword,nonword/no
+619,tese cion tese,tese cion tese,unrelated,nonword,nonword/unrelated
+620,oble duis oble,oble duis oble,unrelated,nonword,nonword/unrelated
+621,brut amie brut,brut amie brut,unrelated,word,word/unrelated
+622,clir bame clir,clir bame clir,unrelated,nonword,nonword/unrelated
+623,cupe abir cupe,cupe abir cupe,unrelated,nonword,nonword/unrelated
+624, dose ,dose,no,word,word/no
+625,gnal moce gnal,gnal moce gnal,unrelated,nonword,nonword/unrelated
+626,olis vave olis,olis vave olis,unrelated,nonword,nonword/unrelated
+627,isar isar isar,isar isar isar,related,nonword,nonword/related
+628, imci ,imci,no,nonword,nonword/no
+629,face bobo face,face bobo face,unrelated,word,word/unrelated
+630, flid ,flid,no,nonword,nonword/no
+631,port cube port,port cube port,unrelated,word,word/unrelated
+632,choc amer choc,choc amer choc,unrelated,word,word/unrelated
+633, grec ,grec,no,word,word/no
+634, fine ,fine,no,word,word/no
+635,tuis erle tuis,tuis erle tuis,unrelated,nonword,nonword/unrelated
+636,ouve ouve ouve,ouve ouve ouve,related,nonword,nonword/related
+637,pipe pipe pipe,pipe pipe pipe,related,word,word/related
+638,plat plat plat,plat plat plat,related,word,word/related
+639,paix chef paix,paix chef paix,unrelated,word,word/unrelated
+640,ilci spen ilci,ilci spen ilci,unrelated,nonword,nonword/unrelated
+641,mule agir mule,mule agir mule,unrelated,word,word/unrelated
+642, doit ,doit,no,word,word/no
+643,punk baie punk,punk baie punk,unrelated,word,word/unrelated
+644, adis ,adis,no,nonword,nonword/no
+645,paye club paye,paye club paye,unrelated,word,word/unrelated
+646,auto bien auto,auto bien auto,unrelated,word,word/unrelated
+647,stin oche stin,stin oche stin,unrelated,nonword,nonword/unrelated
+648,groi groi groi,groi groi groi,related,nonword,nonword/related
+649,afmi afmi afmi,afmi afmi afmi,related,nonword,nonword/related
+650, clec ,clec,no,nonword,nonword/no
+651,nomb vure nomb,nomb vure nomb,unrelated,nonword,nonword/unrelated
+652,luxe luxe luxe,luxe luxe luxe,related,word,word/related
+653,mort mort mort,mort mort mort,related,word,word/related
+654,asos cuce asos,asos cuce asos,unrelated,nonword,nonword/unrelated
+655,stue stue stue,stue stue stue,related,nonword,nonword/related
+656,noie noie noie,noie noie noie,related,word,word/related
+657, rane ,rane,no,nonword,nonword/no
+658,afer cins afer,afer cins afer,unrelated,nonword,nonword/unrelated
+659,bond aime bond,bond aime bond,unrelated,word,word/unrelated
+660,psue psue psue,psue psue psue,related,nonword,nonword/related
+661,doux cave doux,doux cave doux,unrelated,word,word/unrelated
+662, gang ,gang,no,word,word/no
+663, mato ,mato,no,nonword,nonword/no
+664, faut ,faut,no,word,word/no
+665, fier ,fier,no,word,word/no
+666,brir anue brir,brir anue brir,unrelated,nonword,nonword/unrelated
+667, fade ,fade,no,word,word/no
+668,puce abri puce,puce abri puce,unrelated,word,word/unrelated
+669, juge ,juge,no,word,word/no
+670, soge ,soge,no,nonword,nonword/no
+671,jour cape jour,jour cape jour,unrelated,word,word/unrelated
+672,mine coup mine,mine coup mine,unrelated,word,word/unrelated
+673, judo ,judo,no,word,word/no
+674, irai ,irai,no,word,word/no
+675,aser aser aser,aser aser aser,related,nonword,nonword/related
+676, expo ,expo,no,word,word/no
+677,scol gine scol,scol gine scol,unrelated,nonword,nonword/unrelated
+678,ster ster ster,ster ster ster,related,nonword,nonword/related
+679,dets dets dets,dets dets dets,related,nonword,nonword/related
+680,nobe nobe nobe,nobe nobe nobe,related,nonword,nonword/related
+681,flie varc flie,flie varc flie,unrelated,nonword,nonword/unrelated
+682,dier dier dier,dier dier dier,related,nonword,nonword/related
+683,poge poge poge,poge poge poge,related,nonword,nonword/related
+684, jupe ,jupe,no,word,word/no
+685,quai cerf quai,quai cerf quai,unrelated,word,word/unrelated
+686,clan deux clan,clan deux clan,unrelated,word,word/unrelated
+687, jote ,jote,no,nonword,nonword/no
+688, dite ,dite,no,word,word/no
+689,pare cinq pare,pare cinq pare,unrelated,word,word/unrelated
+690,gois gois gois,gois gois gois,related,nonword,nonword/related
+691,idue idue idue,idue idue idue,related,nonword,nonword/related
+692,onze onze onze,onze onze onze,related,word,word/related
+693,pras pras pras,pras pras pras,related,nonword,nonword/related
+694,loto loto loto,loto loto loto,related,word,word/related
+695,ucun ucun ucun,ucun ucun ucun,related,nonword,nonword/related
+696,duis jage duis,duis jage duis,unrelated,nonword,nonword/unrelated
+697,chog lube chog,chog lube chog,unrelated,nonword,nonword/unrelated
+698,demi azur demi,demi azur demi,unrelated,word,word/unrelated
+699, flot ,flot,no,word,word/no
+700,huit clan huit,huit clan huit,unrelated,word,word/unrelated
+701,peur peur peur,peur peur peur,related,word,word/related
+702, vute ,vute,no,nonword,nonword/no
+703,loge cuir loge,loge cuir loge,unrelated,word,word/unrelated
+704,hore hore hore,hore hore hore,related,nonword,nonword/related
+705, fuit ,fuit,no,word,word/no
+706,luge luge luge,luge luge luge,related,word,word/related
+707,noir noir noir,noir noir noir,related,word,word/related
+708,pull cote pull,pull cote pull,unrelated,word,word/unrelated
+709,laid cent laid,laid cent laid,unrelated,word,word/unrelated
+710,midi midi midi,midi midi midi,related,word,word/related
+711,ravi boxe ravi,ravi boxe ravi,unrelated,word,word/unrelated
+712, faim ,faim,no,word,word/no
+713,loup loup loup,loup loup loup,related,word,word/related
+714,dire banc dire,dire banc dire,unrelated,word,word/unrelated
+715,nerf nerf nerf,nerf nerf nerf,related,word,word/related
+716,agne durc agne,agne durc agne,unrelated,nonword,nonword/unrelated
+717, flan ,flan,no,word,word/no
+718,four ciel four,four ciel four,unrelated,word,word/unrelated
+719, arer ,arer,no,nonword,nonword/no
+720,leur leur leur,leur leur leur,related,word,word/related
+721, gant ,gant,no,word,word/no
+722,fope fope fope,fope fope fope,related,nonword,nonword/related
+723,chud jive chud,chud jive chud,unrelated,nonword,nonword/unrelated
+724, buin ,buin,no,nonword,nonword/no
+725,jude glac jude,jude glac jude,unrelated,nonword,nonword/unrelated
+726,sobe sobe sobe,sobe sobe sobe,related,nonword,nonword/related
+727, foin ,foin,no,word,word/no
+728, gare ,gare,no,word,word/no
+729, stre ,stre,no,nonword,nonword/no
+730,cuse cuse cuse,cuse cuse cuse,related,nonword,nonword/related
+731,foin arme foin,foin arme foin,unrelated,word,word/unrelated
+732,tose carc tose,tose carc tose,unrelated,nonword,nonword/unrelated
+733, fixe ,fixe,no,word,word/no
+734,euve euve euve,euve euve euve,related,nonword,nonword/related
+735,alas muie alas,alas muie alas,unrelated,nonword,nonword/unrelated
+736,noce noce noce,noce noce noce,related,word,word/related
+737, irme ,irme,no,nonword,nonword/no
+738, ches ,ches,no,nonword,nonword/no
+739, joie ,joie,no,word,word/no
+740, cupe ,cupe,no,nonword,nonword/no
+741,cres cres cres,cres cres cres,related,nonword,nonword/related
+742,mune mune mune,mune mune mune,related,nonword,nonword/related
+743,dide dide dide,dide dide dide,related,nonword,nonword/related
+744,muse muse muse,muse muse muse,related,word,word/related
+745,pied pied pied,pied pied pied,related,word,word/related
+746,grer grer grer,grer grer grer,related,nonword,nonword/related
+747,peut peut peut,peut peut peut,related,word,word/related
+748,vave gion vave,vave gion vave,unrelated,nonword,nonword/unrelated
+749,zour giel zour,zour giel zour,unrelated,nonword,nonword/unrelated
+750,ambe ambe ambe,ambe ambe ambe,related,nonword,nonword/related
+751,bouc ange bouc,bouc ange bouc,unrelated,word,word/unrelated
+752, cien ,cien,no,nonword,nonword/no
+753,moue moue moue,moue moue moue,related,word,word/related
+754,pain pain pain,pain pain pain,related,word,word/related
+755, oute ,oute,no,nonword,nonword/no
+756,fuve drac fuve,fuve drac fuve,unrelated,nonword,nonword/unrelated
+757,abat ceci abat,abat ceci abat,unrelated,word,word/unrelated
+758, foie ,foie,no,word,word/no
+759,pape pape pape,pape pape pape,related,word,word/related
+760, saze ,saze,no,nonword,nonword/no
+761,mont mont mont,mont mont mont,related,word,word/related
+762, plar ,plar,no,nonword,nonword/no
+763,gant bise gant,gant bise gant,unrelated,word,word/unrelated
+764,oral oral oral,oral oral oral,related,word,word/related
+765, dave ,dave,no,nonword,nonword/no
+766, duel ,duel,no,word,word/no
+767,amie bouc amie,amie bouc amie,unrelated,word,word/unrelated
+768,tran puif tran,tran puif tran,unrelated,nonword,nonword/unrelated
+769, cing ,cing,no,nonword,nonword/no
+770,arve arve arve,arve arve arve,related,nonword,nonword/related
+771,abir tuce abir,abir tuce abir,unrelated,nonword,nonword/unrelated
+772,race boit race,race boit race,unrelated,word,word/unrelated
+773, doux ,doux,no,word,word/no
+774,aive aive aive,aive aive aive,related,nonword,nonword/related
+775,apin bres apin,apin bres apin,unrelated,nonword,nonword/unrelated
+776, faux ,faux,no,word,word/no
+777,dade dade dade,dade dade dade,related,nonword,nonword/related
+778, gage ,gage,no,word,word/no
+779,insi insi insi,insi insi insi,related,nonword,nonword/related
+780, sige ,sige,no,nonword,nonword/no
+781,lire lire lire,lire lire lire,related,word,word/related
+782,fier chat fier,fier chat fier,unrelated,word,word/unrelated
+783, eaux ,eaux,no,word,word/no
+784, uite ,uite,no,nonword,nonword/no
+785,ince ince ince,ince ince ince,related,nonword,nonword/related
+786, face ,face,no,word,word/no
+787, humi ,humi,no,nonword,nonword/no
+788, olis ,olis,no,nonword,nonword/no
+789, lard ,lard,no,word,word/no
+790,pluc pluc pluc,pluc pluc pluc,related,nonword,nonword/related
+791,reur reur reur,reur reur reur,related,nonword,nonword/related
+792, exil ,exil,no,word,word/no
+793, coge ,coge,no,nonword,nonword/no
+794, ilas ,ilas,no,nonword,nonword/no
+795,page bloc page,page bloc page,unrelated,word,word/unrelated
+796,caie zors caie,caie zors caie,unrelated,nonword,nonword/unrelated
+797, drap ,drap,no,word,word/no
+798,ofin daps ofin,ofin daps ofin,unrelated,nonword,nonword/unrelated
+799,roge roge roge,roge roge roge,related,nonword,nonword/related
+800,stas hime stas,stas hime stas,unrelated,nonword,nonword/unrelated
+801, dune ,dune,no,word,word/no
+802, vets ,vets,no,nonword,nonword/no
+803,mien mien mien,mien mien mien,related,word,word/related
+804,nuce nuce nuce,nuce nuce nuce,related,nonword,nonword/related
+805,alir poxe alir,alir poxe alir,unrelated,nonword,nonword/unrelated
+806,poil poil poil,poil poil poil,related,word,word/related
+807,hade scol hade,hade scol hade,unrelated,nonword,nonword/unrelated
+808,suel suel suel,suel suel suel,related,nonword,nonword/related
+809,pion pion pion,pion pion pion,related,word,word/related
+810,mave loui mave,mave loui mave,unrelated,nonword,nonword/unrelated
+811, chir ,chir,no,nonword,nonword/no
+812,glin glin glin,glin glin glin,related,nonword,nonword/related
+813,lisi lisi lisi,lisi lisi lisi,related,nonword,nonword/related
+814,onde onde onde,onde onde onde,related,word,word/related
+815,pras nile pras,pras nile pras,unrelated,nonword,nonword/unrelated
+816,logo logo logo,logo logo logo,related,word,word/related
+817,muis boge muis,muis boge muis,unrelated,nonword,nonword/unrelated
+818, vare ,vare,no,nonword,nonword/no
+819, uits ,uits,no,nonword,nonword/no
+820, jeux ,jeux,no,word,word/no
+821,lune lune lune,lune lune lune,related,word,word/related
+822, fort ,fort,no,word,word/no
+823,viol dame viol,viol dame viol,unrelated,word,word/unrelated
+824, vonc ,vonc,no,nonword,nonword/no
+825, idem ,idem,no,word,word/no
+826, apin ,apin,no,nonword,nonword/no
+827,acle psin acle,acle psin acle,unrelated,nonword,nonword/unrelated
+828, gerf ,gerf,no,nonword,nonword/no
+829,zour zour zour,zour zour zour,related,nonword,nonword/related
+830,lion lion lion,lion lion lion,related,word,word/related
+831,lier lier lier,lier lier lier,related,word,word/related
+832,murf caie murf,murf caie murf,unrelated,nonword,nonword/unrelated
+833,bexe noil bexe,bexe noil bexe,unrelated,nonword,nonword/unrelated
+834,buin afer buin,buin afer buin,unrelated,nonword,nonword/unrelated
+835, vece ,vece,no,nonword,nonword/no
+836,agir clef agir,agir clef agir,unrelated,word,word/unrelated
+837, film ,film,no,word,word/no
+838,oeil oeil oeil,oeil oeil oeil,related,word,word/related
+839,loto cire loto,loto cire loto,unrelated,word,word/unrelated
+840, huer ,huer,no,word,word/no
+841, fait ,fait,no,word,word/no
+842,pare pare pare,pare pare pare,related,word,word/related
+843, joue ,joue,no,word,word/no
+844,ment ment ment,ment ment ment,related,word,word/related
+845, joli ,joli,no,word,word/no
+846, hien ,hien,no,nonword,nonword/no
+847,sont dire sont,sont dire sont,unrelated,word,word/unrelated
+848,crue bond crue,crue bond crue,unrelated,word,word/unrelated
+849,mine mine mine,mine mine mine,related,word,word/related
+850, hall ,hall,no,word,word/no
+851,vrec vrec vrec,vrec vrec vrec,related,nonword,nonword/related
+852, haie ,haie,no,word,word/no
+853,lent lent lent,lent lent lent,related,word,word/related
+854,rans rans rans,rans rans rans,related,nonword,nonword/related
+855,fonc sabe fonc,fonc sabe fonc,unrelated,nonword,nonword/unrelated
+856,spon imer spon,spon imer spon,unrelated,nonword,nonword/unrelated
+857, uter ,uter,no,nonword,nonword/no
+858,muni muni muni,muni muni muni,related,word,word/related
+859,part part part,part part part,related,word,word/related
+860,fond avec fond,fond avec fond,unrelated,word,word/unrelated
+861,jouc berf jouc,jouc berf jouc,unrelated,nonword,nonword/unrelated
+862,guir tyle guir,guir tyle guir,unrelated,nonword,nonword/unrelated
+863,plie chut plie,plie chut plie,unrelated,word,word/unrelated
+864,phol guve phol,phol guve phol,unrelated,nonword,nonword/unrelated
+865,orir uste orir,orir uste orir,unrelated,nonword,nonword/unrelated
+866, sper ,sper,no,nonword,nonword/no
+867,maxi maxi maxi,maxi maxi maxi,related,word,word/related
+868,pipi pipi pipi,pipi pipi pipi,related,word,word/related
+869,rici olde rici,rici olde rici,unrelated,nonword,nonword/unrelated
+870,tion tion tion,tion tion tion,related,nonword,nonword/related
+871,coci ande coci,coci ande coci,unrelated,nonword,nonword/unrelated
+872, cofi ,cofi,no,nonword,nonword/no
+873, arne ,arne,no,nonword,nonword/no
+874, boui ,boui,no,nonword,nonword/no
+875, jury ,jury,no,word,word/no
+876,cinq apte cinq,cinq apte cinq,unrelated,word,word/unrelated
+877,vour itie vour,vour itie vour,unrelated,nonword,nonword/unrelated
+878,inge inge inge,inge inge inge,related,nonword,nonword/related
+879,rici rici rici,rici rici rici,related,nonword,nonword/related
+880, didi ,didi,no,nonword,nonword/no
+881,ogre ogre ogre,ogre ogre ogre,related,word,word/related
+882,clar sube clar,clar sube clar,unrelated,nonword,nonword/unrelated
+883, bube ,bube,no,nonword,nonword/no
+884,onde cuit onde,onde cuit onde,unrelated,word,word/unrelated
+885, dort ,dort,no,word,word/no
+886,parc parc parc,parc parc parc,related,word,word/related
+887,ocbo uise ocbo,ocbo uise ocbo,unrelated,nonword,nonword/unrelated
+888,cing veul cing,cing veul cing,unrelated,nonword,nonword/unrelated
+889,lynx lynx lynx,lynx lynx lynx,related,word,word/related
+890,spon spon spon,spon spon spon,related,nonword,nonword/related
+891,rare coin rare,rare coin rare,unrelated,word,word/unrelated
+892,moto cuve moto,moto cuve moto,unrelated,word,word/unrelated
+893,lage lage lage,lage lage lage,related,nonword,nonword/related
+894, rone ,rone,no,nonword,nonword/no
+895, gain ,gain,no,word,word/no
+896,pion cure pion,pion cure pion,unrelated,word,word/unrelated
+897,perd perd perd,perd perd perd,related,word,word/related
+898, fond ,fond,no,word,word/no
+899,chol fave chol,chol fave chol,unrelated,nonword,nonword/unrelated
+900,uave soti uave,uave soti uave,unrelated,nonword,nonword/unrelated
+901,ponc ponc ponc,ponc ponc ponc,related,nonword,nonword/related
+902, clir ,clir,no,nonword,nonword/no
+903, lait ,lait,no,word,word/no
+904, iser ,iser,no,nonword,nonword/no
+905,lers moif lers,lers moif lers,unrelated,nonword,nonword/unrelated
+906,dige dige dige,dige dige dige,related,nonword,nonword/related
+907, geuf ,geuf,no,nonword,nonword/no
+908,ocre ocre ocre,ocre ocre ocre,related,word,word/related
+909, acle ,acle,no,nonword,nonword/no
+910,oile oile oile,oile oile oile,related,nonword,nonword/related
+911, nour ,nour,no,nonword,nonword/no
+912, iage ,iage,no,nonword,nonword/no
+913,star bile star,star bile star,unrelated,word,word/unrelated
+914,pape cour pape,pape cour pape,unrelated,word,word/unrelated
+915,amal rine amal,amal rine amal,unrelated,nonword,nonword/unrelated
+916,rire cash rire,rire cash rire,unrelated,word,word/unrelated
+917,loin loin loin,loin loin loin,related,word,word/related
+918,ange chic ange,ange chic ange,unrelated,word,word/unrelated
+919,poce poce poce,poce poce poce,related,nonword,nonword/related
+920,lire auto lire,lire auto lire,unrelated,word,word/unrelated
+921,cuif bral cuif,cuif bral cuif,unrelated,nonword,nonword/unrelated
+922,mime mime mime,mime mime mime,related,word,word/related
+923,page page page,page page page,related,word,word/related
+924, flux ,flux,no,word,word/no
+925,long long long,long long long,related,word,word/related
+926,uage uage uage,uage uage uage,related,nonword,nonword/related
+927,misi onue misi,misi onue misi,unrelated,nonword,nonword/unrelated
+928,rinc rinc rinc,rinc rinc rinc,related,nonword,nonword/related
+929, font ,font,no,word,word/no
+930, ucre ,ucre,no,nonword,nonword/no
+931,fave posi fave,fave posi fave,unrelated,nonword,nonword/unrelated
+932,cote brin cote,cote brin cote,unrelated,word,word/unrelated
+933,note note note,note note note,related,word,word/related
+934, grue ,grue,no,word,word/no
+935,orie orie orie,orie orie orie,related,nonword,nonword/related
+936,miel miel miel,miel miel miel,related,word,word/related
+937, laid ,laid,no,word,word/no
+938,nuit nuit nuit,nuit nuit nuit,related,word,word/related
+939,paye paye paye,paye paye paye,related,word,word/related
+940,ique ique ique,ique ique ique,related,nonword,nonword/related
+941,moto moto moto,moto moto moto,related,word,word/related
+942, gami ,gami,no,nonword,nonword/no
+943,hade hade hade,hade hade hade,related,nonword,nonword/related
+944, labo ,labo,no,word,word/no
+945, orir ,orir,no,nonword,nonword/no
+946, muis ,muis,no,nonword,nonword/no
+947, spel ,spel,no,nonword,nonword/no
+948,neuf bail neuf,neuf bail neuf,unrelated,word,word/unrelated
+949,ciel bord ciel,ciel bord ciel,unrelated,word,word/unrelated
+950, glui ,glui,no,nonword,nonword/no
+951,isir gouf isir,isir gouf isir,unrelated,nonword,nonword/unrelated
+952, sute ,sute,no,nonword,nonword/no
+953,ucre diol ucre,ucre diol ucre,unrelated,nonword,nonword/unrelated
+954,uide uide uide,uide uide uide,related,nonword,nonword/related
+955,dodo acte dodo,dodo acte dodo,unrelated,word,word/unrelated
+956,ponc flar ponc,ponc flar ponc,unrelated,nonword,nonword/unrelated
+957,yope isir yope,yope isir yope,unrelated,nonword,nonword/unrelated
+958, pluo ,pluo,no,nonword,nonword/no
+959,main main main,main main main,related,word,word/related
+960,taux dise taux,taux dise taux,unrelated,word,word/unrelated
+961, haut ,haut,no,word,word/no
+962,subi noce subi,subi noce subi,unrelated,word,word/unrelated
+963,mare loin mare,mare loin mare,unrelated,word,word/unrelated
+964, cape ,cape,no,word,word/no
+965,fuit naze fuit,fuit naze fuit,unrelated,word,word/unrelated
+966,cofi buge cofi,cofi buge cofi,unrelated,nonword,nonword/unrelated
+967,thon lier thon,thon lier thon,unrelated,word,word/unrelated
+968, varc ,varc,no,nonword,nonword/no
+969,ofci aser ofci,ofci aser ofci,unrelated,nonword,nonword/unrelated
+970,peut noix peut,peut noix peut,unrelated,word,word/unrelated
+971, agir ,agir,no,word,word/no
+972,soge soge soge,soge soge soge,related,nonword,nonword/related
+973, poxe ,poxe,no,nonword,nonword/no
+974,juse groi juse,juse groi juse,unrelated,nonword,nonword/unrelated
+975,kaki kaki kaki,kaki kaki kaki,related,word,word/related
+976,pluo pluo pluo,pluo pluo pluo,related,nonword,nonword/related
+977, apte ,apte,no,word,word/no
+978, brir ,brir,no,nonword,nonword/no
+979,chic mode chic,chic mode chic,unrelated,word,word/unrelated
+980,cofi cofi cofi,cofi cofi cofi,related,nonword,nonword/related
+981, cion ,cion,no,nonword,nonword/no
+982,juge juge juge,juge juge juge,related,word,word/related
+983, chic ,chic,no,word,word/no
+984, noil ,noil,no,nonword,nonword/no
+985,zuif doce zuif,zuif doce zuif,unrelated,nonword,nonword/unrelated
+986, glac ,glac,no,nonword,nonword/no
+987,flux oser flux,flux oser flux,unrelated,word,word/unrelated
+988, cent ,cent,no,word,word/no
+989, bral ,bral,no,nonword,nonword/no
+990, nouf ,nouf,no,nonword,nonword/no
+991,juci juci juci,juci juci juci,related,nonword,nonword/related
+992,miel parc miel,miel parc miel,unrelated,word,word/unrelated
+993,sang pire sang,sang pire sang,unrelated,word,word/unrelated
+994,flux flux flux,flux flux flux,related,word,word/related
+995, cage ,cage,no,word,word/no
+996,fini fini fini,fini fini fini,related,word,word/related
+997, acte ,acte,no,word,word/no
+998,best long best,best long best,unrelated,word,word/unrelated
+999, boit ,boit,no,word,word/no
+1000,judo judo judo,judo judo judo,related,word,word/related
+1001, bien ,bien,no,word,word/no
+1002,rhum oeil rhum,rhum oeil rhum,unrelated,word,word/unrelated
+1003,spot leur spot,spot leur spot,unrelated,word,word/unrelated
+1004, bail ,bail,no,word,word/no
+1005,haut lien haut,haut lien haut,unrelated,word,word/unrelated
+1006,fond fond fond,fond fond fond,related,word,word/related
+1007,idem idem idem,idem idem idem,related,word,word/related
+1008,apin apin apin,apin apin apin,related,nonword,nonword/related
+1009,rour rour rour,rour rour rour,related,nonword,nonword/related
+1010, tuce ,tuce,no,nonword,nonword/no
+1011,fuir fuir fuir,fuir fuir fuir,related,word,word/related
+1012,dune dune dune,dune dune dune,related,word,word/related
+1013,cigi dets cigi,cigi dets cigi,unrelated,nonword,nonword/unrelated
+1014,clir clir clir,clir clir clir,related,nonword,nonword/related
+1015,film nage film,film nage film,unrelated,word,word/unrelated
+1016,leur main leur,leur main leur,unrelated,word,word/unrelated
+1017,fabe fabe fabe,fabe fabe fabe,related,nonword,nonword/related
+1018,muis muis muis,muis muis muis,related,nonword,nonword/related
+1019,glur glur glur,glur glur glur,related,nonword,nonword/related
+1020,faim faim faim,faim faim faim,related,word,word/related
+1021,bixe pras bixe,bixe pras bixe,unrelated,nonword,nonword/unrelated
+1022,sute sute sute,sute sute sute,related,nonword,nonword/related
+1023, coui ,coui,no,nonword,nonword/no
+1024,veul afmi veul,veul afmi veul,unrelated,nonword,nonword/unrelated
+1025, tese ,tese,no,nonword,nonword/no
+1026, dame ,dame,no,word,word/no
+1027,olis olis olis,olis olis olis,related,nonword,nonword/related
+1028,boxe plat boxe,boxe plat boxe,unrelated,word,word/unrelated
+1029,dite dite dite,dite dite dite,related,word,word/related
+1030,itin uage itin,itin uage itin,unrelated,nonword,nonword/unrelated
+1031,donc pile donc,donc pile donc,unrelated,word,word/unrelated
+1032, aide ,aide,no,word,word/no
+1033, cude ,cude,no,nonword,nonword/no
+1034, guve ,guve,no,nonword,nonword/no
+1035,film film film,film film film,related,word,word/related
+1036,ches ches ches,ches ches ches,related,nonword,nonword/related
+1037,ucre ucre ucre,ucre ucre ucre,related,nonword,nonword/related
+1038,ilie ilie ilie,ilie ilie ilie,related,nonword,nonword/related
+1039, amie ,amie,no,word,word/no
+1040,jeux jeux jeux,jeux jeux jeux,related,word,word/related
+1041,libe jurf libe,libe jurf libe,unrelated,nonword,nonword/unrelated
+1042,ivre ivre ivre,ivre ivre ivre,related,word,word/related
+1043,maxi peut maxi,maxi peut maxi,unrelated,word,word/unrelated
+1044,arni arni arni,arni arni arni,related,nonword,nonword/related
+1045, muie ,muie,no,nonword,nonword/no
+1046,doux doux doux,doux doux doux,related,word,word/related
+1047,joie joie joie,joie joie joie,related,word,word/related
+1048, cinq ,cinq,no,word,word/no
+1049,foin foin foin,foin foin foin,related,word,word/related
+1050, bain ,bain,no,word,word/no
+1051,cool pipe cool,cool pipe cool,unrelated,word,word/unrelated
+1052,code muni code,code muni code,unrelated,word,word/unrelated
+1053, ceux ,ceux,no,word,word/no
+1054,dure dure dure,dure dure dure,related,word,word/related
+1055,vige vige vige,vige vige vige,related,nonword,nonword/related
+1056,noif veur noif,noif veur noif,unrelated,nonword,nonword/unrelated
+1057,saze saze saze,saze saze saze,related,nonword,nonword/related
+1058,paze tion paze,paze tion paze,unrelated,nonword,nonword/unrelated
+1059,gami gami gami,gami gami gami,related,nonword,nonword/related
+1060,dodo dodo dodo,dodo dodo dodo,related,word,word/related
+1061,rers rers rers,rers rers rers,related,nonword,nonword/related
+1062,oute oute oute,oute oute oute,related,nonword,nonword/related
+1063,laid laid laid,laid laid laid,related,word,word/related
+1064, ciel ,ciel,no,word,word/no
+1065,vets vets vets,vets vets vets,related,nonword,nonword/related
+1066,labo peur labo,labo peur labo,unrelated,word,word/unrelated
+1067,didi didi didi,didi didi didi,related,nonword,nonword/related
+1068,luif jave luif,luif jave luif,unrelated,nonword,nonword/unrelated
+1069, diol ,diol,no,nonword,nonword/no
+1070,amir uque amir,amir uque amir,unrelated,nonword,nonword/unrelated
+1071,duel mari duel,duel mari duel,unrelated,word,word/unrelated
+1072, aube ,aube,no,word,word/no
+1073,scie lynx scie,scie lynx scie,unrelated,word,word/unrelated
+1074, choc ,choc,no,word,word/no
+1075,dose dose dose,dose dose dose,related,word,word/related
+1076,ivre mont ivre,ivre mont ivre,unrelated,word,word/unrelated
+1077, rine ,rine,no,nonword,nonword/no
+1078, arme ,arme,no,word,word/no
+1079,nour nour nour,nour nour nour,related,nonword,nonword/related
+1080,brin loge brin,brin loge brin,unrelated,word,word/unrelated
+1081,deno deno deno,deno deno deno,related,nonword,nonword/related
+1082,huer huer huer,huer huer huer,related,word,word/related
+1083, tyle ,tyle,no,nonword,nonword/no
+1084, ocbo ,ocbo,no,nonword,nonword/no
+1085,humi vrec humi,humi vrec humi,unrelated,nonword,nonword/unrelated
+1086,mato mato mato,mato mato mato,related,nonword,nonword/related
+1087,vide loup vide,vide loup vide,unrelated,word,word/unrelated
+1088,jury jury jury,jury jury jury,related,word,word/related
+1089, cool ,cool,no,word,word/no
+1090,dave dave dave,dave dave dave,related,nonword,nonword/related
+1091, nile ,nile,no,nonword,nonword/no
+1092,grue maxi grue,grue maxi grue,unrelated,word,word/unrelated
+1093,elle elle elle,elle elle elle,related,word,word/related
+1094,cais fler cais,cais fler cais,unrelated,nonword,nonword/unrelated
+1095,isar ogne isar,isar ogne isar,unrelated,nonword,nonword/unrelated
+1096, abat ,abat,no,word,word/no
+1097, gine ,gine,no,nonword,nonword/no
+1098,foot mule foot,foot mule foot,unrelated,word,word/unrelated
+1099,uits uits uits,uits uits uits,related,nonword,nonword/related
+1100, clan ,clan,no,word,word/no
+1101, banc ,banc,no,word,word/no
+1102,jion euve jion,jion euve jion,unrelated,nonword,nonword/unrelated
+1103,robe nuit robe,robe nuit robe,unrelated,word,word/unrelated
+1104,spel spel spel,spel spel spel,related,nonword,nonword/related
+1105, ceci ,ceci,no,word,word/no
+1106, amer ,amer,no,word,word/no
+1107,adis adis adis,adis adis adis,related,nonword,nonword/related
+1108, crue ,crue,no,word,word/no
+1109,ocre plan ocre,ocre plan ocre,unrelated,word,word/unrelated
+1110, avas ,avas,no,nonword,nonword/no
+1111,vute vute vute,vute vute vute,related,nonword,nonword/related
+1112, brut ,brut,no,word,word/no
+1113,suce part suce,suce part suce,unrelated,word,word/unrelated
+1114,nain luxe nain,nain luxe nain,unrelated,word,word/unrelated
+1115,psub oile psub,psub oile psub,unrelated,nonword,nonword/unrelated
+1116, boue ,boue,no,word,word/no
+1117,golf perd golf,golf perd golf,unrelated,word,word/unrelated
+1118, gouf ,gouf,no,nonword,nonword/no
+1119,irai oeuf irai,irai oeuf irai,unrelated,word,word/unrelated
+1120, bout ,bout,no,word,word/no
+1121, anue ,anue,no,nonword,nonword/no
+1122,vrec spon vrec,vrec spon vrec,unrelated,nonword,nonword/unrelated
+1123, flar ,flar,no,nonword,nonword/no
+1124,puni ogre puni,puni ogre puni,unrelated,word,word/unrelated
+1125,rodi tute rodi,rodi tute rodi,unrelated,nonword,nonword/unrelated
+1126,gaie gaie gaie,gaie gaie gaie,related,word,word/related
+1127,gant gant gant,gant gant gant,related,word,word/related
+1128,avan idue avan,avan idue avan,unrelated,nonword,nonword/unrelated
+1129, drac ,drac,no,nonword,nonword/no
+1130, coup ,coup,no,word,word/no
+1131,drir psue drir,drir psue drir,unrelated,nonword,nonword/unrelated
+1132, bouc ,bouc,no,word,word/no
+1133,grue grue grue,grue grue grue,related,word,word/related
+1134,fien fien fien,fien fien fien,related,nonword,nonword/related
+1135,hall ment hall,hall ment hall,unrelated,word,word/unrelated
+1136,gion suel gion,gion suel gion,unrelated,nonword,nonword/unrelated
+1137, clip ,clip,no,word,word/no
+1138,scur inge scur,scur inge scur,unrelated,nonword,nonword/unrelated
+1139,foie foie foie,foie foie foie,related,word,word/related
+1140, aime ,aime,no,word,word/no
+1141, bref ,bref,no,word,word/no
+1142, uste ,uste,no,nonword,nonword/no
+1143, duis ,duis,no,nonword,nonword/no
+1144,exil exil exil,exil exil exil,related,word,word/related
+1145, igne ,igne,no,nonword,nonword/no
+1146,vrac onde vrac,vrac onde vrac,unrelated,word,word/unrelated
+1147, erle ,erle,no,nonword,nonword/no
+1148,rone rone rone,rone rone rone,related,nonword,nonword/related
+1149,kilo kilo kilo,kilo kilo kilo,related,word,word/related
+1150,acho mune acho,acho mune acho,unrelated,nonword,nonword/unrelated
+1151,glui hore glui,glui hore glui,unrelated,nonword,nonword/unrelated
+1152,cupe cupe cupe,cupe cupe cupe,related,nonword,nonword/related
+1153,hoir duve hoir,hoir duve hoir,unrelated,nonword,nonword/unrelated
+1154,cire moto cire,cire moto cire,unrelated,word,word/unrelated
+1155,clec clec clec,clec clec clec,related,nonword,nonword/related
+1156,cing cing cing,cing cing cing,related,nonword,nonword/related
+1157, code ,code,no,word,word/no
+1158,rock paie rock,rock paie rock,unrelated,word,word/unrelated
+1159,jour jour jour,jour jour jour,related,word,word/related
+1160,afmi stue afmi,afmi stue afmi,unrelated,nonword,nonword/unrelated
+1161,stus ince stus,stus ince stus,unrelated,nonword,nonword/unrelated
+1162, posi ,posi,no,nonword,nonword/no
+1163, moce ,moce,no,nonword,nonword/no
+1164, bame ,bame,no,nonword,nonword/no
+1165,bruc dige bruc,bruc dige bruc,unrelated,nonword,nonword/unrelated
+1166,duel duel duel,duel duel duel,related,word,word/related
+1167,flot flot flot,flot flot flot,related,word,word/related
+1168, clef ,clef,no,word,word/no
+1169,fauf dier fauf,fauf dier fauf,unrelated,nonword,nonword/unrelated
+1170,fule gois fule,fule gois fule,unrelated,nonword,nonword/unrelated
+1171,deur flin deur,deur flin deur,unrelated,nonword,nonword/unrelated
+1172,chen chen chen,chen chen chen,related,nonword,nonword/related
+1173,four four four,four four four,related,word,word/related
+1174,vong ster vong,vong ster vong,unrelated,nonword,nonword/unrelated
+1175, cure ,cure,no,word,word/no
+1176,baby lent baby,baby lent baby,unrelated,word,word/unrelated
+1177,cien cien cien,cien cien cien,related,nonword,nonword/related
+1178,glui glui glui,glui glui glui,related,nonword,nonword/related
+1179,expo expo expo,expo expo expo,related,word,word/related
+1180,oral mise oral,oral mise oral,unrelated,word,word/unrelated
+1181,dort dort dort,dort dort dort,related,word,word/related
+1182, moif ,moif,no,nonword,nonword/no
+1183,lils oque lils,lils oque lils,unrelated,nonword,nonword/unrelated
+1184,itir ambe itir,itir ambe itir,unrelated,nonword,nonword/unrelated
+1185,vate lisi vate,vate lisi vate,unrelated,nonword,nonword/unrelated
+1186, baie ,baie,no,word,word/no
+1187, bloc ,bloc,no,word,word/no
+1188,poxe ucun poxe,poxe ucun poxe,unrelated,nonword,nonword/unrelated
+1189,labo labo labo,labo labo labo,related,word,word/related
+1190,huif nobe huif,huif nobe huif,unrelated,nonword,nonword/unrelated
+1191,lave lave lave,lave lave lave,related,word,word/related
+1192,rine chud rine,rine chud rine,unrelated,nonword,nonword/unrelated
+1193,bolk aive bolk,bolk aive bolk,unrelated,nonword,nonword/unrelated
+1194,toux nerf toux,toux nerf toux,unrelated,word,word/unrelated
+1195,vend mort vend,vend mort vend,unrelated,word,word/unrelated
+1196, deux ,deux,no,word,word/no
+1197,jure jure jure,jure jure jure,related,word,word/related
+1198,jami poge jami,jami poge jami,unrelated,nonword,nonword/unrelated
+1199,dici bome dici,dici bome dici,unrelated,nonword,nonword/unrelated
+1200, cour ,cour,no,word,word/no
+1201,golf golf golf,golf golf golf,related,word,word/related
+1202, gose ,gose,no,nonword,nonword/no
+1203,diel diel diel,diel diel diel,related,nonword,nonword/related
+1204,doit doit doit,doit doit doit,related,word,word/related
+1205, uise ,uise,no,nonword,nonword/no
+1206,joue joue joue,joue joue joue,related,word,word/related
+1207,abri onze abri,abri onze abri,unrelated,word,word/unrelated
+1208, fave ,fave,no,nonword,nonword/no
+1209,fine fine fine,fine fine fine,related,word,word/related
+1210,folk nier folk,folk nier folk,unrelated,word,word/unrelated
+1211, hime ,hime,no,nonword,nonword/no
+1212,aser glin aser,aser glin aser,unrelated,nonword,nonword/unrelated
+1213, imer ,imer,no,nonword,nonword/no
+1214, bond ,bond,no,word,word/no
+1215,acle acle acle,acle acle acle,related,nonword,nonword/related
+1216,coge rans coge,coge rans coge,unrelated,nonword,nonword/unrelated
+1217,gerf gerf gerf,gerf gerf gerf,related,nonword,nonword/related
+1218, agit ,agit,no,word,word/no
+1219,truc plie truc,truc plie truc,unrelated,word,word/unrelated
+1220,arne arne arne,arne arne arne,related,nonword,nonword/related
+1221,gage gage gage,gage gage gage,related,word,word/related
+1222,muse nain muse,muse nain muse,unrelated,word,word/unrelated
+1223,douc nire douc,douc nire douc,unrelated,nonword,nonword/unrelated
+1224,jore psub jore,jore psub jore,unrelated,nonword,nonword/unrelated
+1225,gain moue gain,gain moue gain,unrelated,word,word/unrelated
+1226,rang muet rang,rang muet rang,unrelated,word,word/unrelated
+1227, zors ,zors,no,nonword,nonword/no
+1228, afer ,afer,no,nonword,nonword/no
+1229,troc miel troc,troc miel troc,unrelated,word,word/unrelated
+1230, coin ,coin,no,word,word/no
+1231, huif ,huif,no,nonword,nonword/no
+1232,unir page unir,unir page unir,unrelated,word,word/unrelated
+1233,nole nole nole,nole nole nole,related,nonword,nonword/related
+1234,juin juin juin,juin juin juin,related,word,word/related
+1235,pupe ibac pupe,pupe ibac pupe,unrelated,nonword,nonword/unrelated
+1236,humi humi humi,humi humi humi,related,nonword,nonword/related
+1237,psir hade psir,psir hade psir,unrelated,nonword,nonword/unrelated
+1238, chat ,chat,no,word,word/no
+1239, jine ,jine,no,nonword,nonword/no
+1240, jive ,jive,no,nonword,nonword/no
+1241, demi ,demi,no,word,word/no
+1242, dire ,dire,no,word,word/no
+1243,tyle ponc tyle,tyle ponc tyle,unrelated,nonword,nonword/unrelated
+1244, bres ,bres,no,nonword,nonword/no
+1245,jurf eige jurf,jurf eige jurf,unrelated,nonword,nonword/unrelated
+1246,hall hall hall,hall hall hall,related,word,word/related
+1247, club ,club,no,word,word/no
+1248,apte midi apte,apte midi apte,unrelated,word,word/unrelated
+1249,fade fade fade,fade fade fade,related,word,word/related
+1250,flic mare flic,flic mare flic,unrelated,word,word/unrelated
+1251,hien hien hien,hien hien hien,related,nonword,nonword/related
+1252,buin buin buin,buin buin buin,related,nonword,nonword/related
+1253,ibac oste ibac,ibac oste ibac,unrelated,nonword,nonword/unrelated
+1254,stre stre stre,stre stre stre,related,nonword,nonword/related
+1255, vure ,vure,no,nonword,nonword/no
+1256, sabe ,sabe,no,nonword,nonword/no
+1257,zote rinc zote,zote rinc zote,unrelated,nonword,nonword/unrelated
+1258,main luge main,main luge main,unrelated,word,word/unrelated
+1259, cire ,cire,no,word,word/no
+1260,dets vour dets,dets vour dets,unrelated,nonword,nonword/unrelated
+1261, chef ,chef,no,word,word/no
+1262,faut faut faut,faut faut faut,related,word,word/related
+1263,afil roge afil,afil roge afil,unrelated,nonword,nonword/unrelated
+1264, abri ,abri,no,word,word/no
+1265, dent ,dent,no,word,word/no
+1266, cins ,cins,no,nonword,nonword/no
+1267, boxe ,boxe,no,word,word/no
+1268,mato uide mato,mato uide mato,unrelated,nonword,nonword/unrelated
+1269,jury mien jury,jury mien jury,unrelated,word,word/unrelated
+1270, loui ,loui,no,nonword,nonword/no
+1271,gare gare gare,gare gare gare,related,word,word/related
+1272, dise ,dise,no,word,word/no
+1273, gric ,gric,no,nonword,nonword/no
+1274,fixe fixe fixe,fixe fixe fixe,related,word,word/related
+1275, cuit ,cuit,no,word,word/no
+1276,yope yope yope,yope yope yope,related,nonword,nonword/related
+1277,cins grer cins,cins grer cins,unrelated,nonword,nonword/unrelated
+1278, oche ,oche,no,nonword,nonword/no
+1279,folk folk folk,folk folk folk,related,word,word/related
+1280,soif pare soif,soif pare soif,unrelated,word,word/unrelated
+1281, gion ,gion,no,nonword,nonword/no
+1282,dont dont dont,dont dont dont,related,word,word/related
+1283, bord ,bord,no,word,word/no
+1284, bobo ,bobo,no,word,word/no
+1285,feux feux feux,feux feux feux,related,word,word/related
+1286,fuit fuit fuit,fuit fuit fuit,related,word,word/related
+1287, vore ,vore,no,nonword,nonword/no
+1288,joli joli joli,joli joli joli,related,word,word/related
+1289,eaux eaux eaux,eaux eaux eaux,related,word,word/related
+1290, cuve ,cuve,no,word,word/no
+1291,irme irme irme,irme irme irme,related,nonword,nonword/related
+1292,vece vece vece,vece vece vece,related,nonword,nonword/related
+1293,rane rane rane,rane rane rane,related,nonword,nonword/related
+1294,hier hier hier,hier hier hier,related,word,word/related
+1295,flic flic flic,flic flic flic,related,word,word/related
+1296,sper sper sper,sper sper sper,related,nonword,nonword/related
+1297,jurc bexe jurc,jurc bexe jurc,unrelated,nonword,nonword/unrelated
+1298,arie pluc arie,arie pluc arie,unrelated,nonword,nonword/unrelated
+1299,sert paix sert,sert paix sert,unrelated,word,word/unrelated
+1300,avec pion avec,avec pion avec,unrelated,word,word/unrelated
+1301, chut ,chut,no,word,word/no
+1302,pluc rese pluc,pluc rese pluc,unrelated,nonword,nonword/unrelated
+1303, ange ,ange,no,word,word/no
+1304,mexe mexe mexe,mexe mexe mexe,related,nonword,nonword/related
+1305, azur ,azur,no,word,word/no
+1306,haut haut haut,haut haut haut,related,word,word/related
+1307,dont lire dont,dont lire dont,unrelated,word,word/unrelated
+1308,fade lion fade,fade lion fade,unrelated,word,word/unrelated
+1309,mime nord mime,mime nord mime,unrelated,word,word/unrelated
+1310,guve isar guve,guve isar guve,unrelated,nonword,nonword/unrelated
+1311,boui boui boui,boui boui boui,related,nonword,nonword/related
+1312,gain gain gain,gain gain gain,related,word,word/related
+1313,jote jote jote,jote jote jote,related,nonword,nonword/related
+1314,tube noir tube,tube noir tube,unrelated,word,word/unrelated
+1315, cher ,cher,no,word,word/no
+1316,drap noie drap,drap noie drap,unrelated,word,word/unrelated
+1317,iers iers iers,iers iers iers,related,nonword,nonword/related
+1318, spen ,spen,no,nonword,nonword/no
+1319, jage ,jage,no,nonword,nonword/no
+1320,plar plar plar,plar plar plar,related,nonword,nonword/related
+1321, bise ,bise,no,word,word/no
+1322,haie haie haie,haie haie haie,related,word,word/related
+1323, cote ,cote,no,word,word/no
+1324,lait lait lait,lait lait lait,related,word,word/related
+1325, crie ,crie,no,word,word/no
+1326, cerf ,cerf,no,word,word/no
+1327,perc perc perc,perc perc perc,related,nonword,nonword/related
+1328,ifus ifus ifus,ifus ifus ifus,related,nonword,nonword/related
+1329,bril dade bril,bril dade bril,unrelated,nonword,nonword/unrelated
+1330,arni pupe arni,arni pupe arni,unrelated,nonword,nonword/unrelated
+1331, sube ,sube,no,nonword,nonword/no
+1332, cuce ,cuce,no,nonword,nonword/no
+1333, avec ,avec,no,word,word/no
+1334, carc ,carc,no,nonword,nonword/no
+1335,face face face,face face face,related,word,word/related
+1336, camp ,camp,no,word,word/no
+1337,coge coge coge,coge coge coge,related,nonword,nonword/related
+1338,bube bube bube,bube bube bube,related,nonword,nonword/related
+1339, brin ,brin,no,word,word/no
+1340,nouf arve nouf,nouf arve nouf,unrelated,nonword,nonword/unrelated
+1341, vave ,vave,no,nonword,nonword/no
+1342,fait fait fait,fait fait fait,related,word,word/related
+1343, auto ,auto,no,word,word/no
+1344,jupe jupe jupe,jupe jupe jupe,related,word,word/related
+1345,mari neuf mari,mari neuf mari,unrelated,word,word/unrelated
+1346, date ,date,no,word,word/no
+1347,foot foot foot,foot foot foot,related,word,word/related
+1348, durc ,durc,no,nonword,nonword/no
+1349,oeuf pain oeuf,oeuf pain oeuf,unrelated,word,word/unrelated
+1350,arer arer arer,arer arer arer,related,nonword,nonword/related
+1351, cave ,cave,no,word,word/no
+1352,imci imci imci,imci imci imci,related,nonword,nonword/related
+1353,roux paye roux,roux paye roux,unrelated,word,word/unrelated
+1354,roge insi roge,roge insi roge,unrelated,nonword,nonword/unrelated
+1355,ilas ilas ilas,ilas ilas ilas,related,nonword,nonword/related
+1356,flan flan flan,flan flan flan,related,word,word/related
+1357,vonc vonc vonc,vonc vonc vonc,related,nonword,nonword/related
+1358, cube ,cube,no,word,word/no
+1359,vonc reur vonc,vonc reur vonc,unrelated,nonword,nonword/unrelated
+1360,grec grec grec,grec grec grec,related,word,word/related
+1361,info info info,info info info,related,word,word/related
+1362,jors dide jors,jors dide jors,unrelated,nonword,nonword/unrelated
+1363, ande ,ande,no,nonword,nonword/no
+1364, nomb ,nomb,no,nonword,nonword/no
+1365, veul ,veul,no,nonword,nonword/no
+1366,irir lage irir,irir lage irir,unrelated,nonword,nonword/unrelated
+1367,gang gang gang,gang gang gang,related,word,word/related
+1368, isir ,isir,no,nonword,nonword/no
+1369, bile ,bile,no,word,word/no
+1370, onue ,onue,no,nonword,nonword/no
+1371,geuf geuf geuf,geuf geuf geuf,related,nonword,nonword/related
+1372,vors ique vors,vors ique vors,unrelated,nonword,nonword/unrelated
+1373, psin ,psin,no,nonword,nonword/no
+1374,mion cuse mion,mion cuse mion,unrelated,nonword,nonword/unrelated
+1375,irai irai irai,irai irai irai,related,word,word/related
+1376, case ,case,no,word,word/no
+1377,sige sige sige,sige sige sige,related,nonword,nonword/related
+1378,imci sobe imci,imci sobe imci,unrelated,nonword,nonword/unrelated
+1379,midi ocre midi,midi ocre midi,unrelated,word,word/unrelated
+1380, cuir ,cuir,no,word,word/no
+1381,clai ouve clai,clai ouve clai,unrelated,nonword,nonword/unrelated
+1382,font font font,font font font,related,word,word/related
+1383,bolk bolk bolk,bolk bolk bolk,related,nonword,nonword/related
+1384, lube ,lube,no,nonword,nonword/no
+1385,chir chir chir,chir chir chir,related,nonword,nonword/related
+1386, puif ,puif,no,nonword,nonword/no
+1387,lard lard lard,lard lard lard,related,word,word/related
+1388,fort fort fort,fort fort fort,related,word,word/related
+1389,uite uite uite,uite uite uite,related,nonword,nonword/related
+1390,feux loto feux,feux loto feux,unrelated,word,word/unrelated
+1391, daps ,daps,no,nonword,nonword/no
+1392,lard muse lard,lard muse lard,unrelated,word,word/unrelated
+1393,muve rici muve,muve rici muve,unrelated,nonword,nonword/unrelated
+1394, stin ,stin,no,nonword,nonword/no
+1395,dite oral dite,dite oral dite,unrelated,word,word/unrelated
+1396,avir poce avir,avir poce avir,unrelated,nonword,nonword/unrelated
+1397, abir ,abir,no,nonword,nonword/no
+1398,cuir note cuir,cuir note cuir,unrelated,word,word/unrelated
+1399,atil cres atil,atil cres atil,unrelated,nonword,nonword/unrelated
+1400, olde ,olde,no,nonword,nonword/no
+1401, soti ,soti,no,nonword,nonword/no
+1402, brun ,brun,no,word,word/no
+1403,joli pape joli,joli pape joli,unrelated,word,word/unrelated
+1404,avas orie avas,avas orie avas,unrelated,nonword,nonword/unrelated
+1405,agit lune agit,agit lune agit,unrelated,word,word/unrelated
+1406,part mine part,part mine part,unrelated,word,word/unrelated
+1407, itie ,itie,no,nonword,nonword/no
+1408,drir drir drir,drir drir drir,related,nonword,nonword/related
+1409,juif juif juif,juif juif juif,related,word,word/related
+1410,arti fope arti,arti fope arti,unrelated,nonword,nonword/unrelated
+1411,orir orir orir,orir orir orir,related,nonword,nonword/related
+1412, cash ,cash,no,word,word/no
+1413,pour mime pour,pour mime pour,unrelated,word,word/unrelated
+1414, base ,base,no,word,word/no
+1415, giel ,giel,no,nonword,nonword/no
+1416,iser iser iser,iser iser iser,related,nonword,nonword/related
+1417,fier fier fier,fier fier fier,related,word,word/related
+1418,huit huit huit,huit huit huit,related,word,word/related
+1419,flid flid flid,flid flid flid,related,nonword,nonword/related
+1420, berf ,berf,no,nonword,nonword/no
+1421,drap drap drap,drap drap drap,related,word,word/related
+1422,faux faux faux,faux faux faux,related,word,word/related
+1423,vare vare vare,vare vare vare,related,nonword,nonword/related
+1424,oste flir oste,oste flir oste,unrelated,nonword,nonword/unrelated
+1425, scol ,scol,no,nonword,nonword/no
+1426, boge ,boge,no,nonword,nonword/no
+1427,aube pipi aube,aube pipi aube,unrelated,word,word/unrelated
+1428,cage poil cage,cage poil cage,unrelated,word,word/unrelated
+1429, caie ,caie,no,nonword,nonword/no
+1430,dige zour dige,dige zour dige,unrelated,nonword,nonword/unrelated
+1431,uter uter uter,uter uter uter,related,nonword,nonword/related
+1432,mien logo mien,mien logo mien,unrelated,word,word/unrelated
+1433, orve ,orve,no,nonword,nonword/no
+1434,tour pied tour,tour pied tour,unrelated,word,word/unrelated
+1435,donc donc donc,donc donc donc,related,word,word/related
+1436,jore jore jore,jore jore jore,related,nonword,nonword/related
+1437,adre adre adre,adre adre adre,related,nonword,nonword/related
+1438,iage iage iage,iage iage iage,related,nonword,nonword/related
+1439, tade ,tade,no,nonword,nonword/no
+1440,zors nuce zors,zors nuce zors,unrelated,nonword,nonword/unrelated
+1441,pain orge pain,pain orge pain,unrelated,word,word/unrelated
+1442,afer afer afer,afer afer afer,related,nonword,nonword/related
