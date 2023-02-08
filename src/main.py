@@ -7,12 +7,13 @@ import time
 import pickle
 from parameters import return_params
 from simulate_experiment import simulate_experiment
+import os
 
 
-def simulate_reading(parameters, stimuli_filepath, outfile_sim_data, outfile_unrecognized):
+def simulate_reading(parameters, outfile_sim_data, outfile_unrecognized):
 
     if parameters.run_exp:
-        simulation_data, unrecognized_words = simulate_experiment(parameters, stimuli_filepath)
+        simulation_data, unrecognized_words = simulate_experiment(parameters, outfile_sim_data, outfile_unrecognized)
         with open(outfile_sim_data, "wb") as all_data_file:
             pickle.dump(simulation_data, all_data_file)
         with open(outfile_unrecognized, "wb") as unrecognized_file:
@@ -46,36 +47,41 @@ def main():
     # will create a new file everytime, stamped with date and time. #TODO; build system to keep only last X logs
     now = datetime.now()
     dt_string = now.strftime("_%d_%m_%Y_%H-%M-%S")
+    if not os.path.isdir('logs'): os.mkdir('logs')
     logging.basicConfig(filename=f'logs/logfile{dt_string}.log', force=True, filemode='w', level=logging.DEBUG, format='%(name)s %(levelname)s:%(message)s')
     logger = logging.getLogger(__name__)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('task_to_run',default='PSCall')
     parser.add_argument('stimuli_filepath')
-    parser.add_argument('run_exp',default='True',help='Should the experiment simulation run?',choices=['True','False'])
-    parser.add_argument('analyze_results',default="True",help='Should the results be analyzed?',choices=["True","False"])
-    parser.add_argument('optimize',default="False",help='Should the parameters be optimized using evolutionary algorithms?',choices=["True","False"])
-    parser.add_argument('print_stim',default="True",choices=["True","False"])
-    parser.add_argument('plotting',default='False',choices=['True','False'])
+    parser.add_argument('--task_to_run',default='continuous reading')
+    parser.add_argument('--language', default='english')
+    parser.add_argument('--run_exp',default='True',help='Should the experiment simulation run?',choices=['True','False'])
+    parser.add_argument('--analyze_results',default="False",help='Should the results be analyzed?',choices=["True","False"])
+    parser.add_argument('--optimize',default="False",help='Should the parameters be optimized using evolutionary algorithms?',choices=["True","False"])
+    parser.add_argument('--print_stim',default="False",choices=["True","False"])
+    parser.add_argument('--plotting',default='False',choices=['True','False'])
 
     args = parser.parse_args()
     global_parameters = {
         "task_to_run" : args.task_to_run,
-        "run_exp": bool(args.run_exp),
-        "analyze_results": bool(args.analyze_results),
-        "optmize": bool(args.optimize),
-        "print_stim": bool(args.print_stim),
-        "plotting": bool(args.plotting)
+        "stimuli_filepath": args.stimuli_filepath,
+        "language": args.language,
+        "run_exp": eval(args.run_exp),
+        "analyze_results": eval(args.analyze_results),
+        "optimize": eval(args.optimize),
+        "print_stim": eval(args.print_stim),
+        "plotting": eval(args.plotting)
     }
 
     pm = return_params(global_parameters)
     logger.debug(pm)
 
-    print("Task:" + pm.task_to_run)
-    print("_----PARAMETERS----_")
+    print("\nTASK: " + pm.task_to_run)
+    print("----PARAMETERS----")
     print("reading in " + pm.language)
 
     if pm.optimize:
+        print(pm.optimize)
         print("Using: " + pm.tuning_measure)
         if any(pm.objective):
             print("Single Objective: " + pm.tuning_measure + " of " + pm.objective)

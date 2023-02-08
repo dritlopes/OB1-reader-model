@@ -3,6 +3,7 @@
 import pandas as pd
 import time
 from types import SimpleNamespace
+from utils import get_stimulus_text_from_file
 
 
 class TaskAttributes:
@@ -11,17 +12,16 @@ class TaskAttributes:
     """
 
     def __init__(self, name, stim, stimAll, language,
-                 stimcycles=None,
+                 stimcycles=0,
                  blankscreen_type='blank', blankscreen_cycles_begin=0, blankscreen_cycles_end=0,
                  is_priming_task=False, ncyclesprime=0,
                  POS_implemented=False,
                  affix_implemented=False):
         self.name = name
         self.stim = stim
-        self.stim['all'] = stimAll
+        self.stim_all = stimAll
         self.language = language
         self.stimcycles = stimcycles
-        # self.is_experiment = is_experiment
         self.is_priming_task = is_priming_task
         self.blankscreen_type = blankscreen_type
         self.blankscreen_cycles_begin = blankscreen_cycles_begin
@@ -35,35 +35,32 @@ class TaskAttributes:
 
 # NV: When designing a new task, set its attributes here. csv must contain a column called 'all', which contains all elements that are on screen during target presentation
 # NV: function returns instance of TaskAttributes with corresponding attributes
-def return_attributes(task_to_run):
+def return_attributes(task_to_run, language, stimuli_filepath):
 
     """" "return_attributes(task_to_run)" - Returns an instance of the TaskAttribute class. This class sets the atributes of the task, like stimuli,
  language and the number of stimulus cycles. Importantly, this function takes in an argument "task_to_run" which determines which task's attributes will be returned.
  For example: when the task is 'EmbeddedWords_German', the function reads a CSV file of the German stimuli, assigns it to the stim attribute of the TaskAttributes class,
  assigns 'German' to the language attribute and returns an instance of TaskAttributes with the associated attributes."""
 
-    if task_to_run == 'PSCall':
-        with open('../stimuli/PSC.txt') as infile:
-            stim = infile.read()
+    stim_data = get_stimulus_text_from_file(stimuli_filepath)
+
+    if task_to_run == 'continuous reading':
+        stim_data['all'] = stim_data['all'].encode("utf-8").decode("utf-8")
         return TaskAttributes(
             task_to_run,
-            stim,
-            stim,
-            language='german')
-            #stimcycles=None,
-            #is_experiment=False)
+            stim_data,
+            stim_data['all'],
+            language)
 
     elif task_to_run == 'EmbeddedWords':
-        stim = pd.read_csv('../stimuli/EmbeddedWords_stimuli_all_csv.csv', sep=';')
-        stim['all'] = stim['all'].astype('unicode') 
+        stim_data['stimulus'] = stim_data['stimulus'].astype('unicode')
         return TaskAttributes(
             task_to_run,
-            stim,
-            stim['stimulus'],
+            stim_data,
+            list(stim_data['stimulus']),
             language='english',
             stimcycles=120, # each stimulus was on screen for 3s
-            # is_experiment=True,
-            #is_priming_task=True,
+            is_priming_task=True,
             blankscreen_type='hashgrid',
             blankscreen_cycles_begin=5, # blank screen before stimulus appears takes 200 ms  # FIXME : 20
             blankscreen_cycles_end=0, #AL: no blank screen after stimulus appears?
@@ -74,15 +71,13 @@ def return_attributes(task_to_run):
 
     # KM: Adding EmbeddedWords_German
     elif task_to_run == 'EmbeddedWords_German':
-        stim = pd.read_csv("../stimuli/EmbeddedWords_Nonwords_german_all_csv.csv", sep=';')
-        stim['all'] = stim['all'].astype('unicode')
+        stim_data['stimulus'] = stim_data['stimulus'].astype('unicode')
         return TaskAttributes(
             task_to_run,
-            stim,
-            stim['stimulus'],
+            stim_data,
+            list(stim_data['stimulus']),
             language='german', 
             stimcycles=120,
-            #is_experiment=True,
             is_priming_task=True,
             blankscreen_type='hashgrid',
             blankscreen_cycles_begin=5,  # FIXME : 20
@@ -93,14 +88,12 @@ def return_attributes(task_to_run):
         )
 
     elif task_to_run == 'Sentence':
-        stim = pd.read_table('../stimuli/Sentence_stimuli_all_csv.csv', sep=',')
-        stim['stimulus'] = stim['stimulus'].astype('unicode')
+        stim_data['stimulus'] = stim_data['stimulus'].astype('unicode')
         return TaskAttributes(
             task_to_run,
-            stim,
-            stim['stimulus'],
+            stim_data,
+            list(stim_data['stimulus']),
             language='french',
-            #is_experiment=True,
             stimcycles=8,
             blankscreen_cycles_begin=8,
             blankscreen_cycles_end=16, 
@@ -110,16 +103,14 @@ def return_attributes(task_to_run):
 
     elif task_to_run == 'Flanker':
         # NV: extra assignments needed for this task
-        stim = pd.read_table('../stimuli/Flanker_stimuli_all_csv.csv', sep=',')
-        stim['stimulus'] = stim['stimulus'].astype('unicode')
-        stim = stim[stim['condition'].str.startswith(('word'))].reset_index()
+        stim_data['stimulus'] = stim_data['stimulus'].astype('unicode')
+        stim = stim_data[stim_data['condition'].str.startswith(('word'))].reset_index()
         return TaskAttributes(
             task_to_run,
             stim,
-            stim['stimulus'],
+            list(stim['stimulus']),
             language='french',
             stimcycles=6,
-            #is_experiment=True,
             blankscreen_cycles_begin=8,
             blankscreen_cycles_end=18,
             POS_implemented = False, 
@@ -127,14 +118,12 @@ def return_attributes(task_to_run):
         )
 
     elif task_to_run == 'Transposed':
-        stim = pd.read_table('../stimuli/Transposed_stimuli_all_csv.csv', sep=',', encoding='utf-8')
-        stim['stimulus'] = stim['stimulus'].astype('unicode')
+        stim_data['stimulus'] = stim_data['stimulus'].astype('unicode')
         return TaskAttributes(
             task_to_run,
-            stim,
-            stim['stimulus'],
+            stim_data,
+            list(stim_data['stimulus']),
             language='french',
-            #is_experiment=True,
             is_priming_task = False,
             blankscreen_cycles_begin = 8,
             blankscreen_type='fixation cross',
@@ -144,14 +133,12 @@ def return_attributes(task_to_run):
         )
 
     elif task_to_run == 'Classification':
-        stim = pd.read_table('../stimuli/Classification_stimuli_all_csv.csv', sep=',', encoding='utf-8')
-        stim['stimulus'] = stim['stimulus'].astype('unicode')
+        stim_data['stimulus'] = stim_data['stimulus'].astype('unicode')
         return TaskAttributes(
             task_to_run,
-            stim,
-            stim['stimulus'],
+            stim_data,
+            list(stim_data['stimulus']),
             language='dutch',
-            #is_experiment=True,
             is_priming_task = False,
             blankscreen_cycles_begin = 8,
             blankscreen_type='fixation cross',
@@ -182,7 +169,7 @@ def return_task_params(task_attributes):
     decay = -0.05  # 0.08 #-0.053 #AL: decay in word activation over time
 
     # attentional width
-    attendWidth = 8.0  # NV: #!!!: was set to 15 for flanker, 20 for sentence and 3 for transposed
+    attend_width = 8.0  # NV: #!!!: was set to 15 for flanker, 20 for sentence and 3 for transposed
     max_attend_width = 5.0
     min_attend_width = 3.0
     attention_skew = 4  # 1 equals symmetrical distribution # 4 (paper)
@@ -230,7 +217,7 @@ def return_task_params(task_attributes):
     wordpred_p = 0.2  # 0.4 # Currently not used
     word_length_similarity_constant = 0.35  # 0.15 # NV: determines how similar the length of 2 words must be for them to be recognised as 'similar word length'
     use_grammar_prob = False  # True for using grammar probabilities, False for using cloze, overwritten by uniform_pred
-    uniform_pred = False  # Overwrites cloze/grammar probabilities with 0.25 for all words
+    uniform_prob = False  # Overwrites cloze/grammar probabilities with 0.25 for all words
     grammar_weight = 0.5  # only used when using grammar_prob
     linear = False
 
@@ -238,6 +225,7 @@ def return_task_params(task_attributes):
     trial_ends_on_key_press = False  # whether trial ends when word is recognized, or should keep going until end of cycle (3350 ms)
 
     # affix system
+    affix_system, simil_algo, max_edit_dist, short_word_cutoff = False,'', 0, 0
     if task_attributes.affix_implemented:
         affix_system = True
         simil_algo = 'lcs'  # can be lev, lcs, startswith
@@ -250,11 +238,10 @@ def return_task_params(task_attributes):
 
     return task_params
 
-
 def return_params(global_params):
 
     # NV: fetch all attributes of the task to run, specified in parameters_exp. Creates an object
-    task_attributes = return_attributes(global_params['task_to_run'])
+    task_attributes = return_attributes(global_params['task_to_run'],global_params['language'],global_params['stimuli_filepath'])
     
     # NV: get parameters corresponding to type of given task. Returns dictionary
     task_params = return_task_params(task_attributes)
