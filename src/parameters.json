@@ -1,0 +1,11 @@
+{
+  "simulation": [
+    {
+      "is_priming_task": false,
+      "blankscreen_cycles_begin": 8,
+      "blankscreen_cycles_end": 18,
+      "POS_implemented": false,
+      "affix_implemented": true
+    }
+  ]
+}

@@ -160,8 +160,7 @@ def get_threshold(word, word_freq_dict, max_frequency, freq_p, max_threshold):
     word_threshold = max_threshold
     try:
         word_frequency = word_freq_dict[word]
-        word_freq_norm = normalize_values(freq_p,word_frequency,max_frequency)
-        word_threshold = word_threshold * word_freq_norm
+        word_threshold = word_threshold * ((max_frequency/freq_p) - word_frequency) / (max_frequency/freq_p)
     except KeyError:
         pass
 
@@ -171,8 +170,8 @@ def update_threshold(word_position, word_threshold, max_predictability, pred_p, 
 
     # TODO change to logits from LM by giving context instead of position of word in the input and update thresholds for other words in the lexicon as well
     word_pred = pred_values[str(word_position)]
-    word_pred_norm = normalize_values(pred_p,float(word_pred),max_predictability)
-    word_threshold = word_threshold * word_pred_norm
+    # word_pred = normalize_values(pred_p,float(word_pred),max_predictability)
+    word_threshold = word_threshold * ((max_predictability/pred_p) - word_pred) / (max_predictability/pred_p)
 
     return word_threshold
 
@@ -337,7 +336,6 @@ def find_word_edges(fixation_center,eye_position,stimulus,tokens, fixation):
     # and the first letter followed by a space, counted to the right from
     # the center
     p = re.compile(r'\b\w+\b', re.UNICODE)
-
     for letter_index in range(int(fixation_center), len(stimulus)):
         if stimulus[letter_index] == " ":
             center_word_last_letter_index = letter_index - 1
@@ -373,27 +371,26 @@ def find_word_edges(fixation_center,eye_position,stimulus,tokens, fixation):
     # (taking into account only the right side of the word)
     for m in p.finditer(stimulus_before_eyepos):
         # add position of the first letter
-        left_word_edge_letter_indices.append((m.start(), m.end() - 1))
+        left_word_edge_letter_indices.append((m.start(), m.end()))
 
-    # TODO gives errors when on last letter of words-1 word
     for m in p.finditer(stimulus_after_eyepos):
         # add position of the first letter,
         # [0][0] = current fixation position + 1
         right_word_edge_letter_indices.append((
             fixation_first_position_right_to_middle + m.start(),
-            fixation_first_position_right_to_middle + m.end() - 1
+            fixation_first_position_right_to_middle + m.end()
         ))
 
-    if left_word_edge_letter_indices[-1][1] < center_word_first_letter_index:
-        left_word_edge_letter_indices.append((-1, -1))
-    if right_word_edge_letter_indices[0][0] > center_word_last_letter_index:
-        right_word_edge_letter_indices.insert(0, (-1, -1))
+    # if left_word_edge_letter_indices[-1][1] < center_word_first_letter_index:
+    #     left_word_edge_letter_indices.append((-1, -1))
+    # if right_word_edge_letter_indices[0][0] > center_word_last_letter_index:
+    #     right_word_edge_letter_indices.insert(0, (-1, -1))
 
     # Test right_word_edge_letter_indices
-    if fixation < len(tokens) - 3:
-        assert (len(right_word_edge_letter_indices) == 3)
+    # if fixation < len(tokens) - 3:
+    #   assert (len(right_word_edge_letter_indices) == 3)
 
-    return right_word_edge_letter_indices, left_word_edge_letter_indices, fixation_first_position_right_to_middle, fixation_first_position_left_to_middle,
+    return right_word_edge_letter_indices, left_word_edge_letter_indices, fixation_first_position_right_to_middle, fixation_first_position_left_to_middle, center_word_first_letter_index, center_word_last_letter_index
 
 def get_midword_position_for_surrounding_word(word_position, right_word_edge_letter_indices, left_word_edge_letter_indices):
 

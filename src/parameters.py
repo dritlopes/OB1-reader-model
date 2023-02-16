@@ -156,7 +156,7 @@ def return_task_params(task_attributes):
     These parameters are set for experimentation and are established by the task_attributes object.
     """
 
-    CYCLE_SIZE = 25 # milliseconds that one model cycle is supposed to last (brain time, not model time)
+    cycle_size = 25 # milliseconds that one model cycle is supposed to last (brain time, not model time)
     output_dir = time.time()
 
     # word activation
@@ -169,7 +169,7 @@ def return_task_params(task_attributes):
     decay = -0.05  # 0.08 #-0.053 #AL: decay in word activation over time
 
     # attentional width
-    attend_width = 8.0  # NV: #!!!: was set to 15 for flanker, 20 for sentence and 3 for transposed
+    attend_width = 5.0 # 8.0  # NV: #!!!: was set to 15 for flanker, 20 for sentence and 3 for transposed
     max_attend_width = 5.0
     min_attend_width = 3.0
     attention_skew = 4  # 1 equals symmetrical distribution # 4 (paper)
