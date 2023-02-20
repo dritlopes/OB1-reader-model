@@ -87,7 +87,6 @@ def compute_ngram_activity(stimulus,lexicon_word_ngrams,eye_position,attention_p
 def compute_words_activity(stimulus, lexicon_word_ngrams, eye_position, attention_position, attend_width, pm, fixation_data, word_overlap_matrix, tokens, fixation, lexicon_word_activity):
 
     lexicon_size = len(lexicon_word_ngrams.keys())
-    #lexicon_word_activity = np.zeros((lexicon_size), dtype=float)
     lexicon_active_words = np.zeros((lexicon_size), dtype=bool)
     word_input = np.zeros((lexicon_size), dtype=float)
     crt_fixation_word_activities = dict()
@@ -113,17 +112,20 @@ def compute_words_activity(stimulus, lexicon_word_ngrams, eye_position, attentio
         if lexicon_word == tokens[fixation]:
             crt_fixation_word_activities['word excitation'] = word_excitation_input
             crt_fixation_word_activities['ngram inhibition'] = (abs(ngram_inhibition_input))
-
+            # print(word_input[lexicon_ix])
     # normalize based on number of ngrams in lexicon
     all_ngrams = list()
     for info_tuple in lexicon_word_ngrams.values():
-        all_ngrams.extend(info_tuple[0])
-    word_input = word_input / np.array(len(set(all_ngrams)))
-
-    # re-compute word activity according to word-to-word inhibition
+        all_ngrams.append(len(info_tuple[0]))
+    word_input = word_input / np.array(all_ngrams)
+    # for lexicon_ix, lexicon_word in enumerate(lexicon_word_ngrams.keys()):
+    #     if lexicon_word == tokens[fixation]:
+    #         print(word_input[lexicon_ix])
+    # re-compute word activity using to word-to-word inhibition
     # NV: the more active a certain word is, the more inhibition it will execute on its peers -> activity is multiplied by inhibition constant.
     # NV: then, this inhibition value is weighed by how much overlap there is between that word and every other.
     lexicon_normalized_word_inhibition = (100.0/lexicon_size) * pm.word_inhibition
+    # find which words are active
     lexicon_active_words[(lexicon_word_activity > 0.0) | (word_input > 0.0)] = True
     overlap_select = word_overlap_matrix[:, (lexicon_active_words == True)]
     lexicon_select = (lexicon_word_activity + word_input)[(lexicon_active_words == True)] * lexicon_normalized_word_inhibition
@@ -136,6 +138,15 @@ def compute_words_activity(stimulus, lexicon_word_ngrams, eye_position, attentio
     # pm.decay has a neg value, that's why it's here added, not subtracted
     lexicon_word_activity_change = ((pm.max_activity - lexicon_word_activity) * lexicon_total_input) + \
                                    ((lexicon_word_activity - pm.min_activity) * pm.decay)
+    # for lexicon_ix, lexicon_word in enumerate(lexicon_word_ngrams.keys()):
+    #     if lexicon_word == tokens[fixation]:
+    #         print(word_input[lexicon_ix])
+    #         print(lexicon_word_inhibition[lexicon_ix])
+    #         print(lexicon_total_input[lexicon_ix])
+    #         print(lexicon_word_activity[lexicon_ix])
+    #         print(lexicon_word_activity_change[lexicon_ix])
+    #         lexicon_word_activity = np.add(lexicon_word_activity, lexicon_word_activity_change)
+    #         print(lexicon_word_activity[lexicon_ix])
     lexicon_word_activity = np.add(lexicon_word_activity, lexicon_word_activity_change)
     # correct activity beyond minimum and maximum activity to min and max
     lexicon_word_activity[lexicon_word_activity < pm.min_activity] = pm.min_activity
@@ -547,7 +558,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
 
         fixation_counter += 1
 
-        print(fixation_data)
+        # print(fixation_data)
         exit()
 
         # Check if end of text is reached
