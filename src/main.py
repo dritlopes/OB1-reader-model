@@ -1,8 +1,6 @@
 from datetime import datetime
 import logging
 import argparse
-import scipy
-import numpy as np
 import time
 import pickle
 from parameters import return_params
@@ -13,7 +11,9 @@ import os
 def simulate_reading(parameters, outfile_sim_data, outfile_unrecognized):
 
     if parameters.run_exp:
-        simulation_data, unrecognized_words = simulate_experiment(parameters, outfile_sim_data, outfile_unrecognized)
+
+        simulation_data, unrecognized_words = simulate_experiment(parameters)
+
         with open(outfile_sim_data, "wb") as all_data_file:
             pickle.dump(simulation_data, all_data_file)
         with open(outfile_unrecognized, "wb") as unrecognized_file:

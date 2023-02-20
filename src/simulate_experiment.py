@@ -293,7 +293,6 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
     max_predictability = max(pred_values.values())
     regression, wordskip, refixation, forward = False, False, False, False
     saccade_distance, saccade_error, refixation_type, wordskip_pass, saccade_type_by_error, offset_previous = 0, 0, 0, 0, 0, 0
-    salience_position_new = pm.salience_position
     # history of regressions, is set to true at a certain position in the text when a regression is performed to that word
     regression_flag = np.zeros(total_n_words, dtype=bool)
     # recognition flag for each word position in the text is set to true when a word whose length is similar to that of the fixated word, is recognised so if it fulfills the condition is_similar_word_length(fixated_word,other_word)
@@ -303,7 +302,8 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
     # recognized word at position, which word received the highest activation in each position
     recognized_word_at_position = np.empty(total_n_words, dtype=str)
     # stores the amount of cycles needed for each word in text to be recognized
-    recognized_word_at_cycle = np.empty(total_n_words, dtype=int).fill(-1)
+    recognized_word_at_cycle = np.zeros(total_n_words, dtype=int)
+    recognized_word_at_cycle.fill(-1)
     # keep track of word activity in lexicon
     lexicon_word_activity = np.zeros((len(lexicon)), dtype=float)
 
@@ -413,7 +413,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
             # check which words with activation above threshold
             above_thresh_lexicon = np.where(lexicon_word_activity > lexicon_thresholds, 1, 0)
             # fixation_data['exact recognized words positions'].append([i for i in above_thresh_lexicon if i == 1])
-            fixation_data['exact recognized words'].append([lexicon[i] for i in above_thresh_lexicon if i == 1])
+            # fixation_data['exact recognized words'].append([lexicon[i] for i in above_thresh_lexicon if i == 1])
 
             # word recognition, by checking matching active wrds to slots
             recognized_position_flag, recognized_word_at_position, recognized_word_at_position_flag, lexicon_word_activity, new_recognized_words, recognized_word_indices = \
@@ -498,9 +498,10 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
                         if next_fixation == 0:
                             # MM: if we're refixating same word because it has highest attentwgt...
                             # ...use first refixation middle of remaining half as refixation stepsize
-                            if not all_data[fixation_counter - 1]['refixated']:
-                                refix_size = np.round(word_reminder_length * refix_size)
-                                attention_position = fixation_first_position_right_to_middle + refix_size
+                            if fixation_counter - 1 in all_data.keys():
+                                if not all_data[fixation_counter - 1]['refixated']:
+                                    refix_size = np.round(word_reminder_length * refix_size)
+                                    attention_position = fixation_first_position_right_to_middle + refix_size
                             else:  # MM: we're fixating n+1 or n+2
                                 attention_position = fixation_first_position_right_to_middle + refix_size
                             offset_from_word_center = (attention_position - fixation_center)
@@ -558,9 +559,6 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
 
         fixation_counter += 1
 
-        # print(fixation_data)
-        exit()
-
         # Check if end of text is reached
         if fixation == total_n_words - 1:
             end_of_task = True
@@ -580,7 +578,13 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
             print("END REACHED!")
             continue
 
-    return all_data
+    # register words in text in which no word in lexicon reaches recognition threshold
+    unrecognized_words = dict()
+    for position in range(total_n_words):
+        if not recognized_position_flag[position]:
+            unrecognized_words[position] = tokens[position]
+
+    return all_data, unrecognized_words
 
 def controlled_reading():
     pass
@@ -598,7 +602,7 @@ def controlled_reading():
     # fixation_data['eye position'] = eye_position
     # print(f"stimulus: {stimulus}\nstart eye: {offset_from_word_center}\nfour letters right: {stimulus[eye_position:eye_position + 4]}")
 
-def simulate_experiment(pm, outfile_results, outfile_unrecognized):
+def simulate_experiment(pm):
 
     # TODO adapt code to add affix system
     # TODO adapt code to add grammar
@@ -670,22 +674,22 @@ def simulate_experiment(pm, outfile_results, outfile_unrecognized):
 
     # read text/trials
     if pm.task_to_run == 'continuous reading':
-        all_data = continuous_reading(pm,
-                                    tokens,
-                                    word_inhibition_matrix,
-                                    lexicon_word_ngrams,
-                                    lexicon_word_index,
-                                    total_n_words,
-                                    word_thresh_dict,
-                                    lexicon,
-                                    pred_values,
-                                    tokens_to_lexicon_indices,
-                                    word_frequencies)
+        all_data, unrecognized_words = continuous_reading(pm,
+                                                        tokens,
+                                                        word_inhibition_matrix,
+                                                        lexicon_word_ngrams,
+                                                        lexicon_word_index,
+                                                        total_n_words,
+                                                        word_thresh_dict,
+                                                        lexicon,
+                                                        pred_values,
+                                                        tokens_to_lexicon_indices,
+                                                        word_frequencies)
 
     else:
-        all_data = controlled_reading()
+        all_data, unrecognized_words = controlled_reading()
 
-
+    return all_data, unrecognized_words
 
 
 
