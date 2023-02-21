@@ -160,13 +160,13 @@ def return_task_params(task_attributes):
     output_dir = time.time()
 
     # word activation
-    bigram_to_word_excitation = 3.09269333333 # 2.18 # inp. divded by #ngrams, so this param estimates excit per word [diff from paper] 1.65 for EmbeddedWords, 2.18 for classification and transposed
+    bigram_to_word_excitation = 1 # 0.0044 # 3.09269333333 # 2.18 # inp. divded by #ngrams, so this param estimates excit per word [diff from paper] 1.65 for EmbeddedWords, 2.18 for classification and transposed
     bigram_to_word_inhibition = 0 # -0.20625  # -0.65835 # -0.55  # general inhibition on all words. The more active bigrams, the more general inhibition.
     word_inhibition = -0.0165  # -0.016093 #-0.011 # -0.002
     letPerDeg = .3
     min_activity = 0.0
-    max_activity = 1.3
-    decay = -0.05  # 0.08 #-0.053 #AL: decay in word activation over time
+    max_activity = 1.0 # 1.3
+    decay = -0.05  # 0.08 #-0.053 # AL: decay in word activation over time
 
     # attentional width
     attend_width = 5.0 # 8.0  # NV: #!!!: was set to 15 for flanker, 20 for sentence and 3 for transposed

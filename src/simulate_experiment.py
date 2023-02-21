@@ -176,17 +176,18 @@ def match_active_words_to_input_slots(order_match_check, stimulus, recognized_po
                 # Find the word with the highest activation in all words that have a similar length
                 highest = np.argmax(recognized_words_fit_len * lexicon_word_activity)
                 highest_word = lexicon[highest]
+                print('word in input: ', word_searched)
+                print('word with highest activation: ', highest_word)
                 # The winner is matched to the slot, and its activity is reset to minimum to not have it matched to other words
                 recognized_position_flag[word_index] = True
                 recognized_word_indices.append(highest)
                 recognized_word_at_position[word_index] = highest_word
                 above_thresh_lexicon[highest] = 0
-                lexicon_word_activity[highest] = min_activity # AL: not sure about this!
+                lexicon_word_activity[highest] = min_activity
                 new_recognized_words[highest] = 1
                 # if recognized word equals word in the stimulus
                 if highest_word == word_searched:
                     recognized_word_at_position_flag[word_index] = True
-
 
     return recognized_position_flag, recognized_word_at_position, recognized_word_at_position_flag, lexicon_word_activity, new_recognized_words, recognized_word_indices
 
@@ -300,7 +301,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
     # recognition flag for each word in the text, it is set to true whenever the exact word from the stimuli is recognized
     recognized_word_at_position_flag = np.zeros(total_n_words, dtype=bool)
     # recognized word at position, which word received the highest activation in each position
-    recognized_word_at_position = np.empty(total_n_words, dtype=str)
+    recognized_word_at_position = np.empty(total_n_words, dtype=object)
     # stores the amount of cycles needed for each word in text to be recognized
     recognized_word_at_cycle = np.zeros(total_n_words, dtype=int)
     recognized_word_at_cycle.fill(-1)
@@ -363,7 +364,6 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
             attend_width = min(attend_width + 0.5, pm.max_attend_width)
 
         print('Entering cycle loops to define word activity...')
-        cur_cycle = 0
         shift = False
         print(("fix on: " + tokens[fixation] + '  attention width: ' + str(attend_width)))
         amount_of_cycles = 0
@@ -392,8 +392,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
 
         # A saccade program takes 5 cycles, or 125ms. This counter starts counting at saccade program initiation.
         while amount_of_cycles_since_attention_shifted < 5:
-            fixation_data['cycle'].append(cur_cycle)
-
+            print(f'CYCLE {amount_of_cycles}')
             # define word activity in lexicon
             lexicon_word_activity, crt_fixation_word_activities, lexicon_word_inhibition = compute_words_activity(stimulus, lexicon_word_ngrams, eye_position,
                                                                                                                   attention_position, attend_width, pm, fixation_data, word_overlap_matrix,
@@ -530,7 +529,6 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
 
             attention_position = np.round(attention_position)
             amount_of_cycles += 1
-            cur_cycle += 1
 
         # out of cycle loop. After last cycle, compute fixation duration and add final values for fixated word before shift is made
         fixation_duration = amount_of_cycles * pm.cycle_size
@@ -546,6 +544,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
             fixation_data['word predictability'] = pred_values[fixation]
 
         all_data[fixation_counter] = fixation_data
+        print(recognized_word_at_position)
 
         print(f"Relative activity from foveal word: {fixation_data['word activity'] / fixation_data['word threshold']}")
         print("Fixation duration: ", fixation_data['fixation duration'], " ms.")
@@ -554,6 +553,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
                 print("The correct word was recognized at fixation position!")
             else:
                 print("Another word was recognized at fixation position!")
+                print(f"Recognized word: {recognized_word_at_position[fixation]}")
         else:
             print("No word was recognized at fixation position")
 
@@ -577,7 +577,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
             end_of_task = True
             print("END REACHED!")
             continue
-
+        # print(fixation_data)
     # register words in text in which no word in lexicon reaches recognition threshold
     unrecognized_words = dict()
     for position in range(total_n_words):
