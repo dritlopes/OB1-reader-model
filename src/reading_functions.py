@@ -296,13 +296,12 @@ def calc_monogram_ext_input(location_info, EyePosition, AttentionPosition, atten
 
     return sumExtInput
 
-def define_slot_matching_order(n_words_in_stim, fixated_position_stimulus=0):
+def define_slot_matching_order(n_words_in_stim, fixated_position_stimulus):
 
     # Slot-matching mechanism
     # MM: check len stim, then determine order in which words are matched to slots in stim
-    # AL: made computation more efficient and dependent on position of fixated word
-    n_words_in_stim = 6
-    fixated_position_stimulus = 3
+    # Words are checked in the order of its attentwght. The closer to the fixation point, the more attention weight.
+    # AL: made computation more efficient and dependent on position of fixated word (so we are not assuming anymore that fixation is always at the center of the stimulus)
     positions = [+1,-1,+2,-2,+3,-3]
     order_match_check = [fixated_position_stimulus]
     for p in positions:

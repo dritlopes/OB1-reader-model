@@ -329,7 +329,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
 
         # define order to match activated words to slots in the stimulus
         # NV: the order list should reset when stimulus changes or with the first stimulus
-        order_match_check = define_slot_matching_order(len(stimulus.split()))
+        order_match_check = define_slot_matching_order(len(stimulus.split()),fixated_position_stimulus)
 
         # define attention width according to whether there was a regression in the last fixation
         if regression:
