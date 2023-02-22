@@ -2,7 +2,7 @@ import logging
 import numpy as np
 import pickle
 from collections import defaultdict
-import itertools
+import math
 
 from utils import get_word_freq, get_pred_values, check_previous_inhibition_matrix
 from reading_functions import get_threshold, string_to_ngrams_and_locations, build_word_inhibition_matrix, \
@@ -12,46 +12,24 @@ from reading_functions import get_threshold, string_to_ngrams_and_locations, bui
 
 logger = logging.getLogger(__name__)
 
-def compute_stimulus(fixation, tokens):
+def compute_stimulus(fixation, tokens, attention_width=5):
 
-    # given a window of n-2 to n+2
-    # fixation at the first word of the text
-    if fixation == 0:
-        window = [tokens[fixation],tokens[fixation+1],tokens[fixation+2]]
-        stimulus_position = [fixation,fixation+1,fixation+2]
-    # fixation at the second word of the text
-    elif fixation == 1:
-        window = [tokens[fixation-1],tokens[fixation],tokens[fixation+1],tokens[fixation+2]]
-        stimulus_position = [fixation-1, fixation, fixation + 1, fixation + 2]
-    # fixation at penultimate word of text
-    elif fixation == len(tokens) - 2:
-        window = [tokens[fixation-2],tokens[fixation-1],tokens[fixation],tokens[fixation+1]]
-        stimulus_position = [fixation - 2, fixation - 1, fixation, fixation + 1]
-    # fixation at last word of text
-    elif fixation == len(tokens) - 1:
-        window = [tokens[fixation-2],tokens[fixation-1],tokens[fixation]]
-        stimulus_position = [fixation - 2, fixation - 1, fixation]
-    else:
-        window = [tokens[fixation-2],tokens[fixation-1],tokens[fixation],tokens[fixation+1],tokens[fixation+2]]
-        stimulus_position = [fixation - 2, fixation - 1, fixation, fixation + 1, fixation + 2]
+    # AL: made computation of stimulus more efficient and dependent on attention width
+    start_window = fixation - math.floor(attention_width/2)
+    end_window = fixation + math.floor(attention_width/2)
+    stimulus_position = [i for i in range(start_window,end_window+1) if (i >= 0 and i < len(tokens))] # only add position if after text begin and below text length
+    stimulus = ' '.join([tokens[i] for i in stimulus_position])
+    fixated_position_stimulus = stimulus_position.index(fixation)
 
-    stimulus = ' '.join(window)
+    return stimulus, stimulus_position, fixated_position_stimulus
 
-    return stimulus, stimulus_position
+def compute_eye_position(stimulus, fixated_position_stimulus, offset_from_word_center):
 
-
-def compute_eye_position(fixation, tokens, offset_from_word_center):
-
-    # given a window of n-2 to n+2
-    space = 1
-    # fixation at the first word of the text
-    if fixation == 0:
-        eye_position = round(len(tokens[fixation])*0.5) + offset_from_word_center
-    # fixation at the second word of the text
-    elif fixation == 1:
-        eye_position = len(tokens[fixation-1]) + space + round(len(tokens[fixation])*0.5) + offset_from_word_center
-    else:
-        eye_position = len(tokens[fixation-2]) + space + len(tokens[fixation-1]) + space + round(len(tokens[fixation]) * 0.5) + offset_from_word_center
+    # AL: made computation more efficient and dependent on attention width
+    stimulus = stimulus.split(' ')
+    center_of_fixation = round(len(stimulus[fixated_position_stimulus]) * 0.5)
+    len_till_fix = sum([len(token)+1 for token in stimulus[:fixated_position_stimulus]]) # find length of stimulus (in characters) up until fixated word
+    eye_position = len_till_fix + center_of_fixation + offset_from_word_center
 
     return int(np.round(eye_position))
 
@@ -342,8 +320,8 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
         fixation_data['word predictability'] = 0
 
         print('Defining stimulus...')
-        stimulus, stimulus_position = compute_stimulus(fixation, tokens)
-        eye_position = compute_eye_position(fixation, tokens, offset_from_word_center)
+        stimulus, stimulus_position, fixated_position_stimulus = compute_stimulus(fixation, tokens, attend_width)
+        eye_position = compute_eye_position(stimulus, fixated_position_stimulus, offset_from_word_center)
         fixation_data['stimulus'] = stimulus
         fixation_data['eye position'] = eye_position
         print(

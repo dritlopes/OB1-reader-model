@@ -160,7 +160,7 @@ def return_task_params(task_attributes):
     output_dir = time.time()
 
     # word activation
-    bigram_to_word_excitation = 1  # 0.0044 # 3.09269333333 # 2.18 # inp. divded by #ngrams, so this param estimates excit per word [diff from paper] 1.65 for EmbeddedWords, 2.18 for classification and transposed
+    bigram_to_word_excitation = 0.7  # 0.0044 # 3.09269333333 # 2.18 # inp. divded by #ngrams, so this param estimates excit per word [diff from paper] 1.65 for EmbeddedWords, 2.18 for classification and transposed
     bigram_to_word_inhibition = 0 # -0.20625  # -0.65835 # -0.55  # general inhibition on all words. The more active bigrams, the more general inhibition.
     word_inhibition = -0.0165  # -0.016093 #-0.011 # -0.002
     letPerDeg = .3
@@ -215,7 +215,7 @@ def return_task_params(task_attributes):
     # 0.4 # Max prop decrease in thresh for highest-freq wrd [different definition than in papers]
     wordfreq_p = 0.4  # 0.2 #NV: difference between max and min threshold
     wordpred_p = 0.2  # 0.4 # Currently not used
-    word_length_similarity_constant = 0.35  # 0.15 # NV: determines how similar the length of 2 words must be for them to be recognised as 'similar word length'
+    word_length_similarity_constant = 0.15 # 0.35  # 0.15 # NV: determines how similar the length of 2 words must be for them to be recognised as 'similar word length'
     use_grammar_prob = False  # True for using grammar probabilities, False for using cloze, overwritten by uniform_pred
     uniform_prob = False  # Overwrites cloze/grammar probabilities with 0.25 for all words
     grammar_weight = 0.5  # only used when using grammar_prob
