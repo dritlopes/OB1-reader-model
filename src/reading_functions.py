@@ -296,29 +296,19 @@ def calc_monogram_ext_input(location_info, EyePosition, AttentionPosition, atten
 
     return sumExtInput
 
-def define_slot_matching_order(n_words_in_stim):
+def define_slot_matching_order(n_words_in_stim, fixated_position_stimulus=0):
 
     # Slot-matching mechanism
     # MM: check len stim, then determine order in which words are matched to slots in stim
-    # Words checked in order of attentwght of word. To ease computation, we assume eye& attend in center.
-    # Then attentweight is the highest on middle, fixated word, then on word just right of fixation
-    if (n_words_in_stim < 2):
-        # if stim 1 wrd, it is checked first (note, indexing starts at 0!)
-        order_match_check = [0]
-    elif (n_words_in_stim == 2):
-        # if stim 2 wrds, fst check right wrd, then left
-        order_match_check = [1, 0]
-    elif (n_words_in_stim == 3):
-        # if stim 3 wrds, fst check middle wrd, then right, then left
-        order_match_check = [1, 2, 0]
-    elif (n_words_in_stim == 4):
-        order_match_check = [2, 1, 3, 0]
-    elif (n_words_in_stim == 5):
-        order_match_check = [2, 3, 1, 4, 0]
-    elif (n_words_in_stim == 6):
-        order_match_check = [3, 2, 4, 1, 5, 0]
-    elif (n_words_in_stim > 6):  # if more than 6 wrds, only consider fst 7
-        order_match_check = [3, 4, 2, 5, 1, 6, 0]
+    # AL: made computation more efficient and dependent on position of fixated word
+    n_words_in_stim = 6
+    fixated_position_stimulus = 3
+    positions = [+1,-1,+2,-2,+3,-3]
+    order_match_check = [fixated_position_stimulus]
+    for p in positions:
+        next_pos = fixated_position_stimulus + p
+        if next_pos >= 0 and next_pos < n_words_in_stim:
+            order_match_check.append(next_pos)
 
     return order_match_check
 
