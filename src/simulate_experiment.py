@@ -12,11 +12,11 @@ from reading_functions import get_threshold, string_to_ngrams_and_locations, bui
 
 logger = logging.getLogger(__name__)
 
-def compute_stimulus(fixation, tokens, attention_width=5):
+def compute_stimulus(fixation, tokens):
 
-    # AL: made computation of stimulus more efficient and dependent on attention width
-    start_window = fixation - math.floor(attention_width/2)
-    end_window = fixation + math.floor(attention_width/2)
+    # assuming stimulus default is n-2 to n+2
+    start_window = fixation - 2
+    end_window = fixation + 2
     stimulus_position = [i for i in range(start_window,end_window+1) if (i >= 0 and i < len(tokens))] # only add position if after text begin and below text length
     stimulus = ' '.join([tokens[i] for i in stimulus_position])
     fixated_position_stimulus = stimulus_position.index(fixation)
@@ -25,7 +25,6 @@ def compute_stimulus(fixation, tokens, attention_width=5):
 
 def compute_eye_position(stimulus, fixated_position_stimulus, offset_from_word_center):
 
-    # AL: made computation more efficient and dependent on attention width
     stimulus = stimulus.split(' ')
     center_of_fixation = round(len(stimulus[fixated_position_stimulus]) * 0.5)
     len_till_fix = sum([len(token)+1 for token in stimulus[:fixated_position_stimulus]]) # find length of stimulus (in characters) up until fixated word
@@ -309,7 +308,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
         fixation_data['word predictability'] = 0
 
         print('Defining stimulus...')
-        stimulus, stimulus_position, fixated_position_stimulus = compute_stimulus(fixation, tokens, attend_width)
+        stimulus, stimulus_position, fixated_position_stimulus = compute_stimulus(fixation, tokens)
         eye_position = compute_eye_position(stimulus, fixated_position_stimulus, offset_from_word_center)
         fixation_data['stimulus'] = stimulus
         fixation_data['eye position'] = eye_position
