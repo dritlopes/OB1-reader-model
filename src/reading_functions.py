@@ -168,7 +168,6 @@ def get_threshold(word, word_freq_dict, max_frequency, freq_p, max_threshold):
 
 def update_threshold(word_position, word_threshold, max_predictability, pred_p, pred_values):
 
-    # TODO change to logits from LM by giving context instead of position of word in the input and update thresholds for other words in the lexicon as well
     word_pred = pred_values[str(word_position)]
     # word_pred = normalize_values(pred_p,float(word_pred),max_predictability)
     word_threshold = word_threshold * ((max_predictability/pred_p) - word_pred) / (max_predictability/pred_p)
@@ -324,6 +323,8 @@ def find_word_edges(fixation_center,eye_position,stimulus,tokens, fixation):
     # first letter following a space, counted to the left of the center,
     # and the first letter followed by a space, counted to the right from
     # the center
+    # print(fixation_center)
+    # print(eye_position)
     p = re.compile(r'\b\w+\b', re.UNICODE)
     for letter_index in range(int(fixation_center), len(stimulus)):
         if stimulus[letter_index] == " ":
@@ -365,11 +366,17 @@ def find_word_edges(fixation_center,eye_position,stimulus,tokens, fixation):
     for m in p.finditer(stimulus_after_eyepos):
         # add position of the first letter,
         # [0][0] = current fixation position + 1
+        # print(stimulus_after_eyepos)
+        # print(fixation_first_position_right_to_middle)
+        # print(m.start())
+        # print(m.end())
         right_word_edge_letter_indices.append((
             fixation_first_position_right_to_middle + m.start(),
             fixation_first_position_right_to_middle + m.end()
         ))
 
+    # print(right_word_edge_letter_indices,left_word_edge_letter_indices)
+    # exit()
     # if left_word_edge_letter_indices[-1][1] < center_word_first_letter_index:
     #     left_word_edge_letter_indices.append((-1, -1))
     # if right_word_edge_letter_indices[0][0] > center_word_last_letter_index:

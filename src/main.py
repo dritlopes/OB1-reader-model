@@ -1,5 +1,6 @@
 from datetime import datetime
 import logging
+from logging.handlers import RotatingFileHandler
 import argparse
 import time
 import pickle
@@ -23,8 +24,6 @@ def simulate_reading(parameters, outfile_sim_data, outfile_unrecognized):
         pass
         # get_results_simulation(task, output_file_all_data,
         #                        output_file_unrecognized_words)
-        # get_results(filepath_psc, output_file_all_data,
-        #                     output_file_unrecognized_words)
 
     if parameters.optimize:
         pass
@@ -47,8 +46,12 @@ def main():
     # will create a new file everytime, stamped with date and time. #TODO; build system to keep only last X logs
     now = datetime.now()
     dt_string = now.strftime("_%d_%m_%Y_%H-%M-%S")
+    filename = f'logs/logfile{dt_string}.log'
     if not os.path.isdir('logs'): os.mkdir('logs')
-    logging.basicConfig(filename=f'logs/logfile{dt_string}.log', force=True, filemode='w', level=logging.DEBUG, format='%(name)s %(levelname)s:%(message)s')
+    logging.basicConfig(handlers=[RotatingFileHandler(filename, mode='w', backupCount=10)], # keep only the 10 most recent log files
+                        force=True,
+                        level=logging.DEBUG,
+                        format='%(name)s %(levelname)s:%(message)s')
     logger = logging.getLogger(__name__)
 
     parser = argparse.ArgumentParser()

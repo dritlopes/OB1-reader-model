@@ -183,7 +183,7 @@ def return_task_params(task_attributes):
     include_sacc_type_sse = True  # Include the sse score based on the saccade type probability plot
     sacc_type_objective = "total"  # If "total" all subplots will be included in the final sse, single objectives can be "length", "freq" or "pred"
     include_sacc_dist_sse = True  # Include the SSE score derived from the saccade_distance.png plot
-    sacc_optimal_distance = 9.99  # 3.1 # 7.0 # 8.0 (optimal) # 7.0 (paper)
+    sacc_optimal_distance = 8 # 9.99  # 3.1 # 7.0 # 8.0 (optimal) # 7.0 (paper)
     saccErr_scaler = 0.2  # to determine avg error for distance difference
     saccErr_sigma = 0.17  # basic sigma
     saccErr_sigma_scaler = 0.06  # effect of distance on sigma
