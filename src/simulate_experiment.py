@@ -263,7 +263,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
     # recognition flag for each word position in the text is set to true when a word whose length is similar to that of the fixated word, is recognised so if it fulfills the condition is_similar_word_length(fixated_word,other_word)
     recognized_position_flag = np.zeros(total_n_words, dtype=bool)
     # recognition flag for each word in the text, it is set to true whenever the exact word from the stimuli is recognized
-    recognized_word_at_position_flag = np.zeros(total_n_words, dtype=bool)
+    recognized_true_word_flag = np.zeros(total_n_words, dtype=bool)
     # recognized word at position, which word received the highest activation in each position
     recognized_word_at_position = np.empty(total_n_words, dtype=object)
     # stores the amount of cycles needed for each word in text to be recognized
@@ -342,23 +342,25 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
             find_word_edges(fixation_center, eye_position, stimulus, tokens, fixation)
 
         # update lexeme thresholds with predictability values (because one word form may have different pred values depending on context
-        # AL: made n of words updating threshold dependent on attentional width
-        if pm.prediction_flag:
-            positions = [position for position in stimulus_position]
-            for position_in_text in positions:
-                if position_in_text not in updated_thresh_positions:
-                    position_in_lexicon = tokens_to_lexicon_indices[position_in_text]
-                    lexicon_thresholds[position_in_lexicon] = update_threshold(position_in_text,
-                                                                               lexicon_thresholds[position_in_lexicon],
-                                                                               max_predictability,
-                                                                               pm.wordpred_p,
-                                                                               pred_values)
-                    updated_thresh_positions.append(position_in_text)
-        fixation_data['word threshold'] = lexicon_thresholds[tokens_to_lexicon_indices[fixation]]
+        # AL: changed placed, now it updates thresholds with pred only for next word and depending on recognition
+        # if pm.prediction_flag:
+        #     positions = [position for position in stimulus_position]
+        #     for position_in_text in positions:
+        #         if position_in_text not in updated_thresh_positions:
+        #             position_in_lexicon = tokens_to_lexicon_indices[position_in_text]
+        #             lexicon_thresholds[position_in_lexicon] = update_threshold(position_in_text,
+        #                                                                        lexicon_thresholds[position_in_lexicon],
+        #                                                                        max_predictability,
+        #                                                                        pm.wordpred_p,
+        #                                                                        pred_values)
+        #             updated_thresh_positions.append(position_in_text)
+        # fixation_data['word threshold'] = lexicon_thresholds[tokens_to_lexicon_indices[fixation]]
 
         # A saccade program takes 5 cycles, or 125ms. This counter starts counting at saccade program initiation.
         while amount_of_cycles_since_attention_shifted < 5:
+
             print(f'CYCLE {amount_of_cycles}')
+
             # define word activity in lexicon
             lexicon_word_activity, crt_fixation_word_activities, lexicon_word_inhibition = compute_words_activity(stimulus, lexicon_word_ngrams, eye_position,
                                                                                                                   attention_position, attend_width, pm, fixation_data, word_overlap_matrix,
@@ -381,11 +383,11 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
             # fixation_data['exact recognized words'].append([lexicon[i] for i in above_thresh_lexicon if i == 1])
 
             # word recognition, by checking matching active wrds to slots
-            recognized_position_flag, recognized_word_at_position, recognized_word_at_position_flag, lexicon_word_activity, new_recognized_words = \
+            recognized_position_flag, recognized_word_at_position, recognized_true_word_flag, lexicon_word_activity, new_recognized_words = \
                 match_active_words_to_input_slots(order_match_check,
                                                   stimulus,
                                                   recognized_position_flag,
-                                                  recognized_word_at_position_flag,
+                                                  recognized_true_word_flag,
                                                   recognized_word_at_position,
                                                   above_thresh_lexicon,
                                                   lexicon_word_activity,
@@ -393,6 +395,26 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
                                                   pm.min_activity,
                                                   stimulus_position,
                                                   pm.word_length_similarity_constant)
+
+            # update threshold of n+1 or n+2 with pred value
+            if pm.prediction_flag:
+                # update the threshold for the next word only if word at fixation has been recognized
+                if recognized_true_word_flag[fixation]:
+                    position = fixation + 1
+                    # if next word has already been recognized, update threshold of n+2 word
+                    if recognized_true_word_flag[position]:
+                        position = fixation + 2
+                    # and only if next word has not been recognized (either n+1 or n+2)
+                    if not recognized_true_word_flag[position]:
+                        # and if it has not been updated yet
+                        if position not in updated_thresh_positions:
+                            position_in_lexicon = tokens_to_lexicon_indices[position]
+                            lexicon_thresholds[position_in_lexicon] = update_threshold(position_in_lexicon,
+                                                                                       lexicon_thresholds[position_in_lexicon],
+                                                                                       max_predictability,
+                                                                                       pm.wordpred_p,
+                                                                                       pred_values)
+                            updated_thresh_positions.append(position)
 
             # word selection and attention shift -> saccade decisions
             if not shift:
@@ -518,7 +540,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
 
         print("Fixation duration: ", fixation_data['fixation duration'], " ms.")
         if recognized_position_flag[fixation]:
-            if recognized_word_at_position_flag[fixation]:
+            if recognized_true_word_flag[fixation]:
                 print("The correct word was recognized at fixation position!")
             else:
                 print("Another word was recognized at fixation position!")
@@ -534,7 +556,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
             print("END REACHED!")
             continue
         print(fixation_data)
-        if fixation == 2: exit()
+
         # if end of text is not yet reached, compute some values for next fixation
         saccade_distance, saccade_error, offset_from_word_center, fixation, regression, refixation, refixation_type, wordskip, forward, next_eye_position, saccade_type_by_error = \
             compute_next_fixation(pm, saccade_distance, offset_from_word_center, eye_position, stimulus,

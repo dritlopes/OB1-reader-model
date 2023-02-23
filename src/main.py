@@ -48,7 +48,7 @@ def main():
     dt_string = now.strftime("_%d_%m_%Y_%H-%M-%S")
     filename = f'logs/logfile{dt_string}.log'
     if not os.path.isdir('logs'): os.mkdir('logs')
-    logging.basicConfig(handlers=[RotatingFileHandler(filename, mode='w', backupCount=10)], # keep only the 10 most recent log files
+    logging.basicConfig(handlers=[RotatingFileHandler(filename, mode='w', backupCount=10)],
                         force=True,
                         level=logging.DEBUG,
                         format='%(name)s %(levelname)s:%(message)s')
