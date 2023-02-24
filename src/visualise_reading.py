@@ -2,8 +2,7 @@ __author__ = 'Sam van Leipsig'
 
 import pygame
 import sys
-import math
-from reading_common import calcContrast # TODO if this function is only used in this script
+from reading_functions import calc_acuity,get_attention_skewed
 
 # Define some colors
 BLACK = (   0,   0,   0)
@@ -29,6 +28,15 @@ screen = pygame.display.set_mode(size)
 pygame.display.toggle_fullscreen()
 pygame.display.set_caption("Array Backed Grid")
 clock = pygame.time.Clock()
+
+def calc_contrast(monogram_position, eye_position, attention_position, attend_width, attention_skew, let_per_deg):
+
+    attention_eccentricity = monogram_position-attention_position
+    eye_eccentricity = abs(monogram_position-eye_position)
+    attention = get_attention_skewed(attend_width, attention_eccentricity, attention_skew)
+    visual_acuity = calc_acuity(eye_eccentricity, let_per_deg)
+
+    return attention * visual_acuity
 
 class Grid(object):
     def __init__(self,screensize,width,height,margin):
@@ -60,12 +68,17 @@ class Stimulus(object):
         self.attentional_span = 10.
         self.attentionposition = self.eyeposition
         self.fixation = 0
-    def update_stimulus(self,stimulus,eyepos,att_span,attpos,fixation):
+        self.attention_skew = 0
+        self.let_per_deg = 0
+    def update_stimulus(self,stimulus,eyepos,att_span,attpos,fixation,attention_skew,let_per_deg):
         self.stimulus = stimulus
         self.eyeposition = eyepos
         self.attentional_span = att_span
         self.attentionposition = attpos
         self.fixation = fixation+1
+        self.attention_skew = attention_skew
+        self.let_per_deg = let_per_deg
+
     def draw(self):
         if self.eyeposition != self.attentionposition:
             pygame.draw.rect(screen,GREEN,
@@ -78,7 +91,7 @@ class Stimulus(object):
                          [((margin+width) * (pos-1)) + margin,
                           ((margin+height) * 4) + margin,
                           width, height])
-            contrast_change = calcContrast(pos,self.eyeposition,self.attentionposition,self.attentional_span)
+            contrast_change = calc_contrast(pos,self.eyeposition,self.attentionposition,self.attentional_span,self.attention_skew,self.let_per_deg)
             letter.set_alpha(450 * contrast_change)
             letterrect = letter.get_rect()
             letterrect.centerx = (margin+width)* pos - (width/2)

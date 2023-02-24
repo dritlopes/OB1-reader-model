@@ -300,7 +300,7 @@ def define_slot_matching_order(n_words_in_stim, fixated_position_stimulus):
     # Slot-matching mechanism
     # MM: check len stim, then determine order in which words are matched to slots in stim
     # Words are checked in the order of its attentwght. The closer to the fixation point, the more attention weight.
-    # AL: made computation more efficient and dependent on position of fixated word (so we are not assuming anymore that fixation is always at the center of the stimulus)
+    # AL: made computation dependent on position of fixated word (so we are not assuming anymore that fixation is always at the center of the stimulus)
     positions = [+1,-1,+2,-2,+3,-3]
     order_match_check = [fixated_position_stimulus]
     for p in positions:
@@ -317,142 +317,143 @@ def sample_from_norm_distribution(mu, sigma, distribution_param, recognized):
     else:
         return int(np.round(np.random.normal(mu, sigma, 1)))
 
-def find_word_edges(fixation_center,eye_position,stimulus,tokens, fixation):
+# def find_word_edges(fixation_center,eye_position,stimulus,tokens):
+#
+#     # contains tuples, tuple[0] is left edge index and tuple[1] is right edge index of words left of fixation + fixated word
+#     left_word_edge_letter_indices = []
+#     # contains tuples, tuple[0] is left edge index and tuple[1] is right edge index of fixated words + words right of fixation
+#     right_word_edge_letter_indices = []
+#     # regex used to find indices of word edges
+#     p = re.compile(r'\b\w+\b', re.UNICODE)
+#
+#     # Identify the beginning and end of fixation word by looking at the
+#     # first letter following a space, counted to the left of the center,
+#     # and the first letter followed by a space, counted to the right from
+#     # the center
+#     for letter_index in range(int(fixation_center), len(stimulus)):
+#         if stimulus[letter_index] == " ":
+#             center_word_last_letter_index = letter_index - 1
+#             break
+#         # in case fixated word is last word in text (no space after last word)
+#         elif letter_index == len(stimulus) - 1 and stimulus.split()[-1] == tokens[-1]:
+#             center_word_last_letter_index = letter_index
+#             break
+#
+#     for letter_index_reversed in range(int(fixation_center), -1, -1):
+#         if stimulus[letter_index_reversed] == " ":
+#             center_word_first_letter_index = letter_index_reversed + 1
+#             break
+#         # in case fixated word is first word in text (no space before first word)
+#         elif letter_index_reversed == 0 and stimulus.split()[0] == tokens[0]:
+#             center_word_first_letter_index = letter_index_reversed
+#             break
+#     fixated_word_edge_indices = (center_word_first_letter_index,center_word_last_letter_index)
+#
+#     fixation_first_position_right_to_middle = eye_position + 1
+#     fixation_first_position_left_to_middle = eye_position - 1
+#
+#     # define stimulus string before and after eye position in fixated word
+#     stimulus_before_eyepos, stimulus_after_eyepos = '', ''
+#     if fixation_first_position_left_to_middle >= 0:
+#         stimulus_before_eyepos = stimulus[0:fixation_first_position_left_to_middle + 1]
+#     if fixation_first_position_right_to_middle < len(stimulus):
+#         stimulus_after_eyepos = stimulus[fixation_first_position_right_to_middle:-1]
+#
+#     # Get word edges for all words starting with the word at fixation
+#     if stimulus_before_eyepos != '':
+#         for m in p.finditer(' ' + stimulus_before_eyepos):
+#             left_edge = m.start() - 1
+#             right_edge = m.end() - 1
+#             if (left_edge, right_edge) != fixated_word_edge_indices: # don't add edges of fixated word
+#                 left_word_edge_letter_indices.append((left_edge, right_edge))
+#
+#     # right_word_edge_letter_indices.append((center_word_first_letter_index, center_word_last_letter_index)) # add edges of fixated word first
+#     if stimulus_after_eyepos != '':
+#         for m in p.finditer(stimulus_after_eyepos):
+#             left_edge = fixation_first_position_right_to_middle + m.start()
+#             right_edge = fixation_first_position_right_to_middle + m.end() - 1
+#             # for the last letter index of last word in stimulus, HACK to surpass error in regex
+#             if right_edge + 2 == len(stimulus):
+#                 right_edge = fixation_first_position_right_to_middle + m.end()
+#             if (left_edge, right_edge) != fixated_word_edge_indices:  # don't add edges of fixated word
+#                 right_word_edge_letter_indices.append((left_edge, right_edge))
+#
+#     return right_word_edge_letter_indices, left_word_edge_letter_indices, fixation_first_position_right_to_middle, fixation_first_position_left_to_middle, fixated_word_edge_indices
 
-    # Identify the beginning and end of fixation word by looking at the
-    # first letter following a space, counted to the left of the center,
-    # and the first letter followed by a space, counted to the right from
-    # the center
-    # print(fixation_center)
-    # print(eye_position)
+def find_word_edges(stimulus):
+
+    word_edges = dict()
+
+    # AL: regex used to find indices of word edges
     p = re.compile(r'\b\w+\b', re.UNICODE)
-    for letter_index in range(int(fixation_center), len(stimulus)):
-        if stimulus[letter_index] == " ":
-            center_word_last_letter_index = letter_index - 1
-            break
-        # in case fixated word is last word in text (no space after last word)
-        elif letter_index == len(stimulus) - 1 and stimulus.split()[-1] == tokens[-1]:
-            center_word_last_letter_index = letter_index
-            break
-
-    for letter_index_reversed in range(int(fixation_center), -1, -1):
-        if stimulus[letter_index_reversed] == " ":
-            center_word_first_letter_index = letter_index_reversed + 1
-            break
-        # in case fixated word is first word in text (no space before first word)
-        elif letter_index_reversed == 0 and stimulus.split()[0] == tokens[0]:
-            center_word_first_letter_index = letter_index_reversed
-
-    # Check if first/lastPositionToMiddle doesn't exceed word
-    if len(tokens[fixation]) % 2 == 1 and eye_position != center_word_first_letter_index:
-        fixation_first_position_left_to_middle = eye_position - 1
-        fixation_first_position_right_to_middle = eye_position + 1
-    else:
-        fixation_first_position_left_to_middle = eye_position
-        fixation_first_position_right_to_middle = eye_position + 1
-
-    stimulus_before_eyepos = stimulus[0:fixation_first_position_left_to_middle + 1]
-    stimulus_after_eyepos = stimulus[fixation_first_position_right_to_middle:-1]
-
-    left_word_edge_letter_indices = []
-    right_word_edge_letter_indices = []
 
     # Get word edges for all words starting with the word at fixation
-    # (taking into account only the right side of the word)
-    for m in p.finditer(stimulus_before_eyepos):
-        # add position of the first letter
-        left_word_edge_letter_indices.append((m.start(), m.end()))
+    for i, m in enumerate(p.finditer(stimulus)):
+        word_edges[i] = (m.start(),m.end()-1)
 
-    for m in p.finditer(stimulus_after_eyepos):
-        # add position of the first letter,
-        # [0][0] = current fixation position + 1
-        # print(stimulus_after_eyepos)
-        # print(fixation_first_position_right_to_middle)
-        # print(m.start())
-        # print(m.end())
-        right_word_edge_letter_indices.append((
-            fixation_first_position_right_to_middle + m.start(),
-            fixation_first_position_right_to_middle + m.end()
-        ))
+    return word_edges
 
-    # print(right_word_edge_letter_indices,left_word_edge_letter_indices)
-    # exit()
-    # if left_word_edge_letter_indices[-1][1] < center_word_first_letter_index:
-    #     left_word_edge_letter_indices.append((-1, -1))
-    # if right_word_edge_letter_indices[0][0] > center_word_last_letter_index:
-    #     right_word_edge_letter_indices.insert(0, (-1, -1))
-
-    # Test right_word_edge_letter_indices
-    # if fixation < len(tokens) - 3:
-    #   assert (len(right_word_edge_letter_indices) == 3)
-
-    return right_word_edge_letter_indices, left_word_edge_letter_indices, fixation_first_position_right_to_middle, fixation_first_position_left_to_middle, center_word_first_letter_index, center_word_last_letter_index
-
-def get_midword_position_for_surrounding_word(word_position, right_word_edge_letter_indices, left_word_edge_letter_indices):
+def get_midword_position_for_surrounding_word(word_position, word_edges, fixated_position_in_stimulus):
 
     word_center_position = None
+    word_position_in_stimulus = fixated_position_in_stimulus + word_position
 
-    if word_position > 0:
-        word_slice_length = right_word_edge_letter_indices[word_position][1] - \
-                            right_word_edge_letter_indices[word_position][0] + 1
-        word_center_position = right_word_edge_letter_indices[word_position][0] + \
-                             round(word_slice_length/2.0) - 1
-    elif word_position == -1:
-        previous_word_length = left_word_edge_letter_indices[-2][1]-left_word_edge_letter_indices[-2][0]+1
-        word_center_position = left_word_edge_letter_indices[-2][0]+round(previous_word_length/2.0)-1
+    # AL: make sure surrounding word is included in stimulus
+    if word_position_in_stimulus in word_edges.keys():
+        word_slice_length = word_edges[word_position_in_stimulus][1] - word_edges[word_position_in_stimulus][0] + 1
+        word_center_position = word_edges[word_position_in_stimulus][0] + round(word_slice_length/2.0) - 1
 
     return word_center_position
 
-def calc_monogram_attention_sum(positionStart, numberOfLetters, EyePosition, AttentionPosition, attendWidth, foveal_word, attention_skew, letPerDeg):
+def calc_monogram_attention_sum(position_start, position_end, eye_position, attention_position, attend_width, attention_skew, let_per_deg, foveal_word):
 
     # this is only used to calculate where to move next when forward saccade
-    sumAttentionLetters = 0
+    sum_attention_letters = 0
 
-    for letter_location in range(positionStart, (positionStart+numberOfLetters)+1):
+    for letter_location in range(position_start, position_end+1):
         monogram_locations_weight_multiplier = 0.5
         if foveal_word:
-            if letter_location == positionStart+numberOfLetters:
+            if letter_location == position_end:
                 monogram_locations_weight_multiplier = 2.
-        elif letter_location == positionStart or letter_location == positionStart+numberOfLetters:
+        elif letter_location in [position_start, position_end]:
             monogram_locations_weight_multiplier = 2.
 
         # Monogram activity depends on distance of monogram letters to the centre of attention and fixation
-        attention_eccentricity1 = letter_location - AttentionPosition
-        eye_eccentricity1 = abs(letter_location - EyePosition)
+        attention_eccentricity = letter_location - attention_position
+        eye_eccentricity = abs(letter_location - eye_position)
 
-        attention1 = get_attention_skewed(attendWidth, attention_eccentricity1, attention_skew)
-        visualAccuity1 = calc_acuity(eye_eccentricity1, letPerDeg)
+        attention = get_attention_skewed(attend_width, attention_eccentricity, attention_skew)
+        visual_acuity = calc_acuity(eye_eccentricity, let_per_deg)
 
-        sumAttentionLetters += (attention1 * visualAccuity1) * monogram_locations_weight_multiplier
+        sum_attention_letters += (attention * visual_acuity) * monogram_locations_weight_multiplier
 
-    return sumAttentionLetters
+    return sum_attention_letters
 
-def calc_word_attention_right(rightWordEdgeLetterIndexes, EyePosition, AttentionPosition, attendWidth, salience_position, attention_skew, letPerDeg):
+def calc_word_attention_right(word_edges, eye_position, attention_position, attend_width, salience_position, attention_skew, let_per_deg, fixated_position_in_stimulus):
 
     # MM: calculate list of attention wgts for all words in stimulus to right of fix.
     word_attention_right = []
-    AttentionPosition += round(salience_position*attendWidth)
+    attention_position += round(salience_position*attend_width)
 
-    for i, wordEdges in enumerate(rightWordEdgeLetterIndexes):
+    for i, edges in word_edges.items():
 
-        word_start_edge = wordEdges[0]
-        word_end_edge = wordEdges[1]
+        # if n or n + x (but not n - x), so only fixated word or words to the right
+        if i >= fixated_position_in_stimulus:
+            word_start_edge = edges[0]
+            word_end_edge = edges[1]
 
-        # Foveal word flag necessary for lateral inhibition calculation
-        if len(rightWordEdgeLetterIndexes) >= 2:
-            foveal_word = True if i == 0 else False
-        else:
             foveal_word = False
+            if i == fixated_position_in_stimulus:
+                foveal_word = True
 
-        # if at last letter (right edge) of fixated word (represented by -1,-1 in word_..._edge)
-        # set attention wghts for (nonexisting) right part of fixated word to 0
-        # TODO can be removed, just have start - end = 0
-        if word_start_edge == -1 and word_end_edge == -1:
-            crtWordMonogramAttentionSum = 0
-        else:
-            crtWordMonogramAttentionSum = calc_monogram_attention_sum(word_start_edge, word_end_edge - word_start_edge, EyePosition, AttentionPosition, attendWidth, foveal_word, attention_skew, letPerDeg)
+            # if eye position at last letter (right edge) of fixated word
+            if foveal_word and eye_position == word_end_edge:
+                # set attention wghts for (nonexisting) right part of fixated word to 0
+                crt_word_monogram_attention_sum = 0
+            else:
+                crt_word_monogram_attention_sum = calc_monogram_attention_sum(word_start_edge, word_end_edge, eye_position, attention_position, attend_width, attention_skew, let_per_deg, foveal_word)
 
-        word_attention_right.append(crtWordMonogramAttentionSum)
+            word_attention_right.append(crt_word_monogram_attention_sum)
 
     return word_attention_right
 
