@@ -54,27 +54,40 @@ def main():
                         format='%(name)s %(levelname)s:%(message)s')
     logger = logging.getLogger(__name__)
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('stimuli_filepath')
-    parser.add_argument('--task_to_run',default='continuous reading')
-    parser.add_argument('--language', default='english')
-    parser.add_argument('--run_exp',default='True',help='Should the experiment simulation run?',choices=['True','False'])
-    parser.add_argument('--analyze_results',default="False",help='Should the results be analyzed?',choices=["True","False"])
-    parser.add_argument('--optimize',default="False",help='Should the parameters be optimized using evolutionary algorithms?',choices=["True","False"])
-    parser.add_argument('--print_stim',default="False",choices=["True","False"])
-    parser.add_argument('--plotting',default='False',choices=['True','False'])
+    useparser=False
+    if useparser:
+        parser = argparse.ArgumentParser()
+        parser.add_argument('stimuli_filepath')
+        parser.add_argument('--task_to_run',default='continuous reading')
+        parser.add_argument('--language', default='english')
+        parser.add_argument('--run_exp',default='True',help='Should the experiment simulation run?',choices=['True','False'])
+        parser.add_argument('--analyze_results',default="False",help='Should the results be analyzed?',choices=["True","False"])
+        parser.add_argument('--optimize',default="False",help='Should the parameters be optimized using evolutionary algorithms?',choices=["True","False"])
+        parser.add_argument('--print_stim',default="False",choices=["True","False"])
+        parser.add_argument('--plotting',default='False',choices=['True','False'])
 
-    args = parser.parse_args()
-    global_parameters = {
-        "task_to_run" : args.task_to_run,
-        "stimuli_filepath": args.stimuli_filepath,
-        "language": args.language,
-        "run_exp": eval(args.run_exp),
-        "analyze_results": eval(args.analyze_results),
-        "optimize": eval(args.optimize),
-        "print_stim": eval(args.print_stim),
-        "plotting": eval(args.plotting)
-    }
+        args = parser.parse_args()
+        global_parameters = {
+            "task_to_run" : args.task_to_run,
+            "stimuli_filepath": args.stimuli_filepath,
+            "language": args.language,
+            "run_exp": eval(args.run_exp),
+            "analyze_results": eval(args.analyze_results),
+            "optimize": eval(args.optimize),
+            "print_stim": eval(args.print_stim),
+            "plotting": eval(args.plotting)
+        }
+    else:
+        global_parameters = {
+            "task_to_run" : 'continuous reading',
+            "stimuli_filepath": "C:/Users/mmr280/OneDrive - Vrije Universiteit Amsterdam/github/OB1-reader-model/stimuli/PSC_test.txt",
+            "language": 'german',
+            "run_exp": 'True',
+            "analyze_results": 'False',
+            "optimize": 'False',
+            "print_stim": 'False',
+            "plotting": 'False'
+        }
 
     pm = return_params(global_parameters)
     logger.debug(pm)
