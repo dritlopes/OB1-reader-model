@@ -54,7 +54,7 @@ def main():
                         format='%(name)s %(levelname)s:%(message)s')
     logger = logging.getLogger(__name__)
 
-    useparser=False
+    useparser=True
     if useparser:
         parser = argparse.ArgumentParser()
         parser.add_argument('stimuli_filepath')
@@ -80,7 +80,7 @@ def main():
     else:
         global_parameters = {
             "task_to_run" : 'continuous reading',
-            "stimuli_filepath": "C:/Users/mmr280/OneDrive - Vrije Universiteit Amsterdam/github/OB1-reader-model/stimuli/PSC_test.txt",
+            "stimuli_filepath": "../stimuli/PSC_test.txt",
             "language": 'german',
             "run_exp": 'True',
             "analyze_results": 'False',

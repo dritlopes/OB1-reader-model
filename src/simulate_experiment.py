@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 def compute_stimulus(fixation, tokens):
 
-    # AL: made computation of stimulus more efficient; MM: removed dependence on attention width
+    # assuming stimulus default is n-2 to n+2
     start_window = fixation - 2
     end_window = fixation + 2
     stimulus_position = [i for i in range(start_window,end_window+1) if (i >= 0 and i < len(tokens))] # only add position if after text begin and below text length
@@ -25,8 +25,6 @@ def compute_stimulus(fixation, tokens):
 
 def compute_eye_position(stimulus, fixated_position_stimulus, offset_from_word_center):
 
-    # AL: made computation more efficient
-    # MM: fixated_position_stimulus is a word nr, right? Rename to make that clear?
     stimulus = stimulus.split(' ')
     center_of_fixation = round(len(stimulus[fixated_position_stimulus]) * 0.5)
     len_till_fix = sum([len(token)+1 for token in stimulus[:fixated_position_stimulus]]) # find length of stimulus (in characters) up until fixated word
@@ -157,6 +155,52 @@ def match_active_words_to_input_slots(order_match_check, stimulus, recognized_po
 
     return recognized_position_flag, recognized_word_at_position, recognized_word_at_position_flag, lexicon_word_activity, new_recognized_words
 
+def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_position_in_stimulus,fixation_first_position_to_eye,regression_flag,recognized_position_flag,lexicon_word_activity,eye_position,fixation_counter,attention_position,attend_width, fix_lexicon_index, pm):
+
+    # Define target of next fixation relative to fixated word n (i.e. 0=next fix on word n, -1=fix on n-1, etc). Default is 1 (= to word n+1)
+    next_fixation = 1
+    word_remainder_length = word_edges[fixated_position_in_stimulus][1] - eye_position
+    refix_size = pm.refix_size
+
+    # regression: if the current fixation was a regression and next word has been recognized, m3ove eyes to n+2 to resume reading
+    if regression_flag[fixation] and recognized_position_flag[fixation + 1]:
+        next_fixation = 2
+
+    # regression: check whether previous word was recognized or there was already a regression performed. If not: regress
+    elif fixation > 1 and not recognized_position_flag[fixation - 1] and not regression_flag[fixation - 1]:
+        next_fixation = -1
+
+    # refixation: refixate if the foveal word is not recognized but is still being processed.
+    elif (not recognized_position_flag[fixation]) and (lexicon_word_activity[fix_lexicon_index] > 0):
+        if word_reminder_length > 0:
+            next_fixation = 0
+            if fixation_counter - 1 in all_data.keys():
+                if not all_data[fixation_counter - 1]['refixated']:
+                    refix_size = np.round(word_remainder_length * refix_size)
+
+    # forward saccade: perform normal forward saccade (unless at the last position in the text)
+    elif fixation < (len(tokens) - 1):
+        word_attention_right = calc_word_attention_right(word_edges,
+                                                         eye_position,
+                                                         attention_position,
+                                                         attend_width,
+                                                         pm.salience_position,
+                                                         pm.attention_skew,
+                                                         pm.letPerDeg,
+                                                         fixated_position_in_stimulus)
+        next_fixation = word_attention_right.index(max(word_attention_right))
+
+    # Calculate next attention position based on next fixation estimate
+    if next_fixation == 0:
+        # MM: if we're refixating same word because it has highest attentwgt AL: or not being recognized whilst processed
+        # ...use first refixation middle of remaining half as refixation stepsize
+        attention_position = fixation_first_position_to_eye[1] + refix_size
+    else:
+        assert (next_fixation in [-1, 1, 2])
+        attention_position = get_midword_position_for_surrounding_word(next_fixation, word_edges, fixated_position_in_stimulus)
+
+    return attention_position, next_fixation
+
 def compute_next_fixation(pm, saccade_distance, offset_from_word_center, eye_position, stimulus, center_word_first_letter_index, center_word_last_letter_index, left_word_edge_letter_indices, right_word_edge_letter_indices, fixation, total_n_words, regression, refixation, refixation_type, wordskip, forward):
 
     # normal random error based on difference with optimal saccade distance
@@ -265,7 +309,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
     # recognition flag for each word position in the text is set to true when a word whose length is similar to that of the fixated word, is recognised so if it fulfills the condition is_similar_word_length(fixated_word,other_word)
     recognized_position_flag = np.zeros(total_n_words, dtype=bool)
     # recognition flag for each word in the text, it is set to true whenever the exact word from the stimuli is recognized
-    recognized_word_at_position_flag = np.zeros(total_n_words, dtype=bool)
+    recognized_true_word_flag = np.zeros(total_n_words, dtype=bool)
     # recognized word at position, which word received the highest activation in each position
     recognized_word_at_position = np.empty(total_n_words, dtype=object)
     # stores the amount of cycles needed for each word in text to be recognized
@@ -308,10 +352,11 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
         fixation_data['saccade_type_by_error'] = saccade_type_by_error
         fixation_data['word frequency'] = 0
         fixation_data['word predictability'] = 0
+        fixation_data['word threshold'] = lexicon_thresholds[tokens_to_lexicon_indices[fixation]]
 
         print('Defining stimulus...')
-        stimulus, stimulus_position, fixated_position_stimulus = compute_stimulus(fixation, tokens, attend_width)
-        eye_position = compute_eye_position(stimulus, fixated_position_stimulus, offset_from_word_center)
+        stimulus, stimulus_position, fixated_position_in_stimulus = compute_stimulus(fixation, tokens)
+        eye_position = compute_eye_position(stimulus, fixated_position_in_stimulus, offset_from_word_center)
         fixation_data['stimulus'] = stimulus
         fixation_data['eye position'] = eye_position
         print(
@@ -319,12 +364,14 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
 
         # define order to match activated words to slots in the stimulus
         # NV: the order list should reset when stimulus changes or with the first stimulus
-        order_match_check = define_slot_matching_order(len(stimulus.split()),fixated_position_stimulus)
+        order_match_check = define_slot_matching_order(len(stimulus.split()),fixated_position_in_stimulus)
 
-        # define attention width according to whether there was a regression in the last fixation
+        # define attention width according to whether there was a regression in the last fixation, i.e. this fixation location is a result of regression
         if regression:
             # set regression flag to know that a regression has been realized towards this position, in order to prevent double regressions to the same word
             regression_flag[fixation] = True
+            # in principle, next saccade should not be a regression again
+            regression = False
             # narrow attention width by 2 letters in the case of regressions
             attend_width = max(attend_width - 2.0, pm.min_attend_width)
         else:
@@ -334,33 +381,40 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
         print('Entering cycle loops to define word activity...')
         shift = False
         print(("fix on: " + tokens[fixation] + '  attention width: ' + str(attend_width)))
-        amount_of_cycles = 0
-        amount_of_cycles_since_attention_shifted = 0
+        n_cycles = 0
+        n_cycles_since_attent_shift = 0
         attention_position = eye_position
-        fixation_center = eye_position - int(np.round(offset_from_word_center))
+        # fixation_center = eye_position - int(np.round(offset_from_word_center))
 
         # define edge locations of words, as well as location of first letter to the right and first letter to the left from center of fixated word
-        right_word_edge_letter_indices, left_word_edge_letter_indices, fixation_first_position_right_to_middle, fixation_first_position_left_to_middle, center_word_first_letter_index, center_word_last_letter_index = \
-            find_word_edges(fixation_center, eye_position, stimulus, tokens, fixation)
+        # right_word_edge_letter_indices, left_word_edge_letter_indices, fixation_first_position_right_to_middle, fixation_first_position_left_to_middle, fixated_word_edge_indices = \
+        #     find_word_edges(fixation_center, eye_position, stimulus, tokens)
+        word_edges = find_word_edges(stimulus)
+
+        fixation_first_position_left_to_eye = eye_position - 1 if eye_position - 1 > 0 else eye_position
+        fixation_first_position_right_to_eye = eye_position + 1 if eye_position + 1 < len(tokens) else eye_position
+        fixation_first_position_to_eye = (fixation_first_position_left_to_eye, fixation_first_position_right_to_eye)
 
         # update lexeme thresholds with predictability values (because one word form may have different pred values depending on context
-        # AL: made n of words updating threshold dependent on attentional width
-        if pm.prediction_flag:
-            positions = [position for position in stimulus_position]
-            for position_in_text in positions:
-                if position_in_text not in updated_thresh_positions:
-                    position_in_lexicon = tokens_to_lexicon_indices[position_in_text]
-                    lexicon_thresholds[position_in_lexicon] = update_threshold(position_in_text,
-                                                                               lexicon_thresholds[position_in_lexicon],
-                                                                               max_predictability,
-                                                                               pm.wordpred_p,
-                                                                               pred_values)
-                    updated_thresh_positions.append(position_in_text)
-        fixation_data['word threshold'] = lexicon_thresholds[tokens_to_lexicon_indices[fixation]]
+        # AL: changed placed, now it updates thresholds with pred only for next word and depending on recognition
+        # if pm.prediction_flag:
+        #     positions = [position for position in stimulus_position]
+        #     for position_in_text in positions:
+        #         if position_in_text not in updated_thresh_positions:
+        #             position_in_lexicon = tokens_to_lexicon_indices[position_in_text]
+        #             lexicon_thresholds[position_in_lexicon] = update_threshold(position_in_text,
+        #                                                                        lexicon_thresholds[position_in_lexicon],
+        #                                                                        max_predictability,
+        #                                                                        pm.wordpred_p,
+        #                                                                        pred_values)
+        #             updated_thresh_positions.append(position_in_text)
+        # fixation_data['word threshold'] = lexicon_thresholds[tokens_to_lexicon_indices[fixation]]
 
         # A saccade program takes 5 cycles, or 125ms. This counter starts counting at saccade program initiation.
-        while amount_of_cycles_since_attention_shifted < 5:
-            print(f'CYCLE {amount_of_cycles}')
+        while n_cycles_since_attent_shift < 5:
+
+            print(f'CYCLE {n_cycles}')
+
             # define word activity in lexicon
             lexicon_word_activity, crt_fixation_word_activities, lexicon_word_inhibition = compute_words_activity(stimulus, lexicon_word_ngrams, eye_position,
                                                                                                                   attention_position, attend_width, pm, fixation_data, word_overlap_matrix,
@@ -383,11 +437,11 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
             # fixation_data['exact recognized words'].append([lexicon[i] for i in above_thresh_lexicon if i == 1])
 
             # word recognition, by checking matching active wrds to slots
-            recognized_position_flag, recognized_word_at_position, recognized_word_at_position_flag, lexicon_word_activity, new_recognized_words = \
+            recognized_position_flag, recognized_word_at_position, recognized_true_word_flag, lexicon_word_activity, new_recognized_words = \
                 match_active_words_to_input_slots(order_match_check,
                                                   stimulus,
                                                   recognized_position_flag,
-                                                  recognized_word_at_position_flag,
+                                                  recognized_true_word_flag,
                                                   recognized_word_at_position,
                                                   above_thresh_lexicon,
                                                   lexicon_word_activity,
@@ -395,6 +449,26 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
                                                   pm.min_activity,
                                                   stimulus_position,
                                                   pm.word_length_similarity_constant)
+
+            # update threshold of n+1 or n+2 with pred value
+            if pm.prediction_flag:
+                # update the threshold for the next word only if word at fixation has been recognized
+                if recognized_true_word_flag[fixation]:
+                    position = fixation + 1
+                    # if next word has already been recognized, update threshold of n+2 word
+                    if recognized_true_word_flag[position]:
+                        position = fixation + 2
+                    # and only if next word has not been recognized (either n+1 or n+2)
+                    if not recognized_true_word_flag[position]:
+                        # and if it has not been updated yet
+                        if position not in updated_thresh_positions:
+                            position_in_lexicon = tokens_to_lexicon_indices[position]
+                            lexicon_thresholds[position_in_lexicon] = update_threshold(position_in_lexicon,
+                                                                                       lexicon_thresholds[position_in_lexicon],
+                                                                                       max_predictability,
+                                                                                       pm.wordpred_p,
+                                                                                       pred_values)
+                            updated_thresh_positions.append(position)
 
             # word selection and attention shift -> saccade decisions
             if not shift:
@@ -405,100 +479,62 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
                     shift_start = sample_from_norm_distribution(pm.mu, pm.sigma, pm.distribution_param,recognized=True)
                 else:
                     shift_start = sample_from_norm_distribution(pm.mu, pm.sigma, pm.distribution_param,recognized=False)
-                # shift attention (followed by saccade) if amount of cycles has reached shift start
-                if amount_of_cycles >= shift_start:
+                # shift attention (do a saccade) if amount of cycles has reached shift start
+                if n_cycles >= shift_start:
                     shift = True
                     offset_from_word_center = 0
-                    # If prev eye mov a regression, go forward 2 words if n+1 already reacognized, otherwise go forward 1 word.
-                    if regression:
-                        if lexicon_word_index[tokens[fixation + 1]] in fixation_data['recognized words indices']:
-                            # go forward two words because n+1 already recognized & must be skipped
-                            attention_position = get_midword_position_for_surrounding_word(2,right_word_edge_letter_indices,left_word_edge_letter_indices)
-                            wordskip = True
-                            wordskip_pass = 2
+                    attention_position, next_fixation = compute_next_attention_position(all_data,
+                                                                                        tokens,
+                                                                                        fixation,
+                                                                                        word_edges,
+                                                                                        fixated_position_in_stimulus,
+                                                                                        fixation_first_position_to_eye,
+                                                                                        regression_flag,
+                                                                                        recognized_position_flag,
+                                                                                        lexicon_word_activity,
+                                                                                        eye_position,
+                                                                                        fixation_counter,
+                                                                                        attention_position,
+                                                                                        attend_width,
+                                                                                        foveal_word_index,
+                                                                                        pm)
+                    if next_fixation == 1: # next fixation n + 1
+                        forward = True
+                    elif next_fixation == 2: # next fixation n + 2
+                        wordskip = True
+                        if regression_flag[fixation]:
+                            wordskip_pass = 2 # bcs n resulted from regression and n + 1 has been recognized
                         else:
-                            # go forward one word
-                            attention_position = get_midword_position_for_surrounding_word(1,right_word_edge_letter_indices,left_word_edge_letter_indices)
-                            forward = True
-                        regression = False  # next fixation is not a regression
-                    # Check whether previous word was recognized or was already target of a regression. If not: regress.
-                    elif fixation > 1 and not recognized_position_flag[fixation - 1] and not regression_flag[fixation - 1]:
-                        attention_position = get_midword_position_for_surrounding_word(-1,right_word_edge_letter_indices,left_word_edge_letter_indices)
+                            wordskip_pass = 1 # bcs n + 2 has highest attwght (letter excitation)
+                    elif next_fixation == -1:
                         regression = True
-                    # Refixate if the foveal word is not recognized but instead still being processed.
-                    elif (not recognized_position_flag[fixation]) \
-                            and (lexicon_word_activity[lexicon_word_index[tokens[fixation]]] > 0):
-                        word_remainder_length = right_word_edge_letter_indices[0][1] - (right_word_edge_letter_indices[0][0])
-                        if word_remainder_length > 0:
-                            # Use first refixation middle of remaining half as refixation stepsize
-                            refix_size = pm.refix_size
-                            if fixation_counter - 1 in all_data.keys():
-                                if not all_data[fixation_counter - 1]['refixated']:
-                                    refix_size = np.round(word_remainder_length * refix_size)
-                            attention_position = fixation_first_position_right_to_middle + refix_size
-                            offset_from_word_center = (attention_position - fixation_center)
-                            refixation = True
-                            refixation_type = 1
-                        elif fixation < (len(tokens) - 1):
-                            # if at last letter of unrecogn. word, jump to middle of next word
-                            attention_position = get_midword_position_for_surrounding_word(1,right_word_edge_letter_indices,left_word_edge_letter_indices)
-                            forward = True
-                    # Perform normal forward saccade (unless at the last position in the text)
-                    elif fixation < (len(tokens) - 1):
-                        # MM: compute attent weights on basis of excentricity & attention
-                        word_attention_right = calc_word_attention_right(right_word_edge_letter_indices,
-                                                                         eye_position,
-                                                                         attention_position,
-                                                                         attend_width,
-                                                                         pm.salience_position,
-                                                                         pm.attention_skew,
-                                                                         pm.letPerDeg)
-                        next_fixation = word_attention_right.index(max(word_attention_right))
-                        word_reminder_length = right_word_edge_letter_indices[0][1] - (right_word_edge_letter_indices[0][0])
-                        refix_size = pm.refix_size
-                        if next_fixation == 0:
-                            # MM: if we're refixating same word because it has highest attentwgt...
-                            # ...use first refixation middle of remaining half as refixation stepsize
-                            if fixation_counter - 1 in all_data.keys():
-                                if not all_data[fixation_counter - 1]['refixated']:
-                                    refix_size = np.round(word_reminder_length * refix_size)
-                                    attention_position = fixation_first_position_right_to_middle + refix_size
-                            else:  # MM: we're fixating n+1 or n+2
-                                attention_position = fixation_first_position_right_to_middle + refix_size
-                            offset_from_word_center = (attention_position - fixation_center)
-                            refixation = True
-                            refixation_type = 2
+                    elif next_fixation == 0:
+                        refixation = True
+                        if not recognized_position_flag[fixation]:
+                            refixation_type = 1 # bcs fixated word has not been recognized
                         else:
-                            assert (next_fixation in [1, 2])
-                            attention_position = get_midword_position_for_surrounding_word(next_fixation,right_word_edge_letter_indices,left_word_edge_letter_indices)
-                            if next_fixation == 1:
-                                forward = True
-                            if next_fixation == 2:
-                                wordskip = True
-                                wordskip_pass = 1
+                            refixation_type = 2 # bcs right of fixated word has highest attwght (letter excitation)
+
                     saccade_distance = attention_position - eye_position
 
             if shift:
-                if amount_of_cycles_since_attention_shifted < 1:
+                if n_cycles_since_attent_shift < 1:
                     crt_fixation_word_activities_at_shift = crt_fixation_word_activities
                 # count the amount of cycles since attention shift
-                amount_of_cycles_since_attention_shifted += 1
+                n_cycles_since_attent_shift += 1
 
             if recognized_position_flag[fixation] and recognized_word_at_cycle[fixation] == -1:
                 # MM: here the time to recognize the word gets stored
-                recognized_word_at_cycle[fixation] = amount_of_cycles
+                recognized_word_at_cycle[fixation] = n_cycles
                 fixation_data['recognition cycle'] = recognized_word_at_cycle[fixation]
 
             attention_position = np.round(attention_position)
-            amount_of_cycles += 1
+            n_cycles += 1
 
         # out of cycle loop. After last cycle, compute fixation duration and add final values for fixated word before shift is made
-        fixation_duration = amount_of_cycles * pm.cycle_size
+        fixation_duration = n_cycles * pm.cycle_size
         fixation_data['fixation duration'] = fixation_duration
         fixation_data['recognized word at position'] = recognized_word_at_position
-        fixation_data['word excitation'] = crt_fixation_word_activities_at_shift['word excitation']
-        fixation_data['ngram inhibition'] = crt_fixation_word_activities_at_shift['ngram inhibition']
-        fixation_data['between word inhibition'] = crt_fixation_word_activities_at_shift['between word inhibition']
         fixation_data['word activity'] = crt_fixation_word_activities_at_shift['foveal word activity']
         fixation_data['total activity'] = crt_fixation_word_activities_at_shift['total activity']
         if tokens[fixation] in freq_values.keys():
@@ -516,7 +552,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
 
         print("Fixation duration: ", fixation_data['fixation duration'], " ms.")
         if recognized_position_flag[fixation]:
-            if recognized_word_at_position_flag[fixation]:
+            if recognized_true_word_flag[fixation]:
                 print("The correct word was recognized at fixation position!")
             else:
                 print("Another word was recognized at fixation position!")
@@ -532,7 +568,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
             print("END REACHED!")
             continue
         print(fixation_data)
-        if fixation == 2: exit()
+        exit()
         # if end of text is not yet reached, compute some values for next fixation
         saccade_distance, saccade_error, offset_from_word_center, fixation, regression, refixation, refixation_type, wordskip, forward, next_eye_position, saccade_type_by_error = \
             compute_next_fixation(pm, saccade_distance, offset_from_word_center, eye_position, stimulus,
@@ -658,10 +694,3 @@ def simulate_experiment(pm):
         all_data, unrecognized_words = controlled_reading()
 
     return all_data, unrecognized_words
-
-
-
-
-
-
-
