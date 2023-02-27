@@ -381,7 +381,8 @@ def sample_from_norm_distribution(mu, sigma, distribution_param, recognized):
 #     return right_word_edge_letter_indices, left_word_edge_letter_indices, fixation_first_position_right_to_middle, fixation_first_position_left_to_middle, fixated_word_edge_indices
 
 def find_word_edges(stimulus):
-
+    # MM: word_edges is dict, with key is token position (from max -2 to +2, but eg. in fst fix can be 0 to +2).
+    #    Entry per key is tuple w. two elements, the left & right edges, coded in letter position
     word_edges = dict()
 
     # AL: regex used to find indices of word edges
