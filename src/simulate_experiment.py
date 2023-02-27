@@ -159,7 +159,7 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
 
     # Define target of next fixation relative to fixated word n (i.e. 0=next fix on word n, -1=fix on n-1, etc). Default is 1 (= to word n+1)
     next_fixation = 1
-    word_remainder_length = word_edges[fixated_position_in_stimulus][1] - eye_position
+    word_reminder_length = word_edges[fixated_position_in_stimulus][1] - eye_position
     refix_size = pm.refix_size
 
     # regression: if the current fixation was a regression and next word has been recognized, m3ove eyes to n+2 to resume reading
@@ -176,7 +176,7 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
             next_fixation = 0
             if fixation_counter - 1 in all_data.keys():
                 if not all_data[fixation_counter - 1]['refixated']:
-                    refix_size = np.round(word_remainder_length * refix_size)
+                    refix_size = np.round(word_reminder_length * refix_size)
 
     # forward saccade: perform normal forward saccade (unless at the last position in the text)
     elif fixation < (len(tokens) - 1):
@@ -543,7 +543,6 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
             fixation_data['word predictability'] = pred_values[str(fixation)]
 
         all_data[fixation_counter] = fixation_data
-        print(recognized_word_at_position)
 
         word_act = fixation_data['word activity']
         if 'recognition cycle' in fixation_data.keys():
