@@ -155,11 +155,10 @@ def match_active_words_to_input_slots(order_match_check, stimulus, recognized_po
 
     return recognized_position_flag, recognized_word_at_position, recognized_word_at_position_flag, lexicon_word_activity, new_recognized_words
 
-def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_position_in_stimulus,fixation_first_position_to_eye,regression_flag,recognized_position_flag,lexicon_word_activity,eye_position,fixation_counter,attention_position,attend_width, fix_lexicon_index, pm):
+def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_position_in_stimulus,regression_flag,recognized_position_flag,lexicon_word_activity,eye_position,fixation_counter,attention_position,attend_width,fix_lexicon_index,pm):
 
     # Define target of next fixation relative to fixated word n (i.e. 0=next fix on word n, -1=fix on n-1, etc). Default is 1 (= to word n+1)
     next_fixation = 1
-    word_reminder_length = word_edges[fixated_position_in_stimulus][1] - eye_position
     refix_size = pm.refix_size
 
     # regression: if the current fixation was a regression and next word has been recognized, m3ove eyes to n+2 to resume reading
@@ -172,6 +171,7 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
 
     # refixation: refixate if the foveal word is not recognized but is still being processed.
     elif (not recognized_position_flag[fixation]) and (lexicon_word_activity[fix_lexicon_index] > 0):
+        word_reminder_length = word_edges[fixated_position_in_stimulus][1] - eye_position
         if word_reminder_length > 0:
             next_fixation = 0
             if fixation_counter - 1 in all_data.keys():
@@ -194,7 +194,8 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
     if next_fixation == 0:
         # MM: if we're refixating same word because it has highest attentwgt AL: or not being recognized whilst processed
         # ...use first refixation middle of remaining half as refixation stepsize
-        attention_position = fixation_first_position_to_eye[1] + refix_size
+        fixation_first_position_right_to_eye = eye_position + 1 if eye_position + 1 < len(tokens) else eye_position
+        attention_position = fixation_first_position_right_to_eye + refix_size
     else:
         assert (next_fixation in [-1, 1, 2])
         attention_position = get_midword_position_for_surrounding_word(next_fixation, word_edges, fixated_position_in_stimulus)
@@ -391,9 +392,9 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
         #     find_word_edges(fixation_center, eye_position, stimulus, tokens)
         word_edges = find_word_edges(stimulus)
 
-        fixation_first_position_left_to_eye = eye_position - 1 if eye_position - 1 > 0 else eye_position
-        fixation_first_position_right_to_eye = eye_position + 1 if eye_position + 1 < len(tokens) else eye_position
-        fixation_first_position_to_eye = (fixation_first_position_left_to_eye, fixation_first_position_right_to_eye)
+        # fixation_first_position_left_to_eye = eye_position - 1 if eye_position - 1 > 0 else eye_position
+        # fixation_first_position_right_to_eye = eye_position + 1 if eye_position + 1 < len(tokens) else eye_position
+        # fixation_first_position_to_eye = (fixation_first_position_left_to_eye, fixation_first_position_right_to_eye)
 
         # update lexeme thresholds with predictability values (because one word form may have different pred values depending on context
         # AL: changed placed, now it updates thresholds with pred only for next word and depending on recognition
@@ -488,7 +489,6 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
                                                                                         fixation,
                                                                                         word_edges,
                                                                                         fixated_position_in_stimulus,
-                                                                                        fixation_first_position_to_eye,
                                                                                         regression_flag,
                                                                                         recognized_position_flag,
                                                                                         lexicon_word_activity,
