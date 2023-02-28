@@ -61,37 +61,31 @@ def compute_ngram_activity(stimulus,lexicon_word_ngrams,eye_position,attention_p
 
     return unit_activations
 
-def compute_words_activity(stimulus, lexicon_word_ngrams, eye_position, attention_position, attend_width, pm):
+def compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_position, attend_width, pm):
 
     lexicon_size = len(lexicon_word_ngrams.keys())
     word_input = np.zeros((lexicon_size), dtype=float)
-    # crt_fixation_word_activities = dict()
 
     # define ngram activity given stimulus
     unit_activations = compute_ngram_activity(stimulus, lexicon_word_ngrams, eye_position,
                                               attention_position, attend_width, pm.letPerDeg,
                                               pm.attention_skew)
     total_ngram_activity = sum(unit_activations.values())
+    print ('    total ngram act:' + str(round(total_ngram_activity,3)))
     n_ngrams = len(unit_activations.keys())
-    # fixation_data['ngram activity per cycle'].append(sum(unit_activations.values()))
-    # fixation_data['n_ngrams'] = len(unit_activations.keys())
 
-    # compute word activity according to ngram excitation and inhibition
+    # compute word input according to ngram excitation and inhibition
     # all stimulus bigrams used, therefore the same bigram inhibition for each word of lexicon (excit is specific to word, inhib same for all)
-    # ngram_inhibition_input = sum(unit_activations.values()) + (pm.bigram_to_word_inhibition * len(unit_activations.keys()))
     ngram_inhibition_input = sum(unit_activations.values()) * pm.bigram_to_word_inhibition
     for lexicon_ix, lexicon_word in enumerate(lexicon_word_ngrams.keys()):
         word_excitation_input = 0
-        # bigram & monogram activations
+        # ngram (bigram & monogram) activations
         ngram_intersect_list = set(unit_activations.keys()).intersection(set(lexicon_word_ngrams[lexicon_word][0]))
         for ngram in ngram_intersect_list:
             word_excitation_input += pm.bigram_to_word_excitation * unit_activations[ngram]
         word_input[lexicon_ix] = word_excitation_input + ngram_inhibition_input
-        # if lexicon_word == tokens[fixation]:
-        #     crt_fixation_word_activities['word excitation'] = word_excitation_input
-        #     crt_fixation_word_activities['ngram inhibition'] = (abs(ngram_inhibition_input))
 
-    # normalize based on number of ngrams in lexicon
+    # normalize based on number of ngrams in each word MM to AL: sure it's not #(ngrams) in lexicon?
     all_ngrams = list()
     for info_tuple in lexicon_word_ngrams.values():
         all_ngrams.append(len(info_tuple[0]))
@@ -100,7 +94,6 @@ def compute_words_activity(stimulus, lexicon_word_ngrams, eye_position, attentio
     return n_ngrams, total_ngram_activity, all_ngrams, word_input
 
 def update_word_activity(lexicon_word_activity,word_overlap_matrix,pm,word_input,all_ngrams,lexicon_size):
-
 
     # re-compute word activity using to word-to-word inhibition
     # NV: the more active a certain word is, the more inhibition it will execute on its peers -> activity is multiplied by inhibition constant.
@@ -436,7 +429,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
             attend_width = min(attend_width + 0.5, pm.max_attend_width)
 
         print('Entering cycle loops to define word activity...')
-        print(("fix on: " + tokens[fixation] + '  attent. width: ' + str(attend_width)) + '  thresh.' + str(round(lexicon_thresholds[tokens_to_lexicon_indices[fixation]],3)))
+        print("fix on: " + tokens[fixation] + '  attent. width: ' + str(attend_width) + '  thresh.' + str(round(lexicon_thresholds[tokens_to_lexicon_indices[fixation]],3)))
         shift = False
         n_cycles = 0
         n_cycles_since_attent_shift = 0
@@ -446,24 +439,23 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
         # define edge locations of words, as well as location of first letter to the right and first letter to the left from center of fixated word
         word_edges = find_word_edges(stimulus)
 
-        # compute word activity using ngram excitation and inhibition (out the cycle loop because this is constant)
-        n_ngrams, total_ngram_activity, all_ngrams, word_input = compute_words_activity(stimulus, lexicon_word_ngrams, eye_position, attention_position, attend_width, pm)
+        # compute word input using ngram excitation and inhibition (out the cycle loop because this is constant)
+        n_ngrams, total_ngram_activity, all_ngrams, word_input = compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_position, attend_width, pm)
         fixation_data['n_ngrams'] = n_ngrams
         fixation_data['total_ngram_activity'] = total_ngram_activity
+        print("input to fixwrd: " + str(round(word_input[tokens_to_lexicon_indices[fixation]], 3)))
 
-        # A saccade program takes 5 cycles, or 125ms. This counter starts counting at saccade program initiation.
+        # Counter n_cycles_since_attent_shift is 0 until attention shift (saccade program initiation), then starts counting to 5
+        #   (because a saccade program takes 5 cycles, or 125ms.)
         while n_cycles_since_attent_shift < 5:
 
-            # define word activity in lexicon
-            # lexicon_word_activity, crt_fixation_word_activities, lexicon_word_inhibition = compute_words_activity(stimulus, lexicon_word_ngrams, eye_position,
-            #                                                                                                       attention_position, attend_width, pm, fixation_data, word_overlap_matrix,
-            #                                                                                                       tokens, fixation, lexicon_word_activity)
+            # Update word act with word inhibition (input remains same, so does not have to be updated)
             lexicon_word_activity, lexicon_word_inhibition = update_word_activity(lexicon_word_activity, word_overlap_matrix, pm, word_input, all_ngrams, len(lexicon))
 
             # update cycle info
             foveal_word_index = lexicon_word_index[tokens[fixation]]
             foveal_word_activity = lexicon_word_activity[foveal_word_index]
-            print('CYCLE ', str(n_cycles), '   activ @fix ', str(round(foveal_word_activity,3)))
+            #print('CYCLE ', str(n_cycles), '   activ @fix ', str(round(foveal_word_activity,3)))
 
             fixation_data['foveal word activity per cycle'].append(foveal_word_activity)
             fixation_data['foveal word-to-word inhibition per cycle'].append(abs(lexicon_word_inhibition[foveal_word_index]))
@@ -517,10 +509,10 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
                 # If cycle since fixstart > sample, make attentshift. This produces approx ex-gauss SRT
                 if recognized_position_flag[fixation]:
                     # MM: if word recog, then faster switch (norm. distrib. with <mu) than if not recog.
-                    shift_start = sample_from_norm_distribution(pm.mu, pm.sigma, pm.distribution_param,recognized=True)
+                    shift_start = sample_from_norm_distribution(pm.mu, pm.sigma, pm.recog_speeding,recognized=True)
                 else:
-                    shift_start = sample_from_norm_distribution(pm.mu, pm.sigma, pm.distribution_param,recognized=False)
-                # shift attention (do a saccade) if amount of cycles has reached shift start
+                    shift_start = sample_from_norm_distribution(pm.mu, pm.sigma, pm.recog_speeding,recognized=False)
+                # shift attention (& plan saccade in 125 ms) if n_cycles is higher than random threshold shift_start
                 if n_cycles >= shift_start:
                     shift = True
                     # offset_from_word_center = 0
@@ -538,12 +530,17 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
                                                                                         attend_width,
                                                                                         foveal_word_index,
                                                                                         pm)
+                    fixation_data['foveal word activity at shift'] = fixation_data['foveal word activity per cycle'][-1]
+                    print('attentpos ', attention_position)
+                    # recompute word input, using ngram excitation and inhibition, because attentshift changes bigram input
+                    n_ngrams, total_ngram_activity, all_ngrams, word_input = compute_words_input(stimulus,
+                                                                                                lexicon_word_ngrams,
+                                                                                                eye_position,
+                                                                                                attention_position,
+                                                                                                attend_width, pm)
 
             if shift:
-                if n_cycles_since_attent_shift < 1:
-                    fixation_data['foveal word activity at shift'] = fixation_data['foveal word activity per cycle'][-1]
-                # count the amount of cycles since attention shift
-                n_cycles_since_attent_shift += 1
+                n_cycles_since_attent_shift += 1 # ...count cycles since attention shift
 
             if recognized_position_flag[fixation] and recognized_word_at_cycle[fixation] == -1:
                 # MM: here the time to recognize the word gets stored
@@ -582,7 +579,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
             continue
 
         print(fixation_data)
-        if fixation == 4: exit()
+        if fixation_counter > 5: exit()
         # if end of text is not yet reached, compute next eye position and thus next fixation
         fixation, next_eye_position, saccade_info = compute_next_eye_position(pm, saccade_info, eye_position, stimulus, fixation, total_n_words, word_edges, fixated_position_in_stimulus)
 
