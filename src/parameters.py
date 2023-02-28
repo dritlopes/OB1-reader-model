@@ -206,8 +206,8 @@ def return_task_params(task_attributes):
     use_boundary_task = False
 
     # fixation durations
-    mu, sigma = 10.09, 5.36  # 4.9, 2.2 # 5.46258 (optimal), 4 # 4.9, 2.2 (paper)
-    distribution_param = 5.0  # 1.1
+    mu, sigma = 10, 4  # 4.9, 2.2 (paper)
+    recog_speeding = 5.0  # 1.1 Decrease in av. SRT when word recognized
 
     # threshold parameters
     max_threshold = 0.8 # mm: changed because max activity changed from 1.3 to 1
