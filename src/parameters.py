@@ -160,13 +160,13 @@ def return_task_params(task_attributes):
     output_dir = time.time()
 
     # word activation
-    bigram_to_word_excitation = 1  # 0.0044 # 3.09269333333 # 2.18 # inp. divded by #ngrams, so this param estimates excit per word [diff from paper] 1.65 for EmbeddedWords, 2.18 for classification and transposed
+    bigram_to_word_excitation = 0.5  # 0.0044 # 3.09269333333 # 2.18 # inp. divded by #ngrams, so this param estimates excit per word [diff from paper] 1.65 for EmbeddedWords, 2.18 for classification and transposed
     bigram_to_word_inhibition = 0 # -0.20625  # -0.65835 # -0.55  # general inhibition on all words. The more active bigrams, the more general inhibition.
     word_inhibition = -0.0165  # -0.016093 #-0.011 # -0.002
     letPerDeg = .3
     min_activity = 0.0
     max_activity = 1.0 # 1.3
-    decay = -0.05  # 0.08 #-0.053 # AL: decay in word activation over time
+    decay = -0.05  # -0.08 # AL: decay in word activation over time
 
     # attentional width
     attend_width = 5.0 # 8.0  # NV: #!!!: was set to 15 for flanker, 20 for sentence and 3 for transposed
@@ -210,11 +210,10 @@ def return_task_params(task_attributes):
     distribution_param = 5.0  # 1.1
 
     # threshold parameters
-    # MM: this is a HACK: a number of words have no freq because of a mistake, repaired by making freq less important
-    max_threshold = 1
-    # 0.4 # Max prop decrease in thresh for highest-freq wrd [different definition than in papers]
-    wordfreq_p = 0.4  # 0.2 #NV: difference between max and min threshold
-    wordpred_p = 0.2  # 0.4 # Currently not used
+    max_threshold = 0.8 # mm: changed because max activity changed from 1.3 to 1
+    # MM: a number of words have no freq because not in corpus, repaired by making freq less important
+    wordfreq_p = 0.3  # 0.2 #NV: difference between max and min threshold
+    wordpred_p = 0.2  # Currently not used
     word_length_similarity_constant = 0.15 # 0.35  # 0.15 # NV: determines how similar the length of 2 words must be for them to be recognised as 'similar word length'
     use_grammar_prob = False  # True for using grammar probabilities, False for using cloze, overwritten by uniform_pred
     uniform_prob = False  # Overwrites cloze/grammar probabilities with 0.25 for all words
