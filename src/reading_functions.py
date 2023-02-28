@@ -310,10 +310,10 @@ def define_slot_matching_order(n_words_in_stim, fixated_position_stimulus):
 
     return order_match_check
 
-def sample_from_norm_distribution(mu, sigma, distribution_param, recognized):
+def sample_from_norm_distribution(mu, sigma, recog_speeding, recognized):
 
     if recognized:
-        return int(np.round(np.random.normal(mu-distribution_param, sigma, 1)))
+        return int(np.round(np.random.normal(mu - recog_speeding, sigma, 1)))
     else:
         return int(np.round(np.random.normal(mu, sigma, 1)))
 
