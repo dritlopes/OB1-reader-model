@@ -413,13 +413,13 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
         fixation_data['foveal word predictability'] = pred_values[str(fixation)] if str(fixation) in pred_values.keys() else 0
         fixation_data['foveal word threshold'] = lexicon_thresholds[tokens_to_lexicon_indices[fixation]]
 
-        print('Defining stimulus...')
+        #print('Defining stimulus...')
         stimulus, stimulus_position, fixated_position_in_stimulus = compute_stimulus(fixation, tokens)
         eye_position = compute_eye_position(stimulus, fixated_position_in_stimulus, saccade_info['offset_from_word_center'])
         fixation_data['stimulus'] = stimulus
         fixation_data['eye position'] = eye_position
         print(
-            f"stimulus: {stimulus}\neye position in stimulus: {eye_position}\nfour characters to the right of fixation: {stimulus[eye_position:eye_position + 4]}")
+            f"Stimulus: {stimulus}\neye position in stimulus: {eye_position}\nfour characters to the right of fixation: {stimulus[eye_position:eye_position + 4]}")
 
         # define order to match activated words to slots in the stimulus
         # NV: the order list should reset when stimulus changes or with the first stimulus
@@ -436,7 +436,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
             attend_width = min(attend_width + 0.5, pm.max_attend_width)
 
         print('Entering cycle loops to define word activity...')
-        print(("fix on: " + tokens[fixation] + '  attention width: ' + str(attend_width)))
+        print(("fix on: " + tokens[fixation] + '  attent. width: ' + str(attend_width)) + '  thresh.' + str(round(lexicon_thresholds[tokens_to_lexicon_indices[fixation]],3)))
         shift = False
         n_cycles = 0
         n_cycles_since_attent_shift = 0
@@ -454,8 +454,6 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
         # A saccade program takes 5 cycles, or 125ms. This counter starts counting at saccade program initiation.
         while n_cycles_since_attent_shift < 5:
 
-            print(f'CYCLE {n_cycles}')
-
             # define word activity in lexicon
             # lexicon_word_activity, crt_fixation_word_activities, lexicon_word_inhibition = compute_words_activity(stimulus, lexicon_word_ngrams, eye_position,
             #                                                                                                       attention_position, attend_width, pm, fixation_data, word_overlap_matrix,
@@ -465,6 +463,8 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
             # update cycle info
             foveal_word_index = lexicon_word_index[tokens[fixation]]
             foveal_word_activity = lexicon_word_activity[foveal_word_index]
+            print('CYCLE ', str(n_cycles), '   activ @fix ', str(round(foveal_word_activity,3)))
+
             fixation_data['foveal word activity per cycle'].append(foveal_word_activity)
             fixation_data['foveal word-to-word inhibition per cycle'].append(abs(lexicon_word_inhibition[foveal_word_index]))
             # crt_fixation_word_activities['foveal word activity'] = foveal_word_activity  # activity of foveal word in last cycle before shift
