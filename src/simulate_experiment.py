@@ -2,11 +2,9 @@ import logging
 import numpy as np
 import pickle
 from collections import defaultdict
-import math
 
 from utils import get_word_freq, get_pred_values, check_previous_inhibition_matrix
-from reading_functions import get_threshold, string_to_ngrams_and_locations, build_word_inhibition_matrix, \
-    get_blankscreen_stimulus, calc_bigram_ext_input, calc_monogram_ext_input, define_slot_matching_order, is_similar_word_length, \
+from reading_functions import get_threshold, string_to_open_ngrams, build_word_inhibition_matrix, cal_ngram_exc_input, define_slot_matching_order, is_similar_word_length, \
     sample_from_norm_distribution, find_word_edges, get_midword_position_for_surrounding_word, calc_word_attention_right, update_threshold, calc_saccade_error
 
 
@@ -32,33 +30,20 @@ def compute_eye_position(stimulus, fixated_position_stimulus, offset_from_word_c
 
     return int(np.round(eye_position))
 
-def compute_ngram_activity(stimulus,lexicon_word_ngrams,eye_position,attention_position,attend_width,letPerDeg,attention_skew):
+def compute_ngram_activity(stimulus,eye_position,attention_position,attend_width,letPerDeg,attention_skew,gap):
 
     unit_activations = {}
-    all_ngrams = [ngram for word in stimulus.split(' ') for ngram in lexicon_word_ngrams[word][0]]
-    all_ngram_locations = [lexicon_word_ngrams[word][1][ngram][0] for word in stimulus.split(' ') for ngram in lexicon_word_ngrams[word][0]]
+    all_ngrams,all_weights,all_locations = string_to_open_ngrams(stimulus,gap)
 
-    for ngram, location in zip(all_ngrams,all_ngram_locations):
-        if len(ngram) == 2:
-            activation = calc_bigram_ext_input(location,
-                                                eye_position,
-                                                attention_position,
-                                                attend_width,
-                                                letPerDeg,
-                                                attention_skew)
-        else:
-            activation = calc_monogram_ext_input(location,
-                                                eye_position,
-                                                attention_position,
-                                                attend_width,
-                                                letPerDeg,
-                                                attention_skew)
-
+    for ngram, weight, location in zip(all_ngrams,all_weights,all_locations):
+        activation = cal_ngram_exc_input(location, weight, eye_position, attention_position, attend_width, letPerDeg, attention_skew)
+        # AL: a ngram that appears more than once in the simulus get summed activation
         if ngram in unit_activations.keys():
             unit_activations[ngram] = unit_activations[ngram] + activation
         else:
             unit_activations[ngram] = activation
 
+    print(unit_activations)
     return unit_activations
 
 def compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_position, attend_width, pm):
@@ -67,9 +52,9 @@ def compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_p
     word_input = np.zeros((lexicon_size), dtype=float)
 
     # define ngram activity given stimulus
-    unit_activations = compute_ngram_activity(stimulus, lexicon_word_ngrams, eye_position,
+    unit_activations = compute_ngram_activity(stimulus, eye_position,
                                               attention_position, attend_width, pm.letPerDeg,
-                                              pm.attention_skew)
+                                              pm.attention_skew, pm.bigram_gap)
     total_ngram_activity = sum(unit_activations.values())
     print ('    total ngram act:' + str(round(total_ngram_activity,3)))
     n_ngrams = len(unit_activations.keys())
@@ -80,15 +65,13 @@ def compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_p
     for lexicon_ix, lexicon_word in enumerate(lexicon_word_ngrams.keys()):
         word_excitation_input = 0
         # ngram (bigram & monogram) activations
-        ngram_intersect_list = set(unit_activations.keys()).intersection(set(lexicon_word_ngrams[lexicon_word][0]))
+        ngram_intersect_list = set(unit_activations.keys()).intersection(set(lexicon_word_ngrams[lexicon_word]))
         for ngram in ngram_intersect_list:
             word_excitation_input += pm.bigram_to_word_excitation * unit_activations[ngram]
         word_input[lexicon_ix] = word_excitation_input + ngram_inhibition_input
 
-    # normalize based on number of ngrams in each word MM to AL: sure it's not #(ngrams) in lexicon?
-    all_ngrams = list()
-    for info_tuple in lexicon_word_ngrams.values():
-        all_ngrams.append(len(info_tuple[0]))
+    # normalize based on number of ngrams in lexicon
+    all_ngrams = [len(ngrams) for ngrams in lexicon_word_ngrams.values()]
     word_input = word_input / np.array(all_ngrams)
 
     return n_ngrams, total_ngram_activity, all_ngrams, word_input
@@ -180,7 +163,6 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
 
     # refixation: refixate if the foveal word is not recognized but is still being processed
     elif (not recognized_position_flag[fixation]) and (lexicon_word_activity[fix_lexicon_index] > 0):
-        # AL: if word does not get recognized, it keeps refixating forever. How come always word reminder length?
         word_reminder_length = word_edges[fixated_position_in_stimulus][1] - eye_position
         if word_reminder_length > 0:
             next_fixation = 0
@@ -200,7 +182,7 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
                                                          fixated_position_in_stimulus)
         next_fixation = word_attention_right.index(max(word_attention_right))
 
-    # AL: Calculate next attention position based on next fixation estimate
+    # AL: Calculate next attention position based on next fixation estimate = 0: refixate, 1: forward, 2: wordskip, -1: regression
     if next_fixation == 0:
         # MM: if we're refixating same word because it has highest attentwgt AL: or not being recognized whilst processed
         # ...use first refixation middle of remaining half as refixation stepsize
@@ -353,14 +335,6 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
     max_predictability = max(pred_values.values())
     # total number of tokens in input
     total_n_words = len(tokens)
-    saccade_info = {'saccade_type': None, # regression, forward, refixation or wordskip
-                    'saccade_distance': 0, # distance between current eye position and eye previous position
-                    'saccade_error': 0, # saccade noise to include overshooting
-                    'saccade_cause': 0, # for wordskip and refixation, extra info on cause of saccade
-                    'saccade_type_by_error': False, # if the saccade type was defined due to saccade error
-                    'offset_from_word_center': 0} # if eye position is to be in a position other than that of the word middle, offset will be negative/positive (left/right) and will represent the number of letters to the new position. It's value is reset before a new saccade is performed.
-    # regression, wordskip, refixation, forward = False, False, False, False
-    # saccade_distance, saccade_error, refixation_type, wordskip_pass, saccade_type_by_error, offset_previous = 0, 0, 0, 0, 0, 0
     # history of regressions, is set to true at a certain position in the text when a regression is performed to that word
     regression_flag = np.zeros(total_n_words, dtype=bool)
     # recognition flag for each word position in the text is set to true when a word whose length is similar to that of the fixated word, is recognised so if it fulfills the condition is_similar_word_length(fixated_word,other_word)
@@ -378,6 +352,13 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
     lexicon_thresholds = np.zeros((len(lexicon)), dtype=float)
     # to keep track of positions in text whose thresholds have already been updated to avoid updating it every time position is in stimulus
     updated_thresh_positions = []
+
+    saccade_info = {'saccade_type': None,  # regression, forward, refixation or wordskip
+                    'saccade_distance': 0,  # distance between current eye position and eye previous position
+                    'saccade_error': 0,  # saccade noise to include overshooting
+                    'saccade_cause': 0,  # for wordskip and refixation, extra info on cause of saccade
+                    'saccade_type_by_error': False,  # if the saccade type was defined due to saccade error
+                    'offset_from_word_center': 0}  # if eye position is to be in a position other than that of the word middle, offset will be negative/positive (left/right) and will represent the number of letters to the new position. It's value is reset before a new saccade is performed.
 
     # initialize thresholds with values based frequency, if dict has been filled (if frequency flag)
     if lexicon_thresholds_dict != {}:
@@ -579,7 +560,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
             continue
 
         print(fixation_data)
-        if fixation_counter > 5: exit()
+        if fixation_counter > 10: exit()
         # if end of text is not yet reached, compute next eye position and thus next fixation
         fixation, next_eye_position, saccade_info = compute_next_eye_position(pm, saccade_info, eye_position, stimulus, fixation, total_n_words, word_edges, fixated_position_in_stimulus)
 
@@ -615,8 +596,6 @@ def controlled_reading():
 
 def simulate_experiment(pm):
 
-    # TODO adapt code to add affix system
-    # TODO adapt code to add grammar
     # TODO add visualise_reading
 
     print('Preparing simulation...')
@@ -629,11 +608,11 @@ def simulate_experiment(pm):
     if pm.is_priming_task:
         tokens.extend([token for stimulus in list(pm.stim["prime"]) for token in stimulus.split(' ')])
 
-    tokens = [word.strip() for word in tokens if word.strip() != '']
+    tokens = [token.strip() for token in tokens if token.strip() != '']
+    tokens = [token.replace(".", "").replace(",", "") for token in tokens]
 
-    cleaned_words = [token.replace(".", "").lower() for token in set(tokens)]
-    word_frequencies = get_word_freq(pm,cleaned_words)
-    pred_values = get_pred_values(pm,cleaned_words)
+    word_frequencies = get_word_freq(pm, set([token.lower() for token in set(tokens)]))
+    pred_values = get_pred_values(pm, set(tokens))
     max_frequency = max(word_frequencies.values())
     lexicon = list(set(tokens) | set(word_frequencies.keys())) # it is actually just the words in the input, because word_frequencies is the overlap between words in the freq resource
 
@@ -664,9 +643,9 @@ def simulate_experiment(pm):
     lexicon_word_ngrams = {}
     lexicon_word_index = {}
     for i, word in enumerate(lexicon):
-        word_local = " " + word + " "
-        all_word_ngrams, word_ngram_locations = string_to_ngrams_and_locations(word_local,pm)
-        lexicon_word_ngrams[word] = (all_word_ngrams, word_ngram_locations)
+        # AL: weights and locations are not used for lexicon, only the ngrams of the words in the lexicon for comparing them later with the ngrams activated in stimulus.
+        all_word_ngrams, weights, locations = string_to_open_ngrams(word,pm.bigram_gap)
+        lexicon_word_ngrams[word] = all_word_ngrams
         lexicon_word_index[word] = i
 
     print('Computing word-to-word inhibition matrix...')

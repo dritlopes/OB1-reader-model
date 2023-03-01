@@ -4,149 +4,184 @@ import os
 import math
 import re
 
-def get_stimulus_space_positions(stimulus):  # NV: get index of spaces in stimulus
+def get_stimulus_edge_positions(stimulus):
 
-    stimulus_space_positions = []
-    for letter_position in range(len(stimulus)):
-        if stimulus[letter_position] == " ":
-            stimulus_space_positions.append(letter_position)
+    # AL: get position of letters next to spaces
+    stimulus_word_edge_positions = []
+    for letter_position in range(1,len(stimulus)-1):
+        if stimulus[letter_position+1] == " " or stimulus[letter_position-1] == " ":
+            stimulus_word_edge_positions.append(letter_position-1)
 
-    return stimulus_space_positions
+    return stimulus_word_edge_positions
 
-def get_ngram_edge_position_weight(ngram, ngramLocations, stimulus_space_locations):
+# def get_ngram_edge_position_weight(ngram, ngramLocations, stimulus_space_locations):
+#
+#     ngramEdgePositionWeight = 0.5  # This is just a default weight; in many cases, it's changed
+#     # to 1 or 2, as can be seen below.
+#     max_weight = 2.
+#
+#     if len(ngram) == 2:
+#         first = ngramLocations[0]
+#         second = ngramLocations[1]
+#
+#         if (first-1) in stimulus_space_locations and (second+1) in stimulus_space_locations:
+#             ngramEdgePositionWeight = max_weight
+#         elif (first+1) in stimulus_space_locations and (second-1) in stimulus_space_locations:
+#             ngramEdgePositionWeight = max_weight
+#         elif (first-1) in stimulus_space_locations or (second+1) in stimulus_space_locations:
+#             ngramEdgePositionWeight = 1.
+#         elif (first+1) in stimulus_space_locations or (second-1) in stimulus_space_locations:
+#             ngramEdgePositionWeight = 1.
+#     else:
+#         letter_location = ngramLocations
+#         # One letter word
+#         if letter_location-1 in stimulus_space_locations and letter_location+1 in stimulus_space_locations:
+#             ngramEdgePositionWeight = max_weight
+#         # letter at the edge
+#         elif letter_location-1 in stimulus_space_locations or letter_location+1 in stimulus_space_locations:
+#             ngramEdgePositionWeight = 1.
+#
+#     return ngramEdgePositionWeight
 
-    ngramEdgePositionWeight = 0.5  # This is just a default weight; in many cases, it's changed
-    # to 1 or 2, as can be seen below.
-    max_weight = 2.
+def string_to_open_ngrams(string,gap):
 
-    if len(ngram) == 2:
-        first = ngramLocations[0]
-        second = ngramLocations[1]
+    all_ngrams = []
+    all_weights = []
+    all_locations = []
+    weight = 0.5
 
-        if (first-1) in stimulus_space_locations and (second+1) in stimulus_space_locations:
-            ngramEdgePositionWeight = max_weight
-        elif (first+1) in stimulus_space_locations and (second-1) in stimulus_space_locations:
-            ngramEdgePositionWeight = max_weight
-        elif (first-1) in stimulus_space_locations or (second+1) in stimulus_space_locations:
-            ngramEdgePositionWeight = 1.
-        elif (first+1) in stimulus_space_locations or (second-1) in stimulus_space_locations:
-            ngramEdgePositionWeight = 1.
-    else:
-        letter_location = ngramLocations
-        # One letter word
-        if letter_location-1 in stimulus_space_locations and letter_location+1 in stimulus_space_locations:
-            ngramEdgePositionWeight = max_weight
-        # letter at the edge
-        elif letter_location-1 in stimulus_space_locations or letter_location+1 in stimulus_space_locations:
-            ngramEdgePositionWeight = 1.
+    # AL: make sure string contains one space before and after for correctly finding word edges
+    string = " " + string + " "
+    edge_locations = get_stimulus_edge_positions(string)
+    string = string.strip()
 
-    return ngramEdgePositionWeight
+    for position, letter in enumerate(string):
+        # AL: to avoid ngrams made of spaces
+        if letter != ' ':
+            # AL: letter at word edge receives higher weight
+            if position in edge_locations:
+                weight = 1.0
+                # AL: include monogram if at word edge AL to MM: this was how it was done before (only monograms at the edge were added), is that the "bedoeling"? Or all monograms of a word should be added?
+                all_ngrams.append(letter)
+                all_weights.append(weight)
+                all_locations.append([position])
 
-def string_to_ngrams_and_locations(stimulus,pm, is_suffix=False):
-
-    stimulus_space_positions = get_stimulus_space_positions(stimulus)
-    stimulus = "_" + stimulus + "_"  # GS try to recognize small words better, does not work doing this
-    # For the current stimulus, bigrams will be made. Bigrams are only made
-    # for letters that are within a range of 4 from each other; (gap=3)
-
-    # Bigrams that contain word boundary letters have more weight.
-    # This is done by means of locating spaces in stimulus, and marking
-    # letters around space locations (as well as spaces themselves), as
-    # indicators of more bigram weight.
-
-    """Returns list with all unique open bigrams that can be made of the stim, and their respective locations 
-    (called 'word' for historic reasons), restricted by the maximum gap between two intervening letters."""
-    all_bigrams = []
-    bigrams_to_locations = {}
-    gap = pm.bigram_gap  # None = no limit
-    if gap == None:
-        for first in range(len(stimulus) - 1):
-            if (stimulus[first] == " "):
-                continue
-            for second in range(first + 1, len(stimulus)):
-                if (stimulus[second] == " "):
+            # AL: find bigrams
+            for i in range(1,gap+1):
+                if position+i >= len(string) or string[position+i] == ' ':
                     break
-                bigram = stimulus[first] + stimulus[second]
-                if bigram != '  ':
-                    if not bigram in all_bigrams:
-                        all_bigrams.append(bigram)
-                    bigram_edge_position_weight = get_ngram_edge_position_weight(
-                        bigram, (first, second), stimulus_space_positions)
-                    if (bigram in bigrams_to_locations.keys()):
-                        bigrams_to_locations[bigram].append((first, second, bigram_edge_position_weight))
-                    else:
-                        bigrams_to_locations[bigram] = [(first, second, bigram_edge_position_weight)]
-    else:
-        for first in range(len(stimulus) - 1):
-            # NV: this code implant is meant to insert special suffix bigrams in bigram list
-            # TODO: does not work for prefixes yet
-            if (stimulus[first] == " "):  # NV: means that first letter is index 1 or last+1
-                if first == 1:  # NV: if it is in the beginning of word
-                    if is_suffix:
-                        continue  # dont do the special _ at beginning of word if is affix
-                    second_alt = 2  # NV: _alt not to interfere with loop variables
-                    bigram = '_' + stimulus[second_alt]
-                    if not bigram in all_bigrams:
-                        all_bigrams.append(bigram)
-                    bigram_edge_position_weight = get_ngram_edge_position_weight(
-                        bigram, (first, second_alt), stimulus_space_positions)
-                    if (bigram in bigrams_to_locations.keys()):
-                        bigrams_to_locations[bigram].append((first, second_alt, bigram_edge_position_weight))
-                    else:
-                        bigrams_to_locations[bigram] = [(first, second_alt, bigram_edge_position_weight)]
-                    continue
-                elif first == len(stimulus) - 2:  # NV: if first letter is the end space
-                    first_alt = -3  # NV: index of last letter
-                    # NV: get the actual index (you do +, because first alt is a negative number)
-                    first_alt = len(stimulus) + first_alt
-                    second_alt = -2  # NV: index of space after last letter
-                    second_alt = len(stimulus) + second_alt
-                    bigram = stimulus[first_alt] + '_'
-                    if not bigram in all_bigrams:
-                        all_bigrams.append(bigram)
-                    bigram_edge_position_weight = get_ngram_edge_position_weight(
-                        bigram, (first_alt, second_alt), stimulus_space_positions)
-                    if (bigram in bigrams_to_locations.keys()):
-                        bigrams_to_locations[bigram].append((first_alt, second_alt, bigram_edge_position_weight))
-                    else:
-                        bigrams_to_locations[bigram] = [(first_alt, second_alt, bigram_edge_position_weight)]
-                    continue
+                bigram = letter+string[position+i]
+                all_ngrams.append(bigram)
+                all_weights.append(weight)
+                all_locations.append([position,position+i])
 
-            # NV:pick letter between first+1 and first+1+gap+1 (end of bigram max length), as long as that is smaller than end of word
-            for second in range(first + 1, min(first + 1 + gap + 1, len(stimulus))):
-                if (stimulus[
-                    second] == " "):  # NV: if that is second lettter, you know you have reached the end of possible bigrams
-                    # NV: break out of second loop if second stim is __. This means symbols before word, or when end of word is reached.
-                    break
-                bigram = stimulus[first] + stimulus[second]
-                if bigram != '  ':
-                    if not bigram in all_bigrams:
-                        all_bigrams.append(bigram)
-                    bigram_edge_position_weight = get_ngram_edge_position_weight(
-                        bigram, (first, second), stimulus_space_positions)
-                    if (bigram in bigrams_to_locations.keys()):
-                        bigrams_to_locations[bigram].append((first, second, bigram_edge_position_weight))
-                    else:
-                        bigrams_to_locations[bigram] = [(first, second, bigram_edge_position_weight)]
+    return all_ngrams, all_weights, all_locations
 
-    # # GS: test of dit werkt, dan geen monograms, die worden later toch weggefilterd
-    #    """Also add monograms"""
-    #    for position in range(len(stimulus)):
-    #        monogram=stimulus[position]
-    #        if(monogram==" "):
-    #            continue
-    #
-    #        if not monogram in allBigrams:
-    #            allBigrams_append(monogram)
-    #
-    #        monogramEdgePositionWeight = get_ngram_edge_position_weight(monogram, position,stimulus_space_positions)
-    #        if monogram in bigramsToLocations.keys():
-    #            bigramsToLocations[monogram].append((position,monogramEdgePositionWeight))
-    #        else:
-    #            bigramsToLocations[monogram]=[(position,monogramEdgePositionWeight)]
-    # # edge_bigrams = ["_"+stimulus[2], stimulus[-3]+"_"]  # NV: added first and last bigram for affix recognition.
-
-    return all_bigrams, bigrams_to_locations
+# def string_to_ngrams_and_locations(stimulus,pm, is_suffix=False):
+#
+#     stimulus_space_positions = get_stimulus_space_positions(stimulus)
+#     stimulus = "_" + stimulus + "_"  # GS try to recognize small words better, does not work doing this
+#     # For the current stimulus, bigrams will be made. Bigrams are only made
+#     # for letters that are within a range of 4 from each other; (gap=3)
+#
+#     # Bigrams that contain word boundary letters have more weight.
+#     # This is done by means of locating spaces in stimulus, and marking
+#     # letters around space locations (as well as spaces themselves), as
+#     # indicators of more bigram weight.
+#
+#     """Returns list with all unique open bigrams that can be made of the stim, and their respective locations
+#     (called 'word' for historic reasons), restricted by the maximum gap between two intervening letters."""
+#     all_bigrams = []
+#     bigrams_to_locations = {}
+#     gap = pm.bigram_gap  # None = no limit
+#     if gap == None:
+#         for first in range(len(stimulus) - 1):
+#             if (stimulus[first] == " "):
+#                 continue
+#             for second in range(first + 1, len(stimulus)):
+#                 if (stimulus[second] == " "):
+#                     break
+#                 bigram = stimulus[first] + stimulus[second]
+#                 if bigram != '  ':
+#                     if not bigram in all_bigrams:
+#                         all_bigrams.append(bigram)
+#                     bigram_edge_position_weight = get_ngram_edge_position_weight(
+#                         bigram, (first, second), stimulus_space_positions)
+#                     if (bigram in bigrams_to_locations.keys()):
+#                         bigrams_to_locations[bigram].append((first, second, bigram_edge_position_weight))
+#                     else:
+#                         bigrams_to_locations[bigram] = [(first, second, bigram_edge_position_weight)]
+#     else:
+#         for first in range(len(stimulus) - 1):
+#             # NV: this code implant is meant to insert special suffix bigrams in bigram list
+#             # TODO: does not work for prefixes yet
+#             if (stimulus[first] == " "):  # NV: means that first letter is index 1 or last+1
+#                 if first == 1:  # NV: if it is in the beginning of word
+#                     if is_suffix:
+#                         continue  # dont do the special _ at beginning of word if is affix
+#                     second_alt = 2  # NV: _alt not to interfere with loop variables
+#                     bigram = '_' + stimulus[second_alt]
+#                     if not bigram in all_bigrams:
+#                         all_bigrams.append(bigram)
+#                     bigram_edge_position_weight = get_ngram_edge_position_weight(
+#                         bigram, (first, second_alt), stimulus_space_positions)
+#                     if (bigram in bigrams_to_locations.keys()):
+#                         bigrams_to_locations[bigram].append((first, second_alt, bigram_edge_position_weight))
+#                     else:
+#                         bigrams_to_locations[bigram] = [(first, second_alt, bigram_edge_position_weight)]
+#                     continue
+#                 elif first == len(stimulus) - 2:  # NV: if first letter is the end space
+#                     first_alt = -3  # NV: index of last letter
+#                     # NV: get the actual index (you do +, because first alt is a negative number)
+#                     first_alt = len(stimulus) + first_alt
+#                     second_alt = -2  # NV: index of space after last letter
+#                     second_alt = len(stimulus) + second_alt
+#                     bigram = stimulus[first_alt] + '_'
+#                     if not bigram in all_bigrams:
+#                         all_bigrams.append(bigram)
+#                     bigram_edge_position_weight = get_ngram_edge_position_weight(
+#                         bigram, (first_alt, second_alt), stimulus_space_positions)
+#                     if (bigram in bigrams_to_locations.keys()):
+#                         bigrams_to_locations[bigram].append((first_alt, second_alt, bigram_edge_position_weight))
+#                     else:
+#                         bigrams_to_locations[bigram] = [(first_alt, second_alt, bigram_edge_position_weight)]
+#                     continue
+#
+#             # NV:pick letter between first+1 and first+1+gap+1 (end of bigram max length), as long as that is smaller than end of word
+#             for second in range(first + 1, min(first + 1 + gap + 1, len(stimulus))):
+#                 if (stimulus[
+#                     second] == " "):  # NV: if that is second lettter, you know you have reached the end of possible bigrams
+#                     # NV: break out of second loop if second stim is __. This means symbols before word, or when end of word is reached.
+#                     break
+#                 bigram = stimulus[first] + stimulus[second]
+#                 if bigram != '  ':
+#                     if not bigram in all_bigrams:
+#                         all_bigrams.append(bigram)
+#                     bigram_edge_position_weight = get_ngram_edge_position_weight(
+#                         bigram, (first, second), stimulus_space_positions)
+#                     if (bigram in bigrams_to_locations.keys()):
+#                         bigrams_to_locations[bigram].append((first, second, bigram_edge_position_weight))
+#                     else:
+#                         bigrams_to_locations[bigram] = [(first, second, bigram_edge_position_weight)]
+#
+#     # # GS: test of dit werkt, dan geen monograms, die worden later toch weggefilterd
+#     #    """Also add monograms"""
+#     #    for position in range(len(stimulus)):
+#     #        monogram=stimulus[position]
+#     #        if(monogram==" "):
+#     #            continue
+#     #
+#     #        if not monogram in allBigrams:
+#     #            allBigrams_append(monogram)
+#     #
+#     #        monogramEdgePositionWeight = get_ngram_edge_position_weight(monogram, position,stimulus_space_positions)
+#     #        if monogram in bigramsToLocations.keys():
+#     #            bigramsToLocations[monogram].append((position,monogramEdgePositionWeight))
+#     #        else:
+#     #            bigramsToLocations[monogram]=[(position,monogramEdgePositionWeight)]
+#     # # edge_bigrams = ["_"+stimulus[2], stimulus[-3]+"_"]  # NV: added first and last bigram for affix recognition.
+#
+#     return all_bigrams, bigrams_to_locations
 
 def normalize_values(p, values, max_value):
 
@@ -204,8 +239,6 @@ def build_word_inhibition_matrix(lexicon,lexicon_word_bigrams,pm,tokens_to_lexic
                 if n_total_overlap > pm.min_overlap:
                     word_overlap_matrix[word_1_index, word_2_index] = n_total_overlap - pm.min_overlap
                     word_overlap_matrix[word_2_index, word_1_index] = n_total_overlap - pm.min_overlap
-                    # word_inhibition_matrix[word1, word2] = True
-                    # word_inhibition_matrix[word2, word1] = True
                 else:
                     word_overlap_matrix[word_1_index, word_2_index] = 0
                     word_overlap_matrix[word_2_index, word_1_index] = 0
@@ -215,7 +248,6 @@ def build_word_inhibition_matrix(lexicon,lexicon_word_bigrams,pm,tokens_to_lexic
         pickle.dump(np.sum(word_overlap_matrix, axis=0)[tokens_to_lexicon_indices], f)
 
     size_of_file = os.path.getsize(output_inhibition_matrix)
-
     with open('../data/Inhib_matrix_params_latest_run.dat', "wb") as f:
         pickle.dump(str(lexicon_word_bigrams) + str(lexicon_size) + str(pm.min_overlap) +
                     # str(complete_selective_word_inhibition) + # str(n_known_words) #str(pm.affix_system) +
@@ -237,6 +269,7 @@ def get_blankscreen_stimulus(blankscreen_type):
     return stimulus
 
 def get_attention_skewed(attentionWidth, attention_eccentricity, attention_skew):
+
     # Remember to remove the abs with calc functions
     if attention_eccentricity < 0:
         # Attention left
@@ -249,51 +282,28 @@ def get_attention_skewed(attentionWidth, attention_eccentricity, attention_skew)
     return attention
 
 def calc_acuity(eye_eccentricity, letPerDeg):
+
     # Parameters from Harvey & Dumoulin (2007); 35.55556 is to make acuity at 0 degs eq. to 1
     return (1/35.555556)/(0.018*(eye_eccentricity*letPerDeg+1/0.64))
 
-def calc_bigram_ext_input(location_info, EyePosition, AttentionPosition, attendWidth, letPerDeg, attention_skew):
+def cal_ngram_exc_input(ngram_location, ngram_weight, eye_position, attention_position, attend_width, let_per_deg, attention_skew):
 
-    # Here we look up all instances of same bigram. Act of all is summed (this is somewhat of a questionable assumption, perhaps max() would be better
-    # todo check if locations weights multiplier is correct fixated words
-    bigram_location_weight_multiplier = location_info[2]
+    total_exc_input = 1
+    # ngram activity depends on distance of ngram letters to the centre of attention and fixation, and left/right is skewed using negative/positve att_ecc
+    for letter_position in ngram_location:
+        attention_eccentricity = letter_position - attention_position
+        eye_eccentricity = abs(letter_position - eye_position)
+        attention = get_attention_skewed(attend_width, attention_eccentricity, attention_skew)
+        visual_accuity = calc_acuity(eye_eccentricity, let_per_deg)
+        exc_input = attention * visual_accuity
+        total_exc_input = total_exc_input * exc_input
+    # AL: if ngram contains more than one letter, total excitatory input is squared
+    if len(ngram_location) > 1:
+        total_exc_input = math.sqrt(total_exc_input)
+    # AL: excitation is regulated by ngram location. Ngrams at the word edges have a higher excitatory input.
+    total_exc_input = total_exc_input * ngram_weight
 
-    # Bigram activity depends on distance of bigram letters to the centre of attention and fixation and left/right is skewed using negative/positve att_ecc
-    attention_eccentricity1 = location_info[0]-AttentionPosition
-    attention_eccentricity2 = location_info[1]-AttentionPosition
-    eye_eccentricity1 = abs(location_info[0]-EyePosition)
-    eye_eccentricity2 = abs(location_info[1]-EyePosition)
-    attention1 = get_attention_skewed(attendWidth, attention_eccentricity1, attention_skew)
-    attention2 = get_attention_skewed(attendWidth, attention_eccentricity2, attention_skew)
-
-    # Parameters from Harvey & Dumoulin (2007); 35.55556 is to make acuity at 0 degs eq. to 1
-    visualAccuity1 = calc_acuity(eye_eccentricity1, letPerDeg)
-    visualAccuity2 = calc_acuity(eye_eccentricity2, letPerDeg)
-
-    extInput1 = attention1*visualAccuity1
-    extInput2 = attention2*visualAccuity2
-    extInput = math.sqrt(extInput1*extInput2)
-
-    sumExtInput = extInput * bigram_location_weight_multiplier
-
-    return sumExtInput
-
-def calc_monogram_ext_input(location_info, EyePosition, AttentionPosition, attendWidth, letPerDeg, attention_skew):
-
-    # Here we look up all instances of same monogram. Act of all is summed
-    monogram_locations_weight_multiplier = location_info[1]
-    # Monogram activity depends on distance of bigram letters to the centre of attention and fixation
-
-    attention_eccentricity1 = location_info[0]-AttentionPosition
-    eye_eccentricity1 = abs(location_info[0]-EyePosition)
-
-    attention1 = get_attention_skewed(attendWidth, attention_eccentricity1, attention_skew)
-    visualAccuity1 = calc_acuity(eye_eccentricity1, letPerDeg)
-
-    extInput = attention1*visualAccuity1
-    sumExtInput = extInput * monogram_locations_weight_multiplier
-
-    return sumExtInput
+    return total_exc_input
 
 def define_slot_matching_order(n_words_in_stim, fixated_position_stimulus):
 
@@ -316,69 +326,6 @@ def sample_from_norm_distribution(mu, sigma, recog_speeding, recognized):
         return int(np.round(np.random.normal(mu - recog_speeding, sigma, 1)))
     else:
         return int(np.round(np.random.normal(mu, sigma, 1)))
-
-# def find_word_edges(fixation_center,eye_position,stimulus,tokens):
-#
-#     # contains tuples, tuple[0] is left edge index and tuple[1] is right edge index of words left of fixation + fixated word
-#     left_word_edge_letter_indices = []
-#     # contains tuples, tuple[0] is left edge index and tuple[1] is right edge index of fixated words + words right of fixation
-#     right_word_edge_letter_indices = []
-#     # regex used to find indices of word edges
-#     p = re.compile(r'\b\w+\b', re.UNICODE)
-#
-#     # Identify the beginning and end of fixation word by looking at the
-#     # first letter following a space, counted to the left of the center,
-#     # and the first letter followed by a space, counted to the right from
-#     # the center
-#     for letter_index in range(int(fixation_center), len(stimulus)):
-#         if stimulus[letter_index] == " ":
-#             center_word_last_letter_index = letter_index - 1
-#             break
-#         # in case fixated word is last word in text (no space after last word)
-#         elif letter_index == len(stimulus) - 1 and stimulus.split()[-1] == tokens[-1]:
-#             center_word_last_letter_index = letter_index
-#             break
-#
-#     for letter_index_reversed in range(int(fixation_center), -1, -1):
-#         if stimulus[letter_index_reversed] == " ":
-#             center_word_first_letter_index = letter_index_reversed + 1
-#             break
-#         # in case fixated word is first word in text (no space before first word)
-#         elif letter_index_reversed == 0 and stimulus.split()[0] == tokens[0]:
-#             center_word_first_letter_index = letter_index_reversed
-#             break
-#     fixated_word_edge_indices = (center_word_first_letter_index,center_word_last_letter_index)
-#
-#     fixation_first_position_right_to_middle = eye_position + 1
-#     fixation_first_position_left_to_middle = eye_position - 1
-#
-#     # define stimulus string before and after eye position in fixated word
-#     stimulus_before_eyepos, stimulus_after_eyepos = '', ''
-#     if fixation_first_position_left_to_middle >= 0:
-#         stimulus_before_eyepos = stimulus[0:fixation_first_position_left_to_middle + 1]
-#     if fixation_first_position_right_to_middle < len(stimulus):
-#         stimulus_after_eyepos = stimulus[fixation_first_position_right_to_middle:-1]
-#
-#     # Get word edges for all words starting with the word at fixation
-#     if stimulus_before_eyepos != '':
-#         for m in p.finditer(' ' + stimulus_before_eyepos):
-#             left_edge = m.start() - 1
-#             right_edge = m.end() - 1
-#             if (left_edge, right_edge) != fixated_word_edge_indices: # don't add edges of fixated word
-#                 left_word_edge_letter_indices.append((left_edge, right_edge))
-#
-#     # right_word_edge_letter_indices.append((center_word_first_letter_index, center_word_last_letter_index)) # add edges of fixated word first
-#     if stimulus_after_eyepos != '':
-#         for m in p.finditer(stimulus_after_eyepos):
-#             left_edge = fixation_first_position_right_to_middle + m.start()
-#             right_edge = fixation_first_position_right_to_middle + m.end() - 1
-#             # for the last letter index of last word in stimulus, HACK to surpass error in regex
-#             if right_edge + 2 == len(stimulus):
-#                 right_edge = fixation_first_position_right_to_middle + m.end()
-#             if (left_edge, right_edge) != fixated_word_edge_indices:  # don't add edges of fixated word
-#                 right_word_edge_letter_indices.append((left_edge, right_edge))
-#
-#     return right_word_edge_letter_indices, left_word_edge_letter_indices, fixation_first_position_right_to_middle, fixation_first_position_left_to_middle, fixated_word_edge_indices
 
 def find_word_edges(stimulus):
     # MM: word_edges is dict, with key is token position (from max -2 to +2, but eg. in fst fix can be 0 to +2).
