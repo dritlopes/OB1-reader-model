@@ -166,7 +166,7 @@ def return_task_params(task_attributes):
     letPerDeg = .3
     min_activity = 0.0
     max_activity = 1.0 # 1.3
-    decay = -0.05  # -0.08 # AL: decay in word activation over time
+    decay = -0.05 # -0.05  # -0.08 # AL: decay in word activation over time
 
     # attentional width
     attend_width = 5.0 # 8.0  # NV: #!!!: was set to 15 for flanker, 20 for sentence and 3 for transposed

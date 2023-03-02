@@ -5,7 +5,8 @@ from collections import defaultdict
 
 from utils import get_word_freq, get_pred_values, check_previous_inhibition_matrix
 from reading_functions import get_threshold, string_to_open_ngrams, build_word_inhibition_matrix, cal_ngram_exc_input, define_slot_matching_order, is_similar_word_length, \
-    sample_from_norm_distribution, find_word_edges, get_midword_position_for_surrounding_word, calc_word_attention_right, update_threshold, calc_saccade_error
+    sample_from_norm_distribution, find_word_edges, get_midword_position_for_surrounding_word, calc_word_attention_right, update_threshold, calc_saccade_error,\
+    check_previous_refixations_at_position
 
 
 logger = logging.getLogger(__name__)
@@ -43,7 +44,7 @@ def compute_ngram_activity(stimulus,eye_position,attention_position,attend_width
         else:
             unit_activations[ngram] = activation
 
-    print(unit_activations)
+    # print(unit_activations)
     return unit_activations
 
 def compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_position, attend_width, pm):
@@ -139,15 +140,7 @@ def match_active_words_to_input_slots(order_match_check, stimulus, recognized_po
 
     return recognized_position_flag, recognized_word_at_position, recognized_word_at_position_flag, lexicon_word_activity, new_recognized_words
 
-def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_position_in_stimulus,regression_flag,recognized_position_flag,lexicon_word_activity,eye_position,fixation_counter,attention_position,attend_width,fix_lexicon_index,pm):
-
-    # AL: re-set saccade info from current fixation to update it with next fixation
-    saccade_info = {'saccade_type': None,
-                    'saccade_distance': 0,
-                    'saccade_error': 0,
-                    'saccade_cause': 0,
-                    'saccade_type_by_error': False,
-                    'offset_from_word_center': 0}
+def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_position_in_stimulus,regression_flag,recognized_position_flag,lexicon_word_activity,eye_position,fixation_counter,attention_position,attend_width,fix_lexicon_index,pm,saccade_info):
 
     # Define target of next fixation relative to fixated word n (i.e. 0=next fix on word n, -1=fix on n-1, etc). Default is 1 (= to word n+1)
     next_fixation = 1
@@ -163,6 +156,9 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
 
     # refixation: refixate if the foveal word is not recognized but is still being processed
     elif (not recognized_position_flag[fixation]) and (lexicon_word_activity[fix_lexicon_index] > 0):
+        # # AL: only allows 5 consecutive refixations on the same word to avoid infinitely refixating if no word reaches threshold recognition at a given position
+        # previous_refix = check_previous_refixations_at_position(all_data, fixation, fixation_counter, max_n_refix=5)
+        # if False in previous_refix:
         word_reminder_length = word_edges[fixated_position_in_stimulus][1] - eye_position
         if word_reminder_length > 0:
             next_fixation = 0
@@ -211,7 +207,8 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
             saccade_info['saccade_cause'] = 2 # AL: bcs right of fixated word has highest attwght (letter excitation)
 
     # AL: saccade distance is next attention position minus the current eye position
-    saccade_info['saccade_distance'] = attention_position - eye_position
+    if attention_position:
+        saccade_info['saccade_distance'] = attention_position - eye_position
 
     return attention_position, saccade_info
 
@@ -367,7 +364,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
 
     while not end_of_task:
 
-        print(f'---Fixation {fixation_counter+1} at position {fixation+1}---')
+        print(f'---Fixation {fixation_counter} at position {fixation}---')
 
         fixation_data = defaultdict(list)
 
@@ -392,8 +389,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
         eye_position = compute_eye_position(stimulus, fixated_position_in_stimulus, saccade_info['offset_from_word_center'])
         fixation_data['stimulus'] = stimulus
         fixation_data['eye position'] = eye_position
-        print(
-            f"Stimulus: {stimulus}\neye position in stimulus: {eye_position}\nfour characters to the right of fixation: {stimulus[eye_position:eye_position + 4]}")
+        print(f"Stimulus: {stimulus}\neye position in stimulus: {eye_position}\nfour characters to the right of fixation: {stimulus[eye_position:eye_position + 4]}")
 
         # define order to match activated words to slots in the stimulus
         # NV: the order list should reset when stimulus changes or with the first stimulus
@@ -424,7 +420,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
         n_ngrams, total_ngram_activity, all_ngrams, word_input = compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_position, attend_width, pm)
         fixation_data['n_ngrams'] = n_ngrams
         fixation_data['total_ngram_activity'] = total_ngram_activity
-        print("input to fixwrd: " + str(round(word_input[tokens_to_lexicon_indices[fixation]], 3)))
+        print("input to fixwrd at first cycle: " + str(round(word_input[tokens_to_lexicon_indices[fixation]], 3)))
 
         # Counter n_cycles_since_attent_shift is 0 until attention shift (saccade program initiation), then starts counting to 5
         #   (because a saccade program takes 5 cycles, or 125ms.)
@@ -496,7 +492,13 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
                 # shift attention (& plan saccade in 125 ms) if n_cycles is higher than random threshold shift_start
                 if n_cycles >= shift_start:
                     shift = True
-                    # offset_from_word_center = 0
+                    # AL: re-set saccade info from current fixation to update it with next fixation
+                    saccade_info = {'saccade_type': None,
+                                    'saccade_distance': 0,
+                                    'saccade_error': 0,
+                                    'saccade_cause': 0,
+                                    'saccade_type_by_error': False,
+                                    'offset_from_word_center': 0}
                     attention_position, saccade_info = compute_next_attention_position(all_data,
                                                                                         tokens,
                                                                                         fixation,
@@ -510,15 +512,19 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
                                                                                         attention_position,
                                                                                         attend_width,
                                                                                         foveal_word_index,
-                                                                                        pm)
+                                                                                        pm,
+                                                                                        saccade_info)
                     fixation_data['foveal word activity at shift'] = fixation_data['foveal word activity per cycle'][-1]
                     print('attentpos ', attention_position)
-                    # recompute word input, using ngram excitation and inhibition, because attentshift changes bigram input
-                    n_ngrams, total_ngram_activity, all_ngrams, word_input = compute_words_input(stimulus,
-                                                                                                lexicon_word_ngrams,
-                                                                                                eye_position,
-                                                                                                attention_position,
-                                                                                                attend_width, pm)
+                    # AL: attention position is None if at the end of the text and saccade is not refixation nor regression, so do not compute new words input
+                    if attention_position:
+                        # AL: recompute word input, using ngram excitation and inhibition, because attentshift changes bigram input
+                        n_ngrams, total_ngram_activity, all_ngrams, word_input = compute_words_input(stimulus,
+                                                                                                    lexicon_word_ngrams,
+                                                                                                    eye_position,
+                                                                                                    attention_position,
+                                                                                                    attend_width, pm)
+                        attention_position = np.round(attention_position)
 
             if shift:
                 n_cycles_since_attent_shift += 1 # ...count cycles since attention shift
@@ -528,7 +534,6 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
                 recognized_word_at_cycle[fixation] = n_cycles
                 fixation_data['recognition cycle'] = recognized_word_at_cycle[fixation]
 
-            attention_position = np.round(attention_position)
             n_cycles += 1
 
         # out of cycle loop. After last cycle, compute fixation duration and add final values for fixated word before shift is made
@@ -552,23 +557,23 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
             print("No word was recognized at fixation position")
 
         fixation_counter += 1
+        print(fixation_data)
 
-        # Check if end of text is reached
-        if fixation == total_n_words - 1:
+        # Check if end of text is reached AL: if fixation on last word and next saccade not refixation nor regression
+        if fixation == total_n_words - 1 and saccade_info['saccade_type'] not in ['refixation', 'regression']:
             end_of_task = True
             print("END REACHED!")
             continue
 
-        print(fixation_data)
-        if fixation_counter > 10: exit()
+        #if fixation_counter > 10: exit()
         # if end of text is not yet reached, compute next eye position and thus next fixation
         fixation, next_eye_position, saccade_info = compute_next_eye_position(pm, saccade_info, eye_position, stimulus, fixation, total_n_words, word_edges, fixated_position_in_stimulus)
 
-        # stop if next fixation will be at the last word of the text and if next eye position is at (last letter -1) of text to prevent errors
-        if fixation == total_n_words - 1 and next_eye_position >= len(stimulus) - 3:
-            end_of_task = True
-            print("END REACHED!")
-            continue
+        # # stop if next fixation will be at the last word of the text and if next eye position is at (last letter -1) of text to prevent errors
+        # if fixation == total_n_words - 1 and next_eye_position >= len(stimulus) - 3:
+        #     end_of_task = True
+        #     print("END REACHED!")
+        #     continue
 
     # register words in text in which no word in lexicon reaches recognition threshold
     unrecognized_words = dict()
