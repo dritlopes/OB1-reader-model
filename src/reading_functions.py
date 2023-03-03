@@ -27,9 +27,13 @@ def string_to_open_ngrams(string,gap):
     for position, letter in enumerate(string):
         # AL: to avoid ngrams made of spaces
         if letter != ' ':
+            # all_ngrams.append(letter)
+            # all_locations.append([position])
             # AL: letter at word edge receives higher weight
+            # weight = 0.01
             if position in edge_locations:
-                weight = 1.0
+                weight = 1.
+            # all_weights.append(weight)
                 # AL: include monogram if at word edge
                 all_ngrams.append(letter)
                 all_weights.append(weight)
@@ -43,9 +47,12 @@ def string_to_open_ngrams(string,gap):
                 bigram = letter+string[position+i]
                 all_ngrams.append(bigram)
                 all_locations.append([position,position+i])
+                # weight = 0.5
+                # if position in edge_locations:
+                #     weight = 1.
                 # AL: if both letters in bigram are edge letters, boost excitation
                 # if weight == 1.0 and position+i in edge_locations:
-                #     weight = 2.0
+                #     weight = 1.5
                 all_weights.append(weight)
 
     return all_ngrams, all_weights, all_locations
@@ -233,9 +240,9 @@ def calc_monogram_attention_sum(position_start, position_end, eye_position, atte
         monogram_locations_weight_multiplier = 0.5
         if foveal_word:
             if letter_location == position_end:
-                monogram_locations_weight_multiplier = 2.
+                monogram_locations_weight_multiplier = 1. # 2.
         elif letter_location in [position_start, position_end]:
-            monogram_locations_weight_multiplier = 2.
+            monogram_locations_weight_multiplier = 1. # 2.
 
         # Monogram activity depends on distance of monogram letters to the centre of attention and fixation
         attention_eccentricity = letter_location - attention_position
@@ -274,7 +281,7 @@ def calc_word_attention_right(word_edges, eye_position, attention_position, atte
                 crt_word_monogram_attention_sum = calc_monogram_attention_sum(word_start_edge, word_end_edge, eye_position, attention_position, attend_width, attention_skew, let_per_deg, foveal_word)
             # print('word position and visual salience: ',i,crt_word_monogram_attention_sum)
             word_attention_right.append(crt_word_monogram_attention_sum)
-
+            print(f'visual salience of {i} to the right of fixation: {crt_word_monogram_attention_sum}')
     return word_attention_right
 
 def calc_saccade_error(saccade_distance, optimal_distance, saccErr_scaler, saccErr_sigma, saccErr_sigma_scaler,use_saccade_error):
@@ -290,11 +297,14 @@ def calc_saccade_error(saccade_distance, optimal_distance, saccErr_scaler, saccE
 
 def check_previous_refixations_at_position(all_data, fixation, fixation_counter, max_n_refix):
 
-    previous_refixations = np.zeros(max_n_refix+1,dtype=bool)
-
-    for i in range(max_n_refix+1):
-        if fixation_counter - i in all_data.keys():
-            if all_data[fixation_counter - i]['saccade_type'] == 'refixation' and all_data[fixation_counter - i]['foveal word index'] == fixation:
-                previous_refixations[i] = True
-
-    return previous_refixations
+    # AL: mechanism to prevent infinite refixations in words that do get sufficient activation to get recognized
+    refixate = False
+    # AL: if first fixation on text, no previous fixation to check, so refixation is allowed
+    if fixation_counter == 0: refixate = True
+    else:
+        for i in range(1,max_n_refix+1):
+            if fixation_counter - i in all_data.keys():
+                if all_data[fixation_counter - i]['saccade_type'] != 'refixation' and all_data[fixation_counter - i]['foveal word index'] == fixation:
+                    refixate = True
+                    break
+    return refixate

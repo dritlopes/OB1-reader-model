@@ -156,15 +156,15 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
 
     # refixation: refixate if the foveal word is not recognized but is still being processed
     elif (not recognized_position_flag[fixation]) and (lexicon_word_activity[fix_lexicon_index] > 0):
-        # # AL: only allows 5 consecutive refixations on the same word to avoid infinitely refixating if no word reaches threshold recognition at a given position
-        # previous_refix = check_previous_refixations_at_position(all_data, fixation, fixation_counter, max_n_refix=5)
-        # if False in previous_refix:
-        word_reminder_length = word_edges[fixated_position_in_stimulus][1] - eye_position
-        if word_reminder_length > 0:
-            next_fixation = 0
-            if fixation_counter - 1 in all_data.keys():
-                if not all_data[fixation_counter - 1]['refixated']:
-                    refix_size = np.round(word_reminder_length * refix_size)
+        # # AL: only allows 3 consecutive refixations on the same word to avoid infinitely refixating if no word reaches threshold recognition at a given position
+        refixate = check_previous_refixations_at_position(all_data,fixation,fixation_counter,max_n_refix=3)
+        if refixate:
+            word_reminder_length = word_edges[fixated_position_in_stimulus][1] - eye_position
+            if word_reminder_length > 0:
+                next_fixation = 0
+                if fixation_counter - 1 in all_data.keys():
+                    if not all_data[fixation_counter - 1]['refixated']:
+                        refix_size = np.round(word_reminder_length * refix_size)
 
     # forward saccade: perform normal forward saccade (unless at the last position in the text)
     elif fixation < (len(tokens) - 1):
@@ -568,12 +568,6 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
         #if fixation_counter > 10: exit()
         # if end of text is not yet reached, compute next eye position and thus next fixation
         fixation, next_eye_position, saccade_info = compute_next_eye_position(pm, saccade_info, eye_position, stimulus, fixation, total_n_words, word_edges, fixated_position_in_stimulus)
-
-        # # stop if next fixation will be at the last word of the text and if next eye position is at (last letter -1) of text to prevent errors
-        # if fixation == total_n_words - 1 and next_eye_position >= len(stimulus) - 3:
-        #     end_of_task = True
-        #     print("END REACHED!")
-        #     continue
 
     # register words in text in which no word in lexicon reaches recognition threshold
     unrecognized_words = dict()
