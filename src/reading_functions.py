@@ -17,7 +17,6 @@ def get_stimulus_edge_positions(stimulus):
 def string_to_open_ngrams(string,gap):
 
     all_ngrams, all_weights, all_locations = [], [], []
-    weight = 0.5
 
     # AL: make sure string contains one space before and after for correctly finding word edges
     string = " " + string + " "
@@ -25,6 +24,7 @@ def string_to_open_ngrams(string,gap):
     string = string.strip()
 
     for position, letter in enumerate(string):
+        weight = 0.5
         # AL: to avoid ngrams made of spaces
         if letter != ' ':
             if position in edge_locations:
@@ -39,6 +39,9 @@ def string_to_open_ngrams(string,gap):
                 # AL: make sure second letter of bigram does not cross the stimulus string nor the word
                 if position+i >= len(string) or string[position+i] == ' ':
                     break
+                # Check if second letter in bigram is edge
+                if position+i in edge_locations:
+                    weight = weight * 2
                 bigram = letter+string[position+i]
                 all_ngrams.append(bigram)
                 all_locations.append([position,position+i])
@@ -275,7 +278,7 @@ def calc_word_attention_right(word_edges, eye_position, attention_position, atte
                 crt_word_monogram_attention_sum = calc_monogram_attention_sum(word_start_edge, word_end_edge, eye_position, attention_position, attend_width, attention_skew, let_per_deg, foveal_word)
             # print('word position and visual salience: ',i,crt_word_monogram_attention_sum)
             word_attention_right.append(crt_word_monogram_attention_sum)
-            print(f'visual salience of {i} to the right of fixation: {crt_word_monogram_attention_sum}')
+            #print(f'visual salience of {i} to the right of fixation: {crt_word_monogram_attention_sum}')
     return word_attention_right
 
 def calc_saccade_error(saccade_distance, optimal_distance, saccErr_scaler, saccErr_sigma, saccErr_sigma_scaler,use_saccade_error):

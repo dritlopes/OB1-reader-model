@@ -44,7 +44,7 @@ def compute_ngram_activity(stimulus,eye_position,attention_position,attend_width
         else:
             unit_activations[ngram] = activation
 
-    # print(unit_activations)
+    #print(unit_activations)
     return unit_activations
 
 def compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_position, attend_width, pm):
@@ -57,7 +57,7 @@ def compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_p
                                               attention_position, attend_width, pm.letPerDeg,
                                               pm.attention_skew, pm.bigram_gap)
     total_ngram_activity = sum(unit_activations.values())
-    print ('    total ngram act:' + str(round(total_ngram_activity,3)))
+    #print ('    total ngram act:' + str(round(total_ngram_activity,3)))
     n_ngrams = len(unit_activations.keys())
 
     # compute word input according to ngram excitation and inhibition
@@ -72,8 +72,9 @@ def compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_p
         word_input[lexicon_ix] = word_excitation_input + ngram_inhibition_input
 
     # normalize based on number of ngrams in lexicon
+    # MM: Added 2 to nr ngrams to decrease input to short words, to compensate for higher av. wgt their bigrams
     all_ngrams = [len(ngrams) for ngrams in lexicon_word_ngrams.values()]
-    word_input = word_input / np.array(all_ngrams)
+    word_input = word_input / (np.array(all_ngrams)+5)
 
     return n_ngrams, total_ngram_activity, all_ngrams, word_input
 
@@ -126,8 +127,7 @@ def match_active_words_to_input_slots(order_match_check, stimulus, recognized_po
                 # Find the word with the highest activation in all words that have a similar length
                 highest = np.argmax(recognized_words_fit_len * lexicon_word_activity)
                 highest_word = lexicon[highest]
-                print('word in input: ', word_searched)
-                print('word with highest activation: ', highest_word)
+                print('word in input: ', word_searched, '      one w. highest act: ', highest_word)
                 # The winner is matched to the slot, and its activity is reset to minimum to not have it matched to other words
                 recognized_position_flag[word_index] = True
                 recognized_word_at_position[word_index] = highest_word
@@ -317,7 +317,7 @@ def compute_next_eye_position(pm, saccade_info, eye_position, stimulus, fixation
 
     return fixation, next_eye_position, saccade_info
 
-def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index,lexicon_thresholds_dict,lexicon,pred_values,tokens_to_lexicon_indices,freq_values):
+def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index,lexicon_thresholds_dict,lexicon,pred_values,tokens_to_lexicon_indices,freq_values):
 
     all_data = {}
     # is set to true when end of text is reached. For non-continuous reading, set to True when it reads the last trial
@@ -389,7 +389,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
         eye_position = compute_eye_position(stimulus, fixated_position_in_stimulus, saccade_info['offset_from_word_center'])
         fixation_data['stimulus'] = stimulus
         fixation_data['eye position'] = eye_position
-        print(f"Stimulus: {stimulus}\neye position in stimulus: {eye_position}\nfour characters to the right of fixation: {stimulus[eye_position:eye_position + 4]}")
+        print(f"Stimulus: {stimulus}\neye pos. in stim.: {eye_position}  four char. right of fix: {stimulus[eye_position:eye_position + 4]}")
 
         # define attention width according to whether there was a regression in the last fixation, i.e. this fixation location is a result of regression
         if fixation_data['saccade_type'] == 'regression':
@@ -405,7 +405,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
         # NV: the order list should reset when stimulus changes or with the first stimulus
         order_match_check = define_slot_matching_order(len(stimulus.split()), fixated_position_in_stimulus,
                                                        attend_width)
-        print(f'order_match_check: {order_match_check}')
+        #print(f'order_match_check: {order_match_check}')
 
         print('Entering cycle loops to define word activity...')
         print("fix on: " + tokens[fixation] + '  attent. width: ' + str(attend_width) + '  thresh.' + str(round(lexicon_thresholds[tokens_to_lexicon_indices[fixation]],3)))
@@ -422,7 +422,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
         n_ngrams, total_ngram_activity, all_ngrams, word_input = compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_position, attend_width, pm)
         fixation_data['n_ngrams'] = n_ngrams
         fixation_data['total_ngram_activity'] = total_ngram_activity
-        #print("input to fixwrd at first cycle: " + str(round(word_input[tokens_to_lexicon_indices[fixation]], 3)))
+        print("  input to fixwrd at first cycle: " + str(round(word_input[tokens_to_lexicon_indices[fixation]], 3)))
 
         # Counter n_cycles_since_attent_shift is 0 until attention shift (saccade program initiation), then starts counting to 5
         #   (because a saccade program takes 5 cycles, or 125ms.)
@@ -434,7 +434,8 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
             # update cycle info
             foveal_word_index = lexicon_word_index[tokens[fixation]]
             foveal_word_activity = lexicon_word_activity[foveal_word_index]
-            #print('CYCLE ', str(n_cycles), '   activ @fix ', str(round(foveal_word_activity,3)))
+            print('CYCLE ', str(n_cycles), '   activ @fix ', str(round(foveal_word_activity,3)))
+            #print('        and act. of Die', str(round(lexicon_word_activity[lexicon_word_index[tokens[0]]],3)))
 
             fixation_data['foveal word activity per cycle'].append(foveal_word_activity)
             fixation_data['foveal word-to-word inhibition per cycle'].append(abs(lexicon_word_inhibition[foveal_word_index]))
@@ -517,7 +518,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
                                                                                         pm,
                                                                                         saccade_info)
                     fixation_data['foveal word activity at shift'] = fixation_data['foveal word activity per cycle'][-1]
-                    print('attentpos ', attention_position)
+                    #print('attentpos ', attention_position)
                     # AL: attention position is None if at the end of the text and saccade is not refixation nor regression, so do not compute new words input
                     if attention_position:
                         # AL: recompute word input, using ngram excitation and inhibition, because attentshift changes bigram input
@@ -527,6 +528,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
                                                                                                     attention_position,
                                                                                                     attend_width, pm)
                         attention_position = np.round(attention_position)
+                    print("  input after attentshift: " + str(round(word_input[tokens_to_lexicon_indices[fixation]], 3)))
 
             if shift:
                 n_cycles_since_attent_shift += 1 # ...count cycles since attention shift
@@ -546,28 +548,27 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
         all_data[fixation_counter] = fixation_data
 
         cycle = fixation_data['recognition cycle'] if 'recognition cycle' in fixation_data.keys() else -1
-        print(f"Relative activity from foveal word in recognition cycle (or last cycle before shift if not recognized): {fixation_data['foveal word activity per cycle'][cycle] / fixation_data['foveal word threshold']}")
+        #print(f"Relative act. from foveal word in recogn. cycle (or pre-shift cycle if not recognized): {fixation_data['foveal word activity per cycle'][cycle] / fixation_data['foveal word threshold']}")
 
         print("Fixation duration: ", fixation_data['fixation duration'], " ms.")
         if recognized_position_flag[fixation]:
             if recognized_true_word_flag[fixation]:
-                print("The correct word was recognized at fixation position!")
+                print("Correct word recognized at fixation!")
             else:
-                print("Another word was recognized at fixation position!")
-                print(f"Recognized word: {recognized_word_at_position[fixation]}")
+                print(f"Wrong word recognized at fixation! (Recognized: {recognized_word_at_position[fixation]})")
         else:
             print("No word was recognized at fixation position")
 
         fixation_counter += 1
-        print(fixation_data)
 
         # Check if end of text is reached AL: if fixation on last word and next saccade not refixation nor regression
         if fixation == total_n_words - 1 and saccade_info['saccade_type'] not in ['refixation', 'regression']:
             end_of_task = True
+            print(fixation_data)
             print("END REACHED!")
             continue
 
-        # if fixation_counter > 25: exit()
+        if fixation_counter > 5: exit()
         # if end of text is not yet reached, compute next eye position and thus next fixation
         fixation, next_eye_position, saccade_info = compute_next_eye_position(pm, saccade_info, eye_position, stimulus, fixation, total_n_words, word_edges, fixated_position_in_stimulus)
 
@@ -579,7 +580,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
 
     return all_data, unrecognized_words
 
-def controlled_reading():
+def word_recognition():
     pass
     # print('Defining stimulus...')
     # # stimulus in each fixation is pre-defined for controlled reading
@@ -656,7 +657,7 @@ def simulate_experiment(pm):
             word_inhibition_matrix = pickle.load(f)
     else:
         word_inhibition_matrix = build_word_inhibition_matrix(lexicon,lexicon_word_ngrams,pm,tokens_to_lexicon_indices)
-    print("Inhibition grid ready.")
+    #print("Inhibition grid ready.")
 
     print("")
     print("BEGIN SIMULATION")
@@ -664,18 +665,18 @@ def simulate_experiment(pm):
 
     # read text/trials
     if pm.task_to_run == 'continuous reading':
-        all_data, unrecognized_words = continuous_reading(pm,
-                                                        tokens,
-                                                        word_inhibition_matrix,
-                                                        lexicon_word_ngrams,
-                                                        lexicon_word_index,
-                                                        word_thresh_dict,
-                                                        lexicon,
-                                                        pred_values,
-                                                        tokens_to_lexicon_indices,
-                                                        word_frequencies)
+        all_data, unrecognized_words = reading(pm,
+                                                tokens,
+                                                word_inhibition_matrix,
+                                                lexicon_word_ngrams,
+                                                lexicon_word_index,
+                                                word_thresh_dict,
+                                                lexicon,
+                                                pred_values,
+                                                tokens_to_lexicon_indices,
+                                                word_frequencies)
 
     else:
-        all_data, unrecognized_words = controlled_reading()
+        all_data, unrecognized_words = word_recognition()
 
     return all_data, unrecognized_words

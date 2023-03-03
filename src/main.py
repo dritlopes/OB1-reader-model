@@ -54,7 +54,7 @@ def main():
                         format='%(name)s %(levelname)s:%(message)s')
     logger = logging.getLogger(__name__)
 
-    useparser=True
+    useparser=False
     if useparser:
         parser = argparse.ArgumentParser()
         parser.add_argument('stimuli_filepath')
@@ -82,11 +82,11 @@ def main():
             "task_to_run" : 'continuous reading',
             "stimuli_filepath": "../stimuli/PSC_test.txt",
             "language": 'german',
-            "run_exp": 'True',
-            "analyze_results": 'False',
-            "optimize": 'False',
-            "print_stim": 'False',
-            "plotting": 'False'
+            "run_exp": True,
+            "analyze_results": False,
+            "optimize": False,
+            "print_stim": False,
+            "plotting": False
         }
 
     pm = return_params(global_parameters)
