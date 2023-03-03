@@ -72,9 +72,9 @@ def compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_p
         word_input[lexicon_ix] = word_excitation_input + ngram_inhibition_input
 
     # normalize based on number of ngrams in lexicon
-    # MM: Added 2 to nr ngrams to decrease input to short words, to compensate for higher av. wgt their bigrams
+    # MM: Add discounted_Ngrams to nr ngrams. Decreases input to short words to compensate for fact that higher prop of their bigrams have higher wgt because edges
     all_ngrams = [len(ngrams) for ngrams in lexicon_word_ngrams.values()]
-    word_input = word_input / (np.array(all_ngrams)+5)
+    word_input = word_input / (np.array(all_ngrams) + pm.discounted_Ngrams)
 
     return n_ngrams, total_ngram_activity, all_ngrams, word_input
 
@@ -568,7 +568,7 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
             print("END REACHED!")
             continue
 
-        if fixation_counter > 5: exit()
+        #if fixation_counter > 6: exit()
         # if end of text is not yet reached, compute next eye position and thus next fixation
         fixation, next_eye_position, saccade_info = compute_next_eye_position(pm, saccade_info, eye_position, stimulus, fixation, total_n_words, word_edges, fixated_position_in_stimulus)
 
