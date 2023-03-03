@@ -5,17 +5,16 @@ import os
 import numpy as np
 import chardet
 import json
-import re
-
 
 def get_stimulus_text_from_file(filepath):
 
     encoding = chardet.detect(open(filepath, "rb").read())['encoding']
-
     if ".txt" in filepath:
         with codecs.open(filepath, encoding=encoding, errors='strict') as infile:
             text = infile.read()
+            text = text.encode('UTF-8').decode('UTF-8')
             data = {'all': text}
+
     else:
         data = pd.read_csv(filepath,sep=',',encoding=encoding)
 
@@ -31,8 +30,8 @@ def create_freq_file(language, task_words, output_file_frequency_map, freq_thres
         my_data['word'] = my_data['word'].astype('unicode')
         file_freq_dict = dict()
         for word, freq in zip(my_data['word'].tolist(),my_data['f'].tolist()):
+            word = word.strip().replace(".", "").replace(",","")
             file_freq_dict[word] = float(freq)
-
         with open(output_file_frequency_map, "w") as f:
             json.dump(file_freq_dict, f, ensure_ascii=False)
 

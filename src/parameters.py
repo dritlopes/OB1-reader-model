@@ -170,7 +170,7 @@ def return_task_params(task_attributes):
 
     # attentional width
     attend_width = 5.0 # 8.0  # NV: #!!!: was set to 15 for flanker, 20 for sentence and 3 for transposed
-    max_attend_width = 5.0
+    max_attend_width = 5.0 # AL: maybe increase this for reading simulation?
     min_attend_width = 3.0
     attention_skew = 4  # 1 equals symmetrical distribution # 4 (paper)
     bigram_gap = 2  # How many in btw letters still lead to bigram? 6 (optimal) # 3 (paper)

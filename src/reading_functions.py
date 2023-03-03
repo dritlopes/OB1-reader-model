@@ -27,13 +27,8 @@ def string_to_open_ngrams(string,gap):
     for position, letter in enumerate(string):
         # AL: to avoid ngrams made of spaces
         if letter != ' ':
-            # all_ngrams.append(letter)
-            # all_locations.append([position])
-            # AL: letter at word edge receives higher weight
-            # weight = 0.01
             if position in edge_locations:
                 weight = 1.
-            # all_weights.append(weight)
                 # AL: include monogram if at word edge
                 all_ngrams.append(letter)
                 all_weights.append(weight)
@@ -47,12 +42,6 @@ def string_to_open_ngrams(string,gap):
                 bigram = letter+string[position+i]
                 all_ngrams.append(bigram)
                 all_locations.append([position,position+i])
-                # weight = 0.5
-                # if position in edge_locations:
-                #     weight = 1.
-                # AL: if both letters in bigram are edge letters, boost excitation
-                # if weight == 1.0 and position+i in edge_locations:
-                #     weight = 1.5
                 all_weights.append(weight)
 
     return all_ngrams, all_weights, all_locations
@@ -179,15 +168,20 @@ def cal_ngram_exc_input(ngram_location, ngram_weight, eye_position, attention_po
 
     return total_exc_input
 
-def define_slot_matching_order(n_words_in_stim, fixated_position_stimulus):
+def define_slot_matching_order(n_words_in_stim, fixated_position_stimulus, attend_width):
 
     # Slot-matching mechanism
     # MM: check len stim, then determine order in which words are matched to slots in stim
     # Words are checked in the order of its attentwght. The closer to the fixation point, the more attention weight.
     # AL: made computation dependent on position of fixated word (so we are not assuming anymore that fixation is always at the center of the stimulus)
+
     positions = [+1,-1,+2,-2,+3,-3]
+    # AL: number of words checked depend on attention width. The narrower the attention width the fewer words matched.
+    n_words_to_match = min(n_words_in_stim, (math.floor(attend_width/3)*2+1))
     order_match_check = [fixated_position_stimulus]
-    for p in positions:
+    for i, p in enumerate(positions):
+        if i > n_words_to_match:
+            break
         next_pos = fixated_position_stimulus + p
         if next_pos >= 0 and next_pos < n_words_in_stim:
             order_match_check.append(next_pos)

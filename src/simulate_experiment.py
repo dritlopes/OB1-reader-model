@@ -391,10 +391,6 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
         fixation_data['eye position'] = eye_position
         print(f"Stimulus: {stimulus}\neye position in stimulus: {eye_position}\nfour characters to the right of fixation: {stimulus[eye_position:eye_position + 4]}")
 
-        # define order to match activated words to slots in the stimulus
-        # NV: the order list should reset when stimulus changes or with the first stimulus
-        order_match_check = define_slot_matching_order(len(stimulus.split()),fixated_position_in_stimulus)
-
         # define attention width according to whether there was a regression in the last fixation, i.e. this fixation location is a result of regression
         if fixation_data['saccade_type'] == 'regression':
             # set regression flag to know that a regression has been realized towards this position, in order to prevent double regressions to the same word
@@ -404,6 +400,12 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
         else:
             # widen attention by 0.5 letters in forward saccades
             attend_width = min(attend_width + 0.5, pm.max_attend_width)
+
+        # define order to match activated words to slots in the stimulus
+        # NV: the order list should reset when stimulus changes or with the first stimulus
+        order_match_check = define_slot_matching_order(len(stimulus.split()), fixated_position_in_stimulus,
+                                                       attend_width)
+        print(f'order_match_check: {order_match_check}')
 
         print('Entering cycle loops to define word activity...')
         print("fix on: " + tokens[fixation] + '  attent. width: ' + str(attend_width) + '  thresh.' + str(round(lexicon_thresholds[tokens_to_lexicon_indices[fixation]],3)))
@@ -420,7 +422,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
         n_ngrams, total_ngram_activity, all_ngrams, word_input = compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_position, attend_width, pm)
         fixation_data['n_ngrams'] = n_ngrams
         fixation_data['total_ngram_activity'] = total_ngram_activity
-        print("input to fixwrd at first cycle: " + str(round(word_input[tokens_to_lexicon_indices[fixation]], 3)))
+        #print("input to fixwrd at first cycle: " + str(round(word_input[tokens_to_lexicon_indices[fixation]], 3)))
 
         # Counter n_cycles_since_attent_shift is 0 until attention shift (saccade program initiation), then starts counting to 5
         #   (because a saccade program takes 5 cycles, or 125ms.)
@@ -461,7 +463,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
                                                   pm.word_length_similarity_constant)
 
             # update threshold of n+1 or n+2 with pred value
-            if pm.prediction_flag:
+            if pm.prediction_flag and fixation < total_n_words-1:
                 # update the threshold for the next word only if word at fixation has been recognized
                 if recognized_true_word_flag[fixation]:
                     position = fixation + 1
@@ -565,7 +567,7 @@ def continuous_reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon
             print("END REACHED!")
             continue
 
-        #if fixation_counter > 10: exit()
+        # if fixation_counter > 25: exit()
         # if end of text is not yet reached, compute next eye position and thus next fixation
         fixation, next_eye_position, saccade_info = compute_next_eye_position(pm, saccade_info, eye_position, stimulus, fixation, total_n_words, word_edges, fixated_position_in_stimulus)
 
@@ -609,7 +611,6 @@ def simulate_experiment(pm):
 
     tokens = [token.strip() for token in tokens if token.strip() != '']
     tokens = [token.replace(".", "").replace(",", "") for token in tokens]
-
     word_frequencies = get_word_freq(pm, set([token.lower() for token in set(tokens)]))
     pred_values = get_pred_values(pm, set(tokens))
     max_frequency = max(word_frequencies.values())
