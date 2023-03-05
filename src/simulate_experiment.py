@@ -3,7 +3,7 @@ import numpy as np
 import pickle
 from collections import defaultdict
 
-from utils import get_word_freq, get_pred_values, check_previous_inhibition_matrix
+from utils import get_word_freq, get_pred_values, check_previous_inhibition_matrix, pre_process_string
 from reading_functions import get_threshold, string_to_open_ngrams, build_word_inhibition_matrix, cal_ngram_exc_input, define_slot_matching_order, is_similar_word_length, \
     sample_from_norm_distribution, find_word_edges, get_midword_position_for_surrounding_word, calc_word_attention_right, update_threshold, calc_saccade_error,\
     check_previous_refixations_at_position
@@ -469,7 +469,7 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
                 if recognized_true_word_flag[fixation]:
                     position = fixation + 1
                     # if next word has already been recognized, update threshold of n+2 word
-                    if recognized_true_word_flag[position]:
+                    if fixation < total_n_words - 2 and recognized_true_word_flag[position]:
                         position = fixation + 2
                     # and only if next word has not been recognized (either n+1 or n+2)
                     if not recognized_true_word_flag[position]:
@@ -598,8 +598,6 @@ def word_recognition():
 
 def simulate_experiment(pm):
 
-    # TODO add visualise_reading
-
     print('Preparing simulation...')
 
     if type(pm.stim_all) == str:
@@ -610,12 +608,11 @@ def simulate_experiment(pm):
     if pm.is_priming_task:
         tokens.extend([token for stimulus in list(pm.stim["prime"]) for token in stimulus.split(' ')])
 
-    tokens = [token.strip() for token in tokens if token.strip() != '']
-    tokens = [token.replace(".", "").replace(",", "") for token in tokens]
-    word_frequencies = get_word_freq(pm, set([token.lower() for token in set(tokens)]))
+    tokens = [pre_process_string(token) for token in tokens]
+    word_frequencies = get_word_freq(pm, set([token.lower() for token in tokens]))
     pred_values = get_pred_values(pm, set(tokens))
     max_frequency = max(word_frequencies.values())
-    lexicon = list(set(tokens) | set(word_frequencies.keys())) # it is actually just the words in the input, because word_frequencies is the overlap between words in the freq resource
+    lexicon = list(set(tokens) | set(word_frequencies.keys()))
 
     # write out lexicon for consulting purposes
     lexicon_file_name = '../data/Lexicon.dat'
@@ -657,7 +654,7 @@ def simulate_experiment(pm):
             word_inhibition_matrix = pickle.load(f)
     else:
         word_inhibition_matrix = build_word_inhibition_matrix(lexicon,lexicon_word_ngrams,pm,tokens_to_lexicon_indices)
-    #print("Inhibition grid ready.")
+    print("Inhibition grid ready.")
 
     print("")
     print("BEGIN SIMULATION")

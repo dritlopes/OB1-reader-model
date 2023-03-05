@@ -91,23 +91,24 @@ def build_word_inhibition_matrix(lexicon,lexicon_word_bigrams,pm,tokens_to_lexic
     # word_inhibition_matrix = np.empty((lexicon_size, lexicon_size), dtype=bool)
 
     for word_1_index in range(lexicon_size):
-        for word_2_index in range(word_1_index+1,lexicon_size): # AL: make sure word1-word2, but not word2-word1 or word1-word1.
+        # AL: make sure word1-word2, but not word2-word1 or word1-word1.
+        for word_2_index in range(word_1_index+1,lexicon_size):
             word1, word2 = lexicon[word_1_index], lexicon[word_2_index]
-            if not is_similar_word_length(len(word1), len(word2), pm.word_length_similarity_constant):
-                continue
-            else:
-                bigram_common = list(set(lexicon_word_bigrams[word1][0]).intersection(set(lexicon_word_bigrams[word2][0])))
-                n_bigram_overlap = len(bigram_common)
-                monograms_common = list(set(word1) & set(word2))
-                n_monogram_overlap = len(monograms_common)
-                n_total_overlap = n_bigram_overlap + n_monogram_overlap
+            # if not is_similar_word_length(len(word1), len(word2), pm.word_length_similarity_constant):
+            #     continue
+            # else:
+            bigram_common = list(set(lexicon_word_bigrams[word1][0]).intersection(set(lexicon_word_bigrams[word2][0])))
+            n_bigram_overlap = len(bigram_common)
+            monograms_common = list(set(word1) & set(word2))
+            n_monogram_overlap = len(monograms_common)
+            n_total_overlap = n_bigram_overlap + n_monogram_overlap
 
-                if n_total_overlap > pm.min_overlap:
-                    word_overlap_matrix[word_1_index, word_2_index] = n_total_overlap - pm.min_overlap
-                    word_overlap_matrix[word_2_index, word_1_index] = n_total_overlap - pm.min_overlap
-                else:
-                    word_overlap_matrix[word_1_index, word_2_index] = 0
-                    word_overlap_matrix[word_2_index, word_1_index] = 0
+            if n_total_overlap > pm.min_overlap:
+                word_overlap_matrix[word_1_index, word_2_index] = n_total_overlap - pm.min_overlap
+                word_overlap_matrix[word_2_index, word_1_index] = n_total_overlap - pm.min_overlap
+            else:
+                word_overlap_matrix[word_1_index, word_2_index] = 0
+                word_overlap_matrix[word_2_index, word_1_index] = 0
 
     output_inhibition_matrix = '../data/Inhibition_matrix_previous.dat'
     with open(output_inhibition_matrix, "wb") as f:

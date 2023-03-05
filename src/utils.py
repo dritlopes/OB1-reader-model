@@ -5,6 +5,7 @@ import os
 import numpy as np
 import chardet
 import json
+import re
 
 def get_stimulus_text_from_file(filepath):
 
@@ -20,9 +21,19 @@ def get_stimulus_text_from_file(filepath):
 
     return data
 
+def pre_process_string(string, remove_punctuation=True, all_lowercase=True, strip_spaces=True):
+
+    if remove_punctuation:
+        string = re.sub(r'[^\w\s]', '', string)
+    if all_lowercase:
+        string = string.lower()
+    if strip_spaces:
+        string = string.strip()
+    return string
+
 def create_freq_file(language, task_words, output_file_frequency_map, freq_threshold, n_high_freq_words, task, verbose):
 
-    # this was needed to reproduce results on PSCall because the overlap between the words and SUBTLEX-DE was low (less than half). Need to fix this later
+    # TODO AL: this was needed to reproduce results on PSCall because the overlap between the words and SUBTLEX-DE was low (less than half). Need to fix this later
     if task == 'continuous reading' and language == 'german':
         filepath = "../data/PSCall_freq_pred.txt"
         my_data = pd.read_csv(filepath, delimiter="\t",
@@ -30,7 +41,7 @@ def create_freq_file(language, task_words, output_file_frequency_map, freq_thres
         my_data['word'] = my_data['word'].astype('unicode')
         file_freq_dict = dict()
         for word, freq in zip(my_data['word'].tolist(),my_data['f'].tolist()):
-            word = word.strip().replace(".", "").replace(",","")
+            word = pre_process_string(word)
             file_freq_dict[word] = float(freq)
         with open(output_file_frequency_map, "w") as f:
             json.dump(file_freq_dict, f, ensure_ascii=False)
@@ -75,6 +86,8 @@ def create_freq_file(language, task_words, output_file_frequency_map, freq_thres
             freq_words['cfreqmovies'] = freq_words['cfreqmovies'].apply(lambda x: np.log10(x * 1000) if x > 0 else 0)
         # convert strings to floats
         freq_words[freq_type] = freq_words[freq_type].replace(',', '.', regex=True).astype(float)
+        # preprocess words for correct matching with tokens in stimulus
+        freq_words[word_col] = freq_words[word_col].apply(lambda x : pre_process_string(x))
         # only keep words whose frequencies are higher than threshold
         freq_words = freq_words[freq_words[freq_type] > freq_threshold]
         frequency_words_dict = dict(zip(freq_words[freq_words.columns[0]], freq_words[freq_words.columns[1]]))
@@ -85,9 +98,9 @@ def create_freq_file(language, task_words, output_file_frequency_map, freq_thres
         for word in overlapping_words:
             file_freq_dict[word] = frequency_words_dict[word]
 
-        # only keep top n words
+        # add top n words from frequency resource
         for line_number in range(n_high_freq_words):
-            file_freq_dict[((freq_words.iloc[line_number][0]).lower())] = freq_words.iloc[line_number][1]
+            file_freq_dict[(freq_words.iloc[line_number][0])] = freq_words.iloc[line_number][1]
 
         if verbose:
             print("amount of words in task:", len(task_words))
@@ -99,9 +112,10 @@ def create_freq_file(language, task_words, output_file_frequency_map, freq_thres
 
 def get_word_freq(pm, unique_words, n_high_freq_words = 500, freq_threshold = 0.15, verbose=False):
 
-    output_word_frequency_map = "../data/" + pm.task_to_run + "_frequency_map_" + pm.language + ".json"
+    output_word_frequency_map = f"../data/{pm.task_to_run}_{pm.stim_name}_frequency_map_{pm.language}.json"
 
-    if not os.path.exists(output_word_frequency_map): #AL: in case freq file needs to be created from original files
+    # AL: in case freq file needs to be created from original files
+    if not os.path.exists(output_word_frequency_map):
         create_freq_file(pm.language, unique_words, output_word_frequency_map, freq_threshold, n_high_freq_words, pm.task_to_run, verbose)
 
     with open(output_word_frequency_map, "r") as f:
@@ -147,9 +161,10 @@ def create_pred_file(pm, task_words, output_file_pred_map):
 
 def get_pred_values(pm, task_words):
 
-    output_word_pred_map = "../data/" + pm.task_to_run + "_predictions_map_" + pm.language + ".json"
+    output_word_pred_map = f"../data/{pm.task_to_run}_{pm.stim_name}_prediction_map_{pm.language}.json"
 
-    if not os.path.exists(output_word_pred_map):  # AL: in case pred file needs to be created from original files
+    # AL: in case pred file needs to be created from original files
+    if not os.path.exists(output_word_pred_map):
         create_pred_file(pm,task_words,output_word_pred_map)
 
     with open(output_word_pred_map, "r") as f:
@@ -181,4 +196,3 @@ def check_previous_inhibition_matrix(pm,lexicon,lexicon_word_bigrams,verbose=Fal
         if verbose: print('no previous inhibition matrix')
 
     return previous_matrix_usable
-

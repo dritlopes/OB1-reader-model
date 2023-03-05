@@ -4,6 +4,7 @@ import pandas as pd
 import time
 from types import SimpleNamespace
 from utils import get_stimulus_text_from_file
+import os
 
 
 class TaskAttributes:
@@ -11,13 +12,14 @@ class TaskAttributes:
     Class object that holds all parameters of task. Also permits to set default values.
     """
 
-    def __init__(self, name, stim, stimAll, language,
+    def __init__(self, task_name, stim_name, stim, stimAll, language,
                  stimcycles=0,
                  blankscreen_type='blank', blankscreen_cycles_begin=0, blankscreen_cycles_end=0,
                  is_priming_task=False, ncyclesprime=0,
                  POS_implemented=False,
                  affix_implemented=False):
-        self.name = name
+        self.task_name = task_name
+        self.stim_name = stim_name
         self.stim = stim
         self.stim_all = stimAll
         self.language = language
@@ -43,11 +45,13 @@ def return_attributes(task_to_run, language, stimuli_filepath):
  assigns 'German' to the language attribute and returns an instance of TaskAttributes with the associated attributes."""
 
     stim_data = get_stimulus_text_from_file(stimuli_filepath)
+    stim_name = os.path.basename(stimuli_filepath).replace('.txt', '').replace('.csv', '')
 
     if task_to_run == 'continuous reading':
         stim_data['all'] = stim_data['all'].encode("utf-8").decode("utf-8")
         return TaskAttributes(
             task_to_run,
+            stim_name,
             stim_data,
             stim_data['all'],
             language)
@@ -56,6 +60,7 @@ def return_attributes(task_to_run, language, stimuli_filepath):
         stim_data['stimulus'] = stim_data['stimulus'].astype('unicode')
         return TaskAttributes(
             task_to_run,
+            stim_name,
             stim_data,
             list(stim_data['stimulus']),
             language='english',
@@ -74,6 +79,7 @@ def return_attributes(task_to_run, language, stimuli_filepath):
         stim_data['stimulus'] = stim_data['stimulus'].astype('unicode')
         return TaskAttributes(
             task_to_run,
+            stim_name,
             stim_data,
             list(stim_data['stimulus']),
             language='german', 
@@ -91,6 +97,7 @@ def return_attributes(task_to_run, language, stimuli_filepath):
         stim_data['stimulus'] = stim_data['stimulus'].astype('unicode')
         return TaskAttributes(
             task_to_run,
+            stim_name,
             stim_data,
             list(stim_data['stimulus']),
             language='french',
@@ -107,6 +114,7 @@ def return_attributes(task_to_run, language, stimuli_filepath):
         stim = stim_data[stim_data['condition'].str.startswith(('word'))].reset_index()
         return TaskAttributes(
             task_to_run,
+            stim_name,
             stim,
             list(stim['stimulus']),
             language='french',
@@ -121,6 +129,7 @@ def return_attributes(task_to_run, language, stimuli_filepath):
         stim_data['stimulus'] = stim_data['stimulus'].astype('unicode')
         return TaskAttributes(
             task_to_run,
+            stim_name,
             stim_data,
             list(stim_data['stimulus']),
             language='french',
@@ -136,6 +145,7 @@ def return_attributes(task_to_run, language, stimuli_filepath):
         stim_data['stimulus'] = stim_data['stimulus'].astype('unicode')
         return TaskAttributes(
             task_to_run,
+            stim_name,
             stim_data,
             list(stim_data['stimulus']),
             language='dutch',
