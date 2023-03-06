@@ -91,7 +91,8 @@ def update_word_activity(lexicon_word_activity,word_overlap_matrix,pm,word_input
     lexicon_select = (lexicon_word_activity + word_input)[
                          (lexicon_active_words == True)] * lexicon_normalized_word_inhibition
     # This concentrates inhibition on the words that have most overlap and are most active
-    lexicon_word_inhibition = np.dot((overlap_select ** 2), -(lexicon_select ** 2)) / np.array(len(set(all_ngrams)))
+    #lexicon_word_inhibition = np.dot((overlap_select ** 2), -(lexicon_select ** 2)) / np.array(len(set(all_ngrams)))
+    lexicon_word_inhibition = np.dot((overlap_select ** 2), -(lexicon_select ** 2)) / np.array(len(set(all_ngrams))**2)
     # Combine word inhibition and input, and update word activity
     lexicon_total_input = np.add(lexicon_word_inhibition, word_input)
 
@@ -111,7 +112,7 @@ def match_active_words_to_input_slots(order_match_check, stimulus, recognized_po
     n_words_in_stim = len(stimulus.split())
     new_recognized_words = np.zeros(len(lexicon))
 
-    for slot_to_check in range(n_words_in_stim):
+    for slot_to_check in range(len(order_match_check)):
         # slot_num is the slot in the stim (spot of still-unrecogn word) that we're checking
         slot_num = order_match_check[slot_to_check]
         word_index = stimulus_position[slot_num]
@@ -405,7 +406,7 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
         # NV: the order list should reset when stimulus changes or with the first stimulus
         order_match_check = define_slot_matching_order(len(stimulus.split()), fixated_position_in_stimulus,
                                                        attend_width)
-        #print(f'order_match_check: {order_match_check}')
+        print(f'order_match_check: {order_match_check}')
 
         print('Entering cycle loops to define word activity...')
         print("fix on: " + tokens[fixation] + '  attent. width: ' + str(attend_width) + '  thresh.' + str(round(lexicon_thresholds[tokens_to_lexicon_indices[fixation]],3)))
@@ -564,7 +565,7 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
         # Check if end of text is reached AL: if fixation on last word and next saccade not refixation nor regression
         if fixation == total_n_words - 1 and saccade_info['saccade_type'] not in ['refixation', 'regression']:
             end_of_task = True
-            print(fixation_data)
+            print(recognized_word_at_position) #fixation_data)
             print("END REACHED!")
             continue
 

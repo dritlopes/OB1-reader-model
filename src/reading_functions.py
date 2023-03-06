@@ -90,9 +90,9 @@ def build_word_inhibition_matrix(lexicon,lexicon_word_bigrams,pm,tokens_to_lexic
     word_overlap_matrix = np.zeros((lexicon_size, lexicon_size), dtype=int)
     # word_inhibition_matrix = np.empty((lexicon_size, lexicon_size), dtype=bool)
 
-    for word_1_index in range(lexicon_size):
+    for word_1_index in range(lexicon_size):    # MM: receiving unit, I think...
         # AL: make sure word1-word2, but not word2-word1 or word1-word1.
-        for word_2_index in range(word_1_index+1,lexicon_size):
+        for word_2_index in range(word_1_index+1,lexicon_size):    # MM: sending unit, I think...
             word1, word2 = lexicon[word_1_index], lexicon[word_2_index]
             if not is_similar_word_length(len(word1), len(word2), pm.word_length_similarity_constant):
                 continue
@@ -184,11 +184,11 @@ def define_slot_matching_order(n_words_in_stim, fixated_position_stimulus, atten
     n_words_to_match = min(n_words_in_stim, (math.floor(attend_width/3)*2+1))
     order_match_check = [fixated_position_stimulus]
     for i, p in enumerate(positions):
-        if i > n_words_to_match:
-            break
-        next_pos = fixated_position_stimulus + p
-        if next_pos >= 0 and next_pos < n_words_in_stim:
-            order_match_check.append(next_pos)
+        if i < n_words_to_match-1:
+            next_pos = fixated_position_stimulus + p
+            if next_pos >= 0 and next_pos < n_words_in_stim:
+                order_match_check.append(next_pos)
+    print('tofill:', n_words_to_match, ",", order_match_check)
 
     return order_match_check
 
