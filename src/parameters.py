@@ -1,5 +1,3 @@
-
-# In this file, parameters are set and returned, task attributes are constructed and returned
 import pandas as pd
 import time
 from types import SimpleNamespace
@@ -171,24 +169,23 @@ def return_task_params(task_attributes):
 
     # word activation
     bigram_to_word_excitation = 1  # 0.0044 # 3.09269333333 # 2.18 # inp. divded by #ngrams, so this param estimates excit per word [diff from paper] 1.65 for EmbeddedWords, 2.18 for classification and transposed
-    bigram_to_word_inhibition = 0 # -0.20625  # -0.65835 # -0.55  # general inhibition on all words. The more active bigrams, the more general inhibition.
-    word_inhibition = -0.005  # -0.016093 # -0.002
+    bigram_to_word_inhibition = 0.0 # -0.20625  # -0.65835 # -0.55  # general inhibition on all words. The more active bigrams, the more general inhibition.
+    word_inhibition = -0.005 # -0.01  # -0.016093 # -0.002
     min_activity = 0.0
     max_activity = 1.0 # 1.3
-    decay = -0.06  # -0.08 # AL: decay in word activation over time
+    decay = -0.06 # -0.08 # AL: decay in word activation over time
     discounted_Ngrams = 7 # MM: Max extra wgt bigrams do to edges in 4-letter wrd w. gap 3. Added to bigram count in compute_input formula to compensate
+    bigram_gap = 2  # How many in btw letters still lead to bigram? 5 (optimal) or 2 (paper, though there 3 because of different definition)
+    min_overlap = 2 # min overlap for words to inhibit each other
 
-    # attentional width
+    # attention
     attend_width = 5.0 # 8.0  # NV: #!!!: was set to 15 for flanker, 20 for sentence and 3 for transposed
     max_attend_width = 5.0 # AL: maybe increase this for reading simulation?
     min_attend_width = 3.0
-    attention_skew = 4  # 1 equals symmetrical distribution # 4 (paper)
+    attention_skew = 4 # 1 equals symmetrical distribution # 4 (paper)
     letPerDeg = .3
-    bigram_gap = 2  # How many in btw letters still lead to bigram? 5 (optimal) or 2 (paper, though there 3 because of different definition)
-    min_overlap = 2
     refix_size = 0.2
     salience_position = 5  # 5 (optimal) # 1.29 (paper)
-    corpora_repeats = 0  # how many times should corpus be repeated? (simulates diff. subjects)
 
     # saccade
     include_sacc_type_sse = True  # Include the sse score based on the saccade type probability plot
@@ -215,6 +212,7 @@ def return_task_params(task_attributes):
     slow_word_activity = False
     pauze_allocation_errors = False
     use_boundary_task = False
+    corpora_repeats = 0  # how many times should corpus be repeated? (simulates diff. subjects)
 
     # fixation durations
     mu, sigma = 10, 4  # 4.9, 2.2 (paper)

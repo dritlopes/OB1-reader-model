@@ -8,7 +8,6 @@ from parameters import return_params
 from simulate_experiment import simulate_experiment
 import os
 
-
 def simulate_reading(parameters, outfile_sim_data, outfile_unrecognized):
 
     if parameters.run_exp:
