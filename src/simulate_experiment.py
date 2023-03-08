@@ -85,7 +85,7 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
         eye_position = compute_eye_position(stimulus, fixated_position_in_stimulus, saccade_info['offset_from_word_center'])
         fixation_data['stimulus'] = stimulus
         fixation_data['eye position'] = eye_position
-        print(f"Stimulus: {stimulus}\n Eye position: {eye_position}")
+        print(f"Stimulus: {stimulus}\nEye position: {eye_position}")
 
         # ---------------------- Update attention width ---------------------
         # update attention width according to whether there was a regression in the last fixation,

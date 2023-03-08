@@ -210,7 +210,7 @@ def define_slot_matching_order(n_words_in_stim, fixated_position_stimulus, atten
             next_pos = fixated_position_stimulus + p
             if next_pos >= 0 and next_pos < n_words_in_stim:
                 order_match_check.append(next_pos)
-    print('tofill:', n_words_to_match, ",", order_match_check)
+    print('slots tofill:', n_words_to_match)
 
     return order_match_check
 

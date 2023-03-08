@@ -139,8 +139,7 @@ def match_active_words_to_input_slots(order_match_check, stimulus, recognized_wo
     Match active words to spatio-topic representation. Fill in the stops in the stimulus.
     The winner is the word with the highest activity above recognition threshold and of similar length.
     :return: recognized_word_at_position is the updated array of recognized words in each text position,
-    lexicon_word_activity is the updated array with activity of each word in the lexicon,
-    above_thresh_lexicon is the updated array with which words have activity above threshold.
+    lexicon_word_activity is the updated array with activity of each word in the lexicon
     """
 
     above_thresh_lexicon = np.where(lexicon_word_activity > lexicon_thresholds, 1, 0)
@@ -159,7 +158,7 @@ def match_active_words_to_input_slots(order_match_check, stimulus, recognized_wo
                                                                   len(word_searched), len_sim_const)) for x in lexicon])
             recognized_words_fit_len = above_thresh_lexicon * similar_length
             # if at least one word matches (act above threshold and similar length)
-            if sum(recognized_words_fit_len):
+            if int(np.sum(recognized_words_fit_len)):
                 # Find the word with the highest activation in all words that have a similar length
                 highest = np.argmax(recognized_words_fit_len * lexicon_word_activity)
                 highest_word = lexicon[highest]
@@ -168,6 +167,7 @@ def match_active_words_to_input_slots(order_match_check, stimulus, recognized_wo
                 # and its activity is reset to minimum to not have it matched to other words
                 recognized_word_at_position[word_index] = highest_word
                 lexicon_word_activity[highest] = min_activity
+                above_thresh_lexicon[highest] = 0
 
     return recognized_word_at_position, lexicon_word_activity
 
