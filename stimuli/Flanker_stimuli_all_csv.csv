@@ -1,4 +1,4 @@
-﻿`item_nr,stimulus_untrimmed,stimulus,flanker_type,lexicality,condition
+﻿`item_nr,stimulus_untrimmed,all,flanker_type,lexicality,condition
 1, lent ,lent,no,word,word/no
 2,ment drap ment,ment drap ment,unrelated,word,word/unrelated
 3,sabe cofi sabe,sabe cofi sabe,unrelated,nonword,nonword/unrelated

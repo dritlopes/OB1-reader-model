@@ -12,12 +12,12 @@ def simulate_reading(parameters, outfile_sim_data, outfile_unrecognized):
 
     if parameters.run_exp:
 
-        simulation_data, unrecognized_words = simulate_experiment(parameters)
+        simulation_data = simulate_experiment(parameters)
 
         with open(outfile_sim_data, "wb") as all_data_file:
             pickle.dump(simulation_data, all_data_file)
-        with open(outfile_unrecognized, "wb") as unrecognized_file:
-            pickle.dump(unrecognized_words, unrecognized_file)
+        # with open(outfile_unrecognized, "wb") as unrecognized_file:
+        #     pickle.dump(unrecognized_words, unrecognized_file)
 
     if parameters.analyze_results:
         pass

@@ -95,7 +95,7 @@ def update_lexicon_threshold(recognized_word_at_position,fixation,tokens,updated
                                                                            pred_values)
                 updated_thresh_positions.append(position)
 
-    return  updated_thresh_positions, lexicon_thresholds
+    return updated_thresh_positions, lexicon_thresholds
 
 def is_similar_word_length(len1, len2, len_sim_constant):
 
