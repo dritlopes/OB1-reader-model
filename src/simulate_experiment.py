@@ -104,10 +104,10 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
         # NV: the order list should reset when stimulus changes or with the first stimulus
         order_match_check = define_slot_matching_order(len(stimulus.split()), fixated_position_in_stimulus,
                                                        attend_width)
-        print(f'Order for slot-matching: {order_match_check}')
+        #print(f'Order for slot-matching: {order_match_check}')
 
         # ---------------------- Start processing of stimulus ---------------------
-        print('Entering cycle loops to define word activity...')
+        #print('Entering cycle loops to define word activity...')
         print("fix on: " + tokens[fixation] + '  attent. width: ' + str(attend_width) + ' fixwrd thresh.' + str(round(lexicon_thresholds[tokens_to_lexicon_indices[fixation]],3)))
         shift = False
         n_cycles = 0
@@ -132,9 +132,10 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
             lexicon_word_activity, lexicon_word_inhibition = update_word_activity(lexicon_word_activity, word_overlap_matrix, pm, word_input, all_ngrams, len(lexicon))
 
             # update cycle info
+            act_of_ist = lexicon_word_activity[lexicon_word_index['ist']]
             foveal_word_index = lexicon_word_index[tokens[fixation]]
             foveal_word_activity = lexicon_word_activity[foveal_word_index]
-            print('CYCLE ', str(n_cycles), '   activ @fix ', str(round(foveal_word_activity,3)))
+            print('CYCLE ', str(n_cycles), '   activ @fix ', str(round(foveal_word_activity,3)), '   inhib of ist', str(round(lexicon_word_inhibition[lexicon_word_index['ist']],3))) #@fix', str(round(lexicon_word_inhibition[foveal_word_index],3)))
             #print('        and act. of Die', str(round(lexicon_word_activity[lexicon_word_index[tokens[0]]],3)))
             fixation_data['foveal word activity per cycle'].append(foveal_word_activity)
             fixation_data['foveal word-to-word inhibition per cycle'].append(abs(lexicon_word_inhibition[foveal_word_index]))

@@ -53,7 +53,7 @@ def main():
                         format='%(name)s %(levelname)s:%(message)s')
     logger = logging.getLogger(__name__)
 
-    useparser=True
+    useparser=False
     if useparser:
         parser = argparse.ArgumentParser()
         parser.add_argument('stimuli_filepath')

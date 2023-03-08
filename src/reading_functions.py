@@ -125,12 +125,13 @@ def build_word_inhibition_matrix(lexicon,lexicon_word_bigrams,pm,tokens_to_lexic
                 n_monogram_overlap = len(monograms_common)
                 n_total_overlap = n_bigram_overlap + n_monogram_overlap
 
-                if n_total_overlap > pm.min_overlap:
-                    word_overlap_matrix[word_1_index, word_2_index] = n_total_overlap - pm.min_overlap
-                    word_overlap_matrix[word_2_index, word_1_index] = n_total_overlap - pm.min_overlap
-                else:
-                    word_overlap_matrix[word_1_index, word_2_index] = 0
-                    word_overlap_matrix[word_2_index, word_1_index] = 0
+                # MM: a minimumoverlap seems unnecessary extra assumpt. The min was set to 2, already passed with 1 bigram same (because then also 2 monograms same)
+                #if n_total_overlap > pm.min_overlap:
+                word_overlap_matrix[word_1_index, word_2_index] = n_total_overlap #- pm.min_overlap
+                word_overlap_matrix[word_2_index, word_1_index] = n_total_overlap #- pm.min_overlap
+                #else:
+                #    word_overlap_matrix[word_1_index, word_2_index] = 0
+                #    word_overlap_matrix[word_2_index, word_1_index] = 0
 
     output_inhibition_matrix = '../data/Inhibition_matrix_previous.dat'
     with open(output_inhibition_matrix, "wb") as f:
@@ -210,7 +211,7 @@ def define_slot_matching_order(n_words_in_stim, fixated_position_stimulus, atten
             next_pos = fixated_position_stimulus + p
             if next_pos >= 0 and next_pos < n_words_in_stim:
                 order_match_check.append(next_pos)
-    print('slots tofill:', n_words_to_match)
+    #print('slots tofill:', n_words_to_match)
 
     return order_match_check
 
