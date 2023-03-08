@@ -173,7 +173,7 @@ def return_task_params(task_attributes):
     word_inhibition = -0.02 # -0.01  # -0.016093 # -0.002
     min_activity = 0.0
     max_activity = 1.0 # 1.3
-    decay = -0.08 # -0.08 # AL: decay in word activation over time
+    decay = -0.08 # -0.06 # AL: decay in word activation over time
     discounted_Ngrams = 7 # MM: Max extra wgt bigrams do to edges in 4-letter wrd w. gap 3. Added to bigram count in compute_input formula to compensate
     bigram_gap = 2  # How many in btw letters still lead to bigram? 5 (optimal) or 2 (paper, though there 3 because of different definition)
     min_overlap = 2 # min overlap for words to inhibit each other
