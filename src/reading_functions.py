@@ -106,7 +106,7 @@ def is_similar_word_length(len1, len2, len_sim_constant):
 
     return is_similar
 
-def build_word_inhibition_matrix(lexicon,lexicon_word_bigrams,pm,tokens_to_lexicon_indices):
+def build_word_inhibition_matrix(lexicon,lexicon_word_ngrams,pm,tokens_to_lexicon_indices):
 
     lexicon_size = len(lexicon)
     word_overlap_matrix = np.zeros((lexicon_size, lexicon_size), dtype=int)
@@ -116,22 +116,20 @@ def build_word_inhibition_matrix(lexicon,lexicon_word_bigrams,pm,tokens_to_lexic
         # AL: make sure word1-word2, but not word2-word1 or word1-word1.
         for word_2_index in range(word_1_index+1,lexicon_size):    # MM: sending unit, I think...
             word1, word2 = lexicon[word_1_index], lexicon[word_2_index]
-            if not is_similar_word_length(len(word1), len(word2), pm.word_length_similarity_constant):
-                continue
+            # if not is_similar_word_length(len(word1), len(word2), pm.word_length_similarity_constant):
+            #     continue
+            # else:
+            # AL: lexicon_word_ngrams already contains all ngrams (bigrams and included monograms)
+            ngram_common = list(set(lexicon_word_ngrams[word1]).intersection(set(lexicon_word_ngrams[word2])))
+            n_total_overlap = len(ngram_common)
+            # MM: a minimumoverlap seems unnecessary extra assumpt. The min was set to 2, already passed with 1 bigram same (because then also 2 monograms same)
+            # AL: this was the case when all monograms were included, but now only the edge ones are.
+            if n_total_overlap > pm.min_overlap:
+                word_overlap_matrix[word_1_index, word_2_index] = n_total_overlap - pm.min_overlap
+                word_overlap_matrix[word_2_index, word_1_index] = n_total_overlap - pm.min_overlap
             else:
-                bigram_common = list(set(lexicon_word_bigrams[word1][0]).intersection(set(lexicon_word_bigrams[word2][0])))
-                n_bigram_overlap = len(bigram_common)
-                monograms_common = list(set(word1) & set(word2))
-                n_monogram_overlap = len(monograms_common)
-                n_total_overlap = n_bigram_overlap + n_monogram_overlap
-
-                # MM: a minimumoverlap seems unnecessary extra assumpt. The min was set to 2, already passed with 1 bigram same (because then also 2 monograms same)
-                #if n_total_overlap > pm.min_overlap:
-                word_overlap_matrix[word_1_index, word_2_index] = n_total_overlap #- pm.min_overlap
-                word_overlap_matrix[word_2_index, word_1_index] = n_total_overlap #- pm.min_overlap
-                #else:
-                #    word_overlap_matrix[word_1_index, word_2_index] = 0
-                #    word_overlap_matrix[word_2_index, word_1_index] = 0
+                word_overlap_matrix[word_1_index, word_2_index] = 0
+                word_overlap_matrix[word_2_index, word_1_index] = 0
 
     output_inhibition_matrix = '../data/Inhibition_matrix_previous.dat'
     with open(output_inhibition_matrix, "wb") as f:
@@ -139,7 +137,7 @@ def build_word_inhibition_matrix(lexicon,lexicon_word_bigrams,pm,tokens_to_lexic
 
     size_of_file = os.path.getsize(output_inhibition_matrix)
     with open('../data/Inhib_matrix_params_latest_run.dat', "wb") as f:
-        pickle.dump(str(lexicon_word_bigrams) + str(lexicon_size) + str(pm.min_overlap) +
+        pickle.dump(str(lexicon_word_ngrams) + str(lexicon_size) + str(pm.min_overlap) +
                     # str(complete_selective_word_inhibition) + # str(n_known_words) #str(pm.affix_system) +
                     str(pm.simil_algo) + str(pm.max_edit_dist) + str(pm.short_word_cutoff) + str(size_of_file), f)
 
