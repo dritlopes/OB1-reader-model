@@ -154,7 +154,7 @@ def create_pred_file(pm, task_words, output_file_pred_map):
 
     word_pred_values_dict = dict()
     for i, pred in enumerate(word_pred_values):
-        word_pred_values_dict[i] = pred
+        word_pred_values_dict[str(i)] = float(pred)
 
     with open(output_file_pred_map, "w") as f:
         json.dump(word_pred_values_dict, f, ensure_ascii=False)

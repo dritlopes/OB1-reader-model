@@ -323,7 +323,7 @@ def check_previous_refixations_at_position(all_data, fixation, fixation_counter,
     else:
         for i in range(1,max_n_refix+1):
             if fixation_counter - i in all_data.keys():
-                if all_data[fixation_counter - i]['saccade_type'] != 'refixation' and all_data[fixation_counter - i]['foveal word index'] == fixation:
+                if all_data[fixation_counter - i]['saccade type'] != 'refixation' and all_data[fixation_counter - i]['foveal word index'] == fixation:
                     refixate = True
                     break
     return refixate

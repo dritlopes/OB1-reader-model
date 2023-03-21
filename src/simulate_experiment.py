@@ -4,15 +4,15 @@ import pickle
 from collections import defaultdict
 import math
 from utils import get_word_freq, get_pred_values, check_previous_inhibition_matrix, pre_process_string
-from reading_processes import compute_stimulus, compute_eye_position, compute_words_input, update_word_activity, \
+from reading_components import compute_stimulus, compute_eye_position, compute_words_input, update_word_activity, \
     match_active_words_to_input_slots, compute_next_attention_position, compute_next_eye_position
-from reading_functions import get_threshold, string_to_open_ngrams, build_word_inhibition_matrix,\
+from reading_helper_functions import get_threshold, string_to_open_ngrams, build_word_inhibition_matrix,\
     define_slot_matching_order, sample_from_norm_distribution, find_word_edges, update_lexicon_threshold,\
     get_blankscreen_stimulus
 
 logger = logging.getLogger(__name__)
 
-def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index,lexicon_thresholds_dict,lexicon,pred_values,tokens_to_lexicon_indices,freq_values):
+def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index,lexicon_thresholds_dict,lexicon,pred_values,tokens_to_lexicon_indices,freq_values,save_skipped_words=True):
 
     # information computed for each fixation
     all_data = {}
@@ -40,16 +40,16 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
     recognized_word_at_cycle = np.zeros(total_n_words, dtype=int)
     recognized_word_at_cycle.fill(-1)
     # info on saccade for each eye movement
-    saccade_info = {'saccade_type': None,  # regression, forward, refixation or wordskip
-                    'saccade_distance': 0,  # distance between current eye position and eye previous position
-                    'saccade_error': 0,  # saccade noise to include overshooting
-                    'saccade_cause': 0,  # for wordskip and refixation, extra info on cause of saccade
-                    'saccade_type_by_error': False,  # if the saccade type was defined due to saccade error
+    saccade_info = {'saccade type': None,  # regression, forward, refixation or wordskip
+                    'saccade distance': 0,  # distance between current eye position and eye previous position
+                    'saccade error': 0,  # saccade noise to include overshooting
+                    'saccade cause': 0,  # for wordskip and refixation, extra info on cause of saccade
+                    'saccade type by error': False,  # if the saccade type was defined due to saccade error
                     # if eye position is to be in a position other thanthat of the word middle,
                     # offset will be negative/positive (left/right)
                     # and will represent the number of letters to the new position.
                     # Its value is reset before a new saccade is performed.
-                    'offset_from_word_center': 0}
+                    'offset from word center': 0}
 
     # initialize thresholds with values based frequency, if dict has been filled (if frequency flag)
     if lexicon_thresholds_dict != {}:
@@ -59,7 +59,7 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
     # ---------------------- Start looping through fixations ---------------------
     while not end_of_text:
 
-        print(f'---Fixation {fixation_counter} at position/trial {fixation}---')
+        print(f'---Fixation {fixation_counter} at position {fixation}---')
 
         fixation_data = defaultdict(list)
 
@@ -72,17 +72,18 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
         fixation_data['attentional width'] = attend_width
         fixation_data['foveal word frequency'] = freq_values[tokens[fixation]] if tokens[fixation] in freq_values.keys() else 0
         fixation_data['foveal word predictability'] = pred_values[str(fixation)] if str(fixation) in pred_values.keys() else 0
+        fixation_data['foveal word length'] = len(tokens[fixation])
         fixation_data['foveal word threshold'] = lexicon_thresholds[tokens_to_lexicon_indices[fixation]]
-        fixation_data['offset'] = saccade_info['offset_from_word_center']
-        fixation_data['saccade_type'] = saccade_info['saccade_type']
-        fixation_data['saccade error'] = saccade_info['saccade_error']
-        fixation_data['saccade distance'] = saccade_info['saccade_distance']
-        fixation_data['saccade_cause'] = saccade_info['saccade_cause']
-        fixation_data['saccade_type_by_error'] = saccade_info['saccade_type_by_error']
+        fixation_data['offset'] = saccade_info['offset from word center']
+        fixation_data['saccade type'] = saccade_info['saccade type']
+        fixation_data['saccade error'] = saccade_info['saccade error']
+        fixation_data['saccade distance'] = saccade_info['saccade distance']
+        fixation_data['saccade cause'] = saccade_info['saccade cause']
+        fixation_data['saccade type by error'] = saccade_info['saccade type by error']
 
         # ---------------------- Define the stimulus and eye position ---------------------
         stimulus, stimulus_position, fixated_position_in_stimulus = compute_stimulus(fixation, tokens)
-        eye_position = compute_eye_position(stimulus, fixated_position_in_stimulus, saccade_info['offset_from_word_center'])
+        eye_position = compute_eye_position(stimulus, fixated_position_in_stimulus, saccade_info['offset from word center'])
         fixation_data['stimulus'] = stimulus
         fixation_data['eye position'] = eye_position
         print(f"Stimulus: {stimulus}\nEye position: {eye_position}")
@@ -90,7 +91,7 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
         # ---------------------- Update attention width ---------------------
         # update attention width according to whether there was a regression in the last fixation,
         # i.e. this fixation location is a result of regression
-        if fixation_data['saccade_type'] == 'regression':
+        if fixation_data['saccade type'] == 'regression':
             # set regression flag to know that a regression has been realized towards this position
             regression_flag[fixation] = True
             # narrow attention width by 2 letters in the case of regressions
@@ -119,8 +120,8 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
         # ---------------------- Define word excitatory input ---------------------
         # compute word input using ngram excitation and inhibition (out the cycle loop because this is constant)
         n_ngrams, total_ngram_activity, all_ngrams, word_input = compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_position, attend_width, pm)
-        fixation_data['n_ngrams'] = n_ngrams
-        fixation_data['total_ngram_activity'] = total_ngram_activity
+        fixation_data['n ngrams'] = n_ngrams
+        fixation_data['total ngram activity'] = total_ngram_activity
         # print("  input to fixwrd at first cycle: " + str(round(word_input[tokens_to_lexicon_indices[fixation]], 3)))
 
         # Counter n_cycles_since_attent_shift is 0 until attention shift (saccade program initiation),
@@ -181,12 +182,12 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
                 if n_cycles >= shift_start:
                     shift = True
                     # AL: re-set saccade info from current fixation to update it with next fixation
-                    saccade_info = {'saccade_type': None,
-                                    'saccade_distance': 0,
-                                    'saccade_error': 0,
-                                    'saccade_cause': 0,
-                                    'saccade_type_by_error': False,
-                                    'offset_from_word_center': 0}
+                    saccade_info = {'saccade type': None,
+                                    'saccade distance': 0,
+                                    'saccade error': 0,
+                                    'saccade cause': 0,
+                                    'saccade type by error': False,
+                                    'offset from word center': 0}
                     attention_position, saccade_info = compute_next_attention_position(all_data,
                                                                                         tokens,
                                                                                         fixation,
@@ -245,7 +246,7 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
         fixation_counter += 1
 
         # Check if end of text is reached AL: if fixation on last word and next saccade not refixation nor regression
-        if fixation == total_n_words - 1 and saccade_info['saccade_type'] not in ['refixation', 'regression']:
+        if fixation == total_n_words - 1 and saccade_info['saccade type'] not in ['refixation', 'regression']:
             end_of_text = True
             print(recognized_word_at_position)
             print("END REACHED!")
@@ -255,75 +256,79 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
         # if end of text is not yet reached, compute next eye position and thus next fixation
         fixation, next_eye_position, saccade_info = compute_next_eye_position(pm, saccade_info, eye_position, stimulus, fixation, total_n_words, word_edges, fixated_position_in_stimulus)
 
+    # register words in text that were skipped and never fixated
+    skipped_words = []
+    if save_skipped_words:
+        # find which words were skipped on first pass
+        wordskip_indices = set()
+        counter = 0
+        word_indices = [fx['foveal word index'] for fx in all_data.values()]
+        saccades = [fx['saccade type'] for fx in all_data.values()]
+        for word_i, saccade in zip(word_indices, saccades):
+            if saccade == 'wordskip':
+                if counter - 1 > 0 and saccades[counter - 1] != 'regression':
+                    wordskip_indices.add(word_i - 1)
+            counter += 1
+        # store info on each word
+        for i in wordskip_indices:
+            skipped_words.append({'foveal word': tokens[i],
+                                  'foveal word index': i,
+                                  'foveal word length': len(tokens[i]),
+                                  'foveal word frequency': freq_values[tokens[i]],
+                                  'foveal word predictability': pred_values[str(i)]})
+
     # # register words in text in which no word in lexicon reaches recognition threshold
     # unrecognized_words = dict()
     # for position in range(total_n_words):
     #     if not recognized_word_at_position[position]:
     #         unrecognized_words[position] = tokens[position]
 
-    return all_data
+    return all_data, skipped_words
 
 def word_recognition(pm,tokens,word_inhibition_matrix,lexicon_word_ngrams,lexicon_word_index,word_thresh_dict,lexicon,pred_values,tokens_to_lexicon_indices,word_frequencies):
 
     # information computed for each fixation
     all_data = {}
     # data frame with stimulus info
-    stim = pm.stim
+    stim_df = pm.stim
+    # list of stimuli
+    stim = pm.stim_all
     # initialise attention window size
     attend_width = pm.attend_width
-    # total number of tokens in input
-    total_n_words = len(tokens)
     # word activity for each word in lexicon
     lexicon_word_activity = np.zeros((len(lexicon)), dtype=float)
     # recognition threshold for each word in lexicon
     lexicon_thresholds = np.zeros((len(lexicon)), dtype=float)
-    # positions in text whose thresholds have already been updated
-    updated_thresh_positions = []
 
-    for trial in range(0, len(stim['all'])):
+    for trial in range(0, len(pm.stim_all)):
 
-        # all_data[trial] = {'stimulus': [],
-        #                    'prime': [],  # NV: added prime
-        #                    'target': [],
-        #                    'condition': [],
-        #                    'cycle': [],
-        #                    'lexicon activity per cycle': [],
-        #                    'stimulus activity per cycle': [],
-        #                    'target activity per cycle': [],
-        #                    'bigram activity per cycle': [],
-        #                    'ngrams': [],
-        #                    # 'recognized words indices': [],
-        #                    # 'attentional width': attendWidth,
-        #                    'exact recognized words positions': [],
-        #                    'exact recognized words': [],
-        #                    'eye position': EyePosition,
-        #                    'attention position': AttentionPosition,
-        #                    'word threshold': 0,
-        #                    'word frequency': 0,
-        #                    'word predictability': 0,
-        #                    'reaction time': [],
-        #                    'correct': [],
-        #                    'POS': [],
-        #                    'position': [],
-        #                    'inhibition_value': pm.word_inhibition,  # NV: info for plots in notebook
-        #                    'wordlen_threshold': pm.word_length_similarity_constant,
-        #                    'target_inhib': [],
-        #                    'error_rate': 0}  # NV: info for plots in notebook
+        trial_data = defaultdict(list)
 
         # ---------------------- Define the trial stimuli ---------------------
-        stimulus = stim['all'][trial]
+        stimulus = stim[trial]
         fixated_position_in_stim = math.floor(len(stimulus.split(' '))/2)
         eye_position = np.round(len(stimulus) // 2)
-        target = stim['target'][trial]
-        condition = stim['condition'][trial]
+        target = stim_df['target'][trial]
+        condition = stim_df['condition'][trial]
+        trial_data['stimulus'] = stimulus
+        trial_data['eye position'] = eye_position
+        trial_data['target'] = target
+        trial_data['condition'] = condition
         if pm.is_priming_task:
-            prime = stim['prime'][trial]
+            prime = stim_df['prime'][trial]
+            trial_data['prime'] = prime
+
+        trial_data['target threshold'] = lexicon_thresholds[lexicon_word_index[target]]
+        trial_data['target frequency'] = word_frequencies[target]
+        # if pred_values:
+        #     trial_data['target predictability'] = pred_values[stimulus.split().index(target)]
 
         # ---------------------- Start processing stimuli ---------------------
         n_cycles = 0
+        recog_cycle = 0
         attention_position = eye_position
         stimuli = []
-        recognized = False
+        recognized, false_guess = False,False
         # init activity matrix with min activity. Assumption that each trial is independent.
         lexicon_word_activity[lexicon_word_activity < pm.min_activity] = pm.min_activity
 
@@ -333,14 +338,22 @@ def word_recognition(pm,tokens,word_inhibition_matrix,lexicon_word_ngrams,lexico
             # stimulus may change within a trial to blankscreen, prime
             if n_cycles < pm.blankscreen_cycles_begin or n_cycles > pm.totalcycles - pm.blankscreen_cycles_end:
                 stimulus = get_blankscreen_stimulus(pm.blankscreen_type)
+                stimuli.append(stimulus)
+                n_cycles += 1
+                continue
             elif pm.is_priming_task and n_cycles < (pm.blankscreen_cycles_begin+pm.ncyclesprime):
                 stimulus = prime
             else:
-                stimulus = stim['all'][trial]
+                stimulus = stim[trial]
             stimuli.append(stimulus)
 
+            # keep track of which words have been recognized in the stimulus
+            # create array if first stimulus or stimulus has changed within trial
+            if (len(stimuli) <= 1) or (stimuli[-2] != stimuli[-1]):
+                stimulus_matched_slots = np.empty(len(stimulus.split()),dtype=object)
+
             # define order for slot matching. Computed within cycle loop bcs stimulus may change within trial
-            order_match_check = define_slot_matching_order(stimulus,fixated_position_in_stim,attend_width)
+            order_match_check = define_slot_matching_order(len(stimulus.split()),fixated_position_in_stim,attend_width)
 
             # compute word excitatory input given stimulus
             n_ngrams, total_ngram_activity, all_ngrams, word_input = compute_words_input(stimulus,
@@ -349,6 +362,9 @@ def word_recognition(pm,tokens,word_inhibition_matrix,lexicon_word_ngrams,lexico
                                                                                          attention_position,
                                                                                          attend_width,
                                                                                          pm)
+            trial_data['ngram act per cycle'].append(total_ngram_activity)
+            trial_data['n of ngrams per cycle'].append(len(all_ngrams))
+
             # update word activity using word-to-word inhibition and decay
             lexicon_word_activity, lexicon_word_inhibition = update_word_activity(lexicon_word_activity,
                                                                                   word_inhibition_matrix,
@@ -356,11 +372,15 @@ def word_recognition(pm,tokens,word_inhibition_matrix,lexicon_word_ngrams,lexico
                                                                                   word_input,
                                                                                   all_ngrams,
                                                                                   len(lexicon))
+            trial_data['target act per cycle'].append(lexicon_word_activity[lexicon_word_index[target]])
+            trial_data['lexicon act per cycle'].append(sum(lexicon_word_activity))
+            trial_data['stimulus act per cycle'].append(sum([lexicon_word_activity[lexicon_word_index[word]] for word in stimulus.split() if word in lexicon_word_index.keys()]))
+
             # word recognition, by checking matching active wrds to slots
-            recognized, lexicon_word_activity = \
+            stimulus_matched_slots, lexicon_word_activity = \
                 match_active_words_to_input_slots(order_match_check,
                                                   stimulus,
-                                                  recognized,
+                                                  stimulus_matched_slots,
                                                   lexicon_thresholds,
                                                   lexicon_word_activity,
                                                   lexicon,
@@ -368,9 +388,17 @@ def word_recognition(pm,tokens,word_inhibition_matrix,lexicon_word_ngrams,lexico
                                                   None,
                                                   pm.word_length_similarity_constant)
 
-            # register cycle of recognition
-            if recognized:
+            # register cycle of recognition at target position
+            if target in stimulus.split() and stimulus_matched_slots[fixated_position_in_stim]:
                 recog_cycle = n_cycles
+                if stimulus_matched_slots[fixated_position_in_stim] == target:
+                    recognized = True
+                else:
+                    false_guess = True
+
+            # NV: if the design of the task considers the first recognized word in the target slot to be the final response, stop the trial when this happens
+            if pm.trial_ends_on_key_press and (recognized == True or false_guess == True):
+                break
 
             n_cycles += 1
 
@@ -380,6 +408,17 @@ def word_recognition(pm,tokens,word_inhibition_matrix,lexicon_word_ngrams,lexico
         print("end of trial")
         print("----------------")
         print("\n")
+
+        trial_data['attend width'] = attend_width
+        trial_data['reaction time'] = reaction_time
+        trial_data['matched slots'] = stimulus_matched_slots
+        trial_data['target recognized'] = recognized
+        trial_data['false guess'] = false_guess
+
+        all_data[trial] = trial_data
+
+        # print(trial_data)
+        # if trial > 3: exit()
 
     return all_data
 
@@ -448,17 +487,18 @@ def simulate_experiment(pm):
     print("")
 
     # read text/trials
+    skipped_words, all_data = [],[]
     if pm.task_to_run == 'continuous reading':
-        all_data = reading(pm,
-                            tokens,
-                            word_inhibition_matrix,
-                            lexicon_word_ngrams,
-                            lexicon_word_index,
-                            word_thresh_dict,
-                            lexicon,
-                            pred_values,
-                            tokens_to_lexicon_indices,
-                            word_frequencies)
+        all_data, skipped_words = reading(pm,
+                                        tokens,
+                                        word_inhibition_matrix,
+                                        lexicon_word_ngrams,
+                                        lexicon_word_index,
+                                        word_thresh_dict,
+                                        lexicon,
+                                        pred_values,
+                                        tokens_to_lexicon_indices,
+                                        word_frequencies)
 
     else:
         all_data = word_recognition(pm,
@@ -472,4 +512,4 @@ def simulate_experiment(pm):
                                     tokens_to_lexicon_indices,
                                     word_frequencies)
 
-    return all_data
+    return all_data, skipped_words

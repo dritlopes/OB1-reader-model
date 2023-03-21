@@ -179,7 +179,7 @@ def return_task_params(task_attributes):
     min_overlap = 0 # was 2 # min overlap for words to inhibit each other. MM: unnecessary, can be deleted later
 
     # attention
-    attend_width = 5.0 # 8.0  # NV: #!!!: was set to 15 for flanker, 20 for sentence and 3 for transposed
+    attend_width = 15 # 5.0 for natural reading # 8.0  # NV: #!!!: was set to 15 for flanker, 20 for sentence and 3 for transposed
     max_attend_width = 5.0 # AL: maybe increase this for reading simulation?
     min_attend_width = 3.0
     attention_skew = 4 # 1 equals symmetrical distribution # 4 (paper)

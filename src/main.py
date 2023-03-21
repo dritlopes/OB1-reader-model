@@ -7,17 +7,17 @@ import pickle
 from parameters import return_params
 from simulate_experiment import simulate_experiment
 import os
+import json
 
-def simulate_reading(parameters, outfile_sim_data, outfile_unrecognized):
+def simulate_reading(parameters, outfile_sim_data, outfile_skipped=None):
 
     if parameters.run_exp:
-
-        simulation_data = simulate_experiment(parameters)
-
+        simulation_data, skipped_words = simulate_experiment(parameters)
         with open(outfile_sim_data, "wb") as all_data_file:
             pickle.dump(simulation_data, all_data_file)
-        # with open(outfile_unrecognized, "wb") as unrecognized_file:
-        #     pickle.dump(unrecognized_words, unrecognized_file)
+        if outfile_skipped:
+            with open(outfile_skipped, "wb") as skipped_file:
+                pickle.dump(skipped_words, skipped_file)
 
     if parameters.analyze_results:
         pass
@@ -105,11 +105,11 @@ def main():
         print("Step-size: " + str(pm.epsilon))
     print("-------------------")
 
-    output_file_results, output_file_unrecognized_words = (
-        "../results/results_" + pm.task_to_run + ".pkl", "../results/unrecognized_" + pm.task_to_run + ".pkl")
+    output_file_results, output_file_skipped = (
+        "../results/results_" + pm.task_to_run + ".pkl", "../results/skipped_words_" + pm.task_to_run + ".pkl")
 
     start_time = time.perf_counter()
-    simulate_reading(pm, output_file_results, output_file_unrecognized_words)
+    simulate_reading(pm, output_file_results, output_file_skipped)
     time_elapsed = time.perf_counter() - start_time
     print("Time elapsed: " + str(time_elapsed))
 
