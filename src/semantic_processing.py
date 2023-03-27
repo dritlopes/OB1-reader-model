@@ -5,6 +5,7 @@ sequence = "AI can do great"
 # initialize model and tokenizer
 model = GPT2LMHeadModel.from_pretrained('gpt2')
 tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+# in case you want to reproduce predictions
 set_seed(42)
 # pre-process text
 encoded_input = tokenizer(sequence, return_tensors='pt')
