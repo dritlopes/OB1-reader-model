@@ -7,7 +7,6 @@ import pickle
 from parameters import return_params
 from simulate_experiment import simulate_experiment
 import os
-import json
 
 def simulate_reading(parameters, outfile_sim_data, outfile_skipped=None):
 
