@@ -109,7 +109,7 @@ def is_similar_word_length(len1, len2, len_sim_constant):
 def build_word_inhibition_matrix(lexicon,lexicon_word_ngrams,pm,tokens_to_lexicon_indices):
 
     lexicon_size = len(lexicon)
-    word_overlap_matrix = np.zeros((lexicon_size, lexicon_size), dtype=int)
+    word_overlap_matrix = np.zeros((lexicon_size, lexicon_size), dtype=float)
     # word_inhibition_matrix = np.empty((lexicon_size, lexicon_size), dtype=bool)
 
     for word_1_index in range(lexicon_size):    # MM: receiving unit, I think...
@@ -122,14 +122,12 @@ def build_word_inhibition_matrix(lexicon,lexicon_word_ngrams,pm,tokens_to_lexico
             # AL: lexicon_word_ngrams already contains all ngrams (bigrams and included monograms)
             ngram_common = list(set(lexicon_word_ngrams[word1]).intersection(set(lexicon_word_ngrams[word2])))
             n_total_overlap = len(ngram_common)
-            # MM: a minimumoverlap seems unnecessary extra assumpt. The min was set to 2, already passed with 1 bigram same (because then also 2 monograms same)
-            # AL: this was the case when all monograms were included, but now only the edge ones are.
-            if n_total_overlap > pm.min_overlap:
-                word_overlap_matrix[word_1_index, word_2_index] = n_total_overlap - pm.min_overlap
-                word_overlap_matrix[word_2_index, word_1_index] = n_total_overlap - pm.min_overlap
-            else:
-                word_overlap_matrix[word_1_index, word_2_index] = 0
-                word_overlap_matrix[word_2_index, word_1_index] = 0
+            # MM: now inhib set as proportion of overlapping bigrams (instead of nr overlap)
+            word_overlap_matrix[word_1_index, word_2_index] = n_total_overlap / len(lexicon_word_ngrams[word1])
+            word_overlap_matrix[word_2_index, word_1_index] = n_total_overlap / len(lexicon_word_ngrams[word2])
+            #print("word1 ", word1, "word2 ", word2, "overlap ", n_total_overlap, "len w1 ", len(lexicon_word_ngrams[word1]))
+            #print("inhib one way", word_overlap_matrix[word_1_index, word_2_index])
+            #exit()
 
     output_inhibition_matrix = '../data/Inhibition_matrix_previous.dat'
     with open(output_inhibition_matrix, "wb") as f:
@@ -137,8 +135,7 @@ def build_word_inhibition_matrix(lexicon,lexicon_word_ngrams,pm,tokens_to_lexico
 
     size_of_file = os.path.getsize(output_inhibition_matrix)
     with open('../data/Inhib_matrix_params_latest_run.dat', "wb") as f:
-        pickle.dump(str(lexicon_word_ngrams) + str(lexicon_size) + str(pm.min_overlap) +
-                    # str(complete_selective_word_inhibition) + # str(n_known_words) #str(pm.affix_system) +
+        pickle.dump(str(lexicon_word_ngrams) + str(lexicon_size) +
                     str(pm.simil_algo) + str(pm.max_edit_dist) + str(pm.short_word_cutoff) + str(size_of_file), f)
 
     return word_overlap_matrix

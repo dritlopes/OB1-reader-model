@@ -117,7 +117,7 @@ def update_word_activity(lexicon_word_activity, word_overlap_matrix, pm, word_in
     lexicon_select = (lexicon_word_activity + word_input)[
                          (lexicon_active_words == True)] * lexicon_normalized_word_inhibition
     # This concentrates inhibition on the words that have most overlap and are most active
-    lexicon_word_inhibition = np.dot((overlap_select ** 2), -(lexicon_select ** 2)) / np.array(len(set(all_ngrams))**2)
+    lexicon_word_inhibition = np.dot((overlap_select ** 2), -(lexicon_select ** 2))
     # Combine word inhibition and input, and update word activity
     lexicon_total_input = np.add(lexicon_word_inhibition, word_input)
 

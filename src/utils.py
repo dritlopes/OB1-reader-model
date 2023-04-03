@@ -185,7 +185,7 @@ def check_previous_inhibition_matrix(pm,lexicon,lexicon_word_bigrams,verbose=Fal
         # the idea is that the matrix is fully dependent on these parameters alone.
         # So, if the parameters are the same, the matrix should be the same.
         # The file size is also added as a check
-        if str(lexicon_word_bigrams)+str(len(lexicon))+str(pm.min_overlap) +\
+        if str(lexicon_word_bigrams)+str(len(lexicon)) +\
            str(pm.simil_algo)+str(pm.max_edit_dist) + str(pm.short_word_cutoff)+str(size_of_file) \
            == parameters_previous:
             previous_matrix_usable = True
