@@ -136,7 +136,7 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
             act_of_ist = lexicon_word_activity[lexicon_word_index['ist']]
             foveal_word_index = lexicon_word_index[tokens[fixation]]
             foveal_word_activity = lexicon_word_activity[foveal_word_index]
-            print('CYCLE ', str(n_cycles), '   activ @fix ', str(round(foveal_word_activity,3)), ' inhib  #@fix', str(round(lexicon_word_inhibition[foveal_word_index],3)), '  inhib ist', str(round(lexicon_word_inhibition[lexicon_word_index['ist']],3)), '  inhib zumeist', str(round(lexicon_word_inhibition[lexicon_word_index['zumeist']],3)))
+            print('CYCLE ', str(n_cycles), '   activ @fix ', str(round(foveal_word_activity,3)), ' inhib  #@fix', str(round(lexicon_word_inhibition[foveal_word_index],3)))
             #print('        and act. of Die', str(round(lexicon_word_activity[lexicon_word_index[tokens[0]]],3)))
             fixation_data['foveal word activity per cycle'].append(foveal_word_activity)
             fixation_data['foveal word-to-word inhibition per cycle'].append(abs(lexicon_word_inhibition[foveal_word_index]))

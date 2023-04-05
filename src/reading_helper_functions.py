@@ -88,7 +88,7 @@ def update_lexicon_threshold(recognized_word_at_position,fixation,tokens,updated
             # and if it has not been updated yet
             if position not in updated_thresh_positions:
                 position_in_lexicon = tokens_to_lexicon_indices[position]
-                lexicon_thresholds[position_in_lexicon] = update_threshold(position_in_lexicon,
+                lexicon_thresholds[position_in_lexicon] = update_threshold(position,
                                                                            lexicon_thresholds[position_in_lexicon],
                                                                            max(pred_values.values()),
                                                                            wordpred_p,
