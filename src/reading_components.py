@@ -1,4 +1,6 @@
 import numpy as np
+import torch
+from torch import nn
 from reading_helper_functions import string_to_open_ngrams, cal_ngram_exc_input, is_similar_word_length, \
     get_midword_position_for_surrounding_word, calc_word_attention_right, calc_saccade_error,\
     check_previous_refixations_at_position
@@ -107,7 +109,7 @@ def update_word_activity(lexicon_word_activity, word_overlap_matrix, pm, word_in
     """
 
     # NV: the more active a certain word is, the more inhibition it will execute on its peers
-    # -> activity is multiplied by inhibition constant.
+    # Activity is multiplied by inhibition constant.
     # NV: then, this inhibition value is weighed by how much overlap there is between that word and every other.
     lexicon_normalized_word_inhibition = (100.0 / lexicon_size) * pm.word_inhibition
     # find which words are active
@@ -173,6 +175,42 @@ def match_active_words_to_input_slots(order_match_check, stimulus, recognized_wo
                 above_thresh_lexicon[highest] = 0
 
     return recognized_word_at_position, lexicon_word_activity
+
+def semantic_processing(sequence, tokenizer, model):
+
+    # pre-process text
+    encoded_input = tokenizer(sequence, return_tensors='pt')
+    # get logits
+    # output contains at minimum the prediction scores of the language modelling head,
+    # i.e. scores for each vocab token given by a feed-forward neural network
+    output = model(**encoded_input)
+    # logits are prediction scores of language modelling head; of shape (batch_size, sequence_length, config.vocab_size)
+    logits = output.logits[:, -1, :]
+
+    return logits
+
+def activate_predicted_upcoming_word(recognized_word_at_position, tokens_original, lexicon_word_activity, lexicon, language_model, tokenizer, pred_values, top_k=5):
+
+    recognized_word_at_position[recognized_word_at_position == None] = ''
+    recognized_word_at_position = recognized_word_at_position[recognized_word_at_position != '']
+    tokens_read = tokens_original[:len(recognized_word_at_position)]
+    read_sequence = ' '.join(tokens_read)
+    print(f'READ SEQUENCE: {read_sequence}')
+    logits = semantic_processing(read_sequence,tokenizer,language_model)
+    probabilities = nn.functional.softmax(logits, dim=1)
+    # pred_word = tokenizer.decode([torch.argmax(logits).item()])
+    top_tokens = [tokenizer.decode(id.item()) for id in torch.topk(logits, k=top_k)[1][0]]
+    top_probabilities = [float(pred) for pred in torch.topk(probabilities, k=top_k)[0][0]]
+    for token,pred in zip(top_tokens,top_probabilities):
+        token = token.strip()
+        if token in lexicon:
+            print(f'PREDICTED: {token}, {pred}')
+            i = lexicon.index(token)
+            print(f'act before: {lexicon_word_activity[i]}')
+            lexicon_word_activity[i] += pred * 0.05
+            print(f'act after: {lexicon_word_activity[i]}')
+
+    return lexicon_word_activity, pred_values
 
 def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_position_in_stimulus,regression_flag,recognized_word_at_position,lexicon_word_activity,eye_position,fixation_counter,attention_position,attend_width,fix_lexicon_index,pm,saccade_info):
 

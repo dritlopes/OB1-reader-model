@@ -35,18 +35,17 @@ class TaskAttributes:
 
 # NV: When designing a new task, set its attributes here. csv must contain a column called 'all', which contains all elements that are on screen during target presentation
 # NV: function returns instance of TaskAttributes with corresponding attributes
-def return_attributes(task_to_run, language, stimuli_filepath):
+def return_attributes(task_to_run, language, stimuli_filepath, file_separator):
 
     """" "return_attributes(task_to_run)" - Returns an instance of the TaskAttribute class. This class sets the atributes of the task, like stimuli,
  language and the number of stimulus cycles. Importantly, this function takes in an argument "task_to_run" which determines which task's attributes will be returned.
  For example: when the task is 'EmbeddedWords_German', the function reads a CSV file of the German stimuli, assigns it to the stim attribute of the TaskAttributes class,
  assigns 'German' to the language attribute and returns an instance of TaskAttributes with the associated attributes."""
 
-    stim_data = get_stimulus_text_from_file(stimuli_filepath)
-    stim_name = os.path.basename(stimuli_filepath).replace('.txt', '').replace('.csv', '')
+    stim_data, stim_name = get_stimulus_text_from_file(stimuli_filepath, file_separator)
 
     if task_to_run == 'continuous reading':
-        stim_data['all'] = stim_data['all'].encode("utf-8").decode("utf-8")
+        stim_data['all'] = [text.encode("utf-8").decode("utf-8") for text in stim_data['all']]
         return TaskAttributes(
             task_to_run,
             stim_name,
@@ -178,16 +177,18 @@ def return_task_params(task_attributes):
     bigram_gap = 2  # How many in btw letters still lead to bigram? 5 (optimal) or 2 (paper, though there 3 because of different definition)
     #min_overlap = 0 # was 2 # min overlap for words to inhibit each other. MM: unnecessary, can be deleted later
 
+
     # threshold parameters
     max_threshold = 0.6 # mm: changed because max activity changed from 1.3 to 1
     # MM: a number of words have no freq because not in corpus, repaired by making freq less important
     wordfreq_p = 0.2  # 0.2 #NV: difference between max and min threshold
     wordpred_p = 0.2  # Currently not used
     word_length_similarity_constant = 0.15 # 0.35  # 0.15 # NV: determines how similar the length of 2 words must be for them to be recognised as 'similar word length'
-    use_grammar_prob = False  # True for using grammar probabilities, False for using cloze, overwritten by uniform_pred
-    uniform_prob = False  # Overwrites cloze/grammar probabilities with 0.25 for all words
-    grammar_weight = 0.5  # only used when using grammar_prob
     linear = False
+    # use_grammar_prob = False  # True for using grammar probabilities, False for using cloze, overwritten by uniform_pred
+    # uniform_prob = False  # Overwrites cloze/grammar probabilities with 0.25 for all words
+    # grammar_weight = 0.5  # only used when using grammar_prob
+    prediction_flag = 'language model' # cloze # uniform # grammar # language model # TODO implement different prob methods
 
     # attention
     attend_width = 15 # 5.0 for natural reading # 8.0  # NV: #!!!: was set to 15 for flanker, 20 for sentence and 3 for transposed
@@ -215,7 +216,7 @@ def return_task_params(task_attributes):
 
     # model settings
     frequency_flag = True  # use word freq in threshold
-    prediction_flag = True
+    # prediction_flag = True # AL: changed this into a str variable that tells which probability type to be used (if none, prob = None)
     similarity_based_recognition = True
     use_saccade_error = True
     use_attendposition_change = True  # attend width influenced by predictability next wrd
@@ -249,7 +250,7 @@ def return_task_params(task_attributes):
 def return_params(global_params):
 
     # NV: fetch all attributes of the task to run, specified in parameters_exp. Creates an object
-    task_attributes = return_attributes(global_params['task_to_run'],global_params['language'],global_params['stimuli_filepath'])
+    task_attributes = return_attributes(global_params['task_to_run'],global_params['language'],global_params['stimuli_filepath'],global_params['stimuli_separator'])
     
     # NV: get parameters corresponding to type of given task. Returns dictionary
     task_params = return_task_params(task_attributes)

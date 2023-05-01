@@ -56,6 +56,7 @@ def main():
     if useparser:
         parser = argparse.ArgumentParser()
         parser.add_argument('stimuli_filepath')
+        parser.add_argument('--stimuli_separator',default='\t')
         parser.add_argument('--task_to_run',default='continuous reading')
         parser.add_argument('--language', default='english')
         parser.add_argument('--run_exp',default='True',help='Should the experiment simulation run?',choices=['True','False'])
@@ -77,9 +78,10 @@ def main():
         }
     else:
         global_parameters = {
-            "task_to_run" : 'continuous reading',
-            "stimuli_filepath": "../stimuli/PSC_test.txt",
-            "language": 'german',
+            "task_to_run" : 'continuous reading', # EmbeddedWords # Flanker # continuous reading
+            "stimuli_filepath": "../stimuli/Provo_Corpus.csv", # ../stimuli/EmbeddedWords_stimuli_all.csv #  "../stimuli/Flanker_stimuli_all.csv" # "../stimuli/PSC_test.txt"
+            "stimuli_separator": "\t",
+            "language": 'english', # english # french # german
             "run_exp": True,
             "analyze_results": False,
             "optimize": False,

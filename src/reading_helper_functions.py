@@ -127,7 +127,6 @@ def build_word_inhibition_matrix(lexicon,lexicon_word_ngrams,pm,tokens_to_lexico
             word_overlap_matrix[word_2_index, word_1_index] = n_total_overlap / len(lexicon_word_ngrams[word2])
             #print("word1 ", word1, "word2 ", word2, "overlap ", n_total_overlap, "len w1 ", len(lexicon_word_ngrams[word1]))
             #print("inhib one way", word_overlap_matrix[word_1_index, word_2_index])
-            #exit()
 
     output_inhibition_matrix = '../data/Inhibition_matrix_previous.dat'
     with open(output_inhibition_matrix, "wb") as f:
