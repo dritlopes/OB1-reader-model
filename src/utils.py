@@ -149,17 +149,28 @@ def create_pred_file(pm, task_words, output_file_pred_map):
 
     elif pm.prediction_flag == 'cloze':
 
-        if pm.task_to_run == 'continuous reading': # TODO change to not assume PSCall stimuli (add PROVO)
+        if 'psc' in pm.stim_name.lower():
             filepath = "../data/PSCall_freq_pred.txt"
-            my_data = pd.read_csv(filepath, delimiter="\t", encoding=chardet.detect(open(filepath, "rb").read())['encoding'])
+            my_data = pd.read_csv(filepath, delimiter="\t",
+                                  encoding=chardet.detect(open(filepath, "rb").read())['encoding'])
             word_pred_values = np.array(my_data['pred'].tolist())
+
+        elif 'provo' in pm.stim_name.lower():
+            filepath = "../data/Provo_Corpus-Predictability_Norms.csv"
+            my_data = pd.read_csv(filepath, delimiter=",",
+                                  encoding=chardet.detect(open(filepath, "rb").read())['encoding'])
+            word_pred_values = []
+            for text_position, responses in my_data.groupby(['Text_ID', 'Word_Number']):
+                responses = responses.to_dict('records')
+                word_pred_values.append([(response['Response'], float(response['Response_Proportion'])) for response in responses])
 
     else: # prediction_flag == uniform
         word_pred_values = np.repeat(0.25, len(task_words))
 
     word_pred_values_dict = dict()
     for i, pred in enumerate(word_pred_values):
-        word_pred_values_dict[str(i)] = float(pred)
+        # word_pred_values_dict[str(i)] = float(pred)
+        word_pred_values_dict[str(i)] = pred
 
     with open(output_file_pred_map, "w") as f:
         json.dump(word_pred_values_dict, f, ensure_ascii=False)

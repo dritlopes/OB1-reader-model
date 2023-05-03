@@ -189,26 +189,43 @@ def semantic_processing(sequence, tokenizer, model):
 
     return logits
 
-def activate_predicted_upcoming_word(recognized_word_at_position, tokens_original, lexicon_word_activity, lexicon, language_model, tokenizer, pred_values, top_k=5):
+def activate_predicted_upcoming_word(prediction_flag, recognized_word_at_position, tokens_original, lexicon_word_activity, lexicon, pred_values, pred_dict, top_k=5):
 
-    recognized_word_at_position[recognized_word_at_position == None] = ''
-    recognized_word_at_position = recognized_word_at_position[recognized_word_at_position != '']
-    tokens_read = tokens_original[:len(recognized_word_at_position)]
-    read_sequence = ' '.join(tokens_read)
-    print(f'READ SEQUENCE: {read_sequence}')
-    logits = semantic_processing(read_sequence,tokenizer,language_model)
-    probabilities = nn.functional.softmax(logits, dim=1)
-    # pred_word = tokenizer.decode([torch.argmax(logits).item()])
-    top_tokens = [tokenizer.decode(id.item()) for id in torch.topk(logits, k=top_k)[1][0]]
-    top_probabilities = [float(pred) for pred in torch.topk(probabilities, k=top_k)[0][0]]
-    for token,pred in zip(top_tokens,top_probabilities):
-        token = token.strip()
-        if token in lexicon:
-            print(f'PREDICTED: {token}, {pred}')
-            i = lexicon.index(token)
-            print(f'act before: {lexicon_word_activity[i]}')
-            lexicon_word_activity[i] += pred * 0.05
-            print(f'act after: {lexicon_word_activity[i]}')
+    recognized_word_at_position = recognized_word_at_position[recognized_word_at_position != None]
+    # TODO add conditions for pre-activation (see update_lexicon_threshold)
+    # TODO fill in pred_values for language model
+
+    if prediction_flag == 'cloze':
+        predicted = pred_dict[str(len(recognized_word_at_position))]
+        for token, pred in predicted:
+            if token in lexicon:
+                print(f'PREDICTED: {token}, {pred}')
+                i = lexicon.index(token)
+                print(f'act before: {lexicon_word_activity[i]}')
+                lexicon_word_activity[i] += pred * 0.05
+                print(f'act after: {lexicon_word_activity[i]}')
+
+    elif prediction_flag == 'language model':
+        language_model = pred_dict['language model']
+        tokenizer = pred_dict['lm tokenizer']
+        # recognized_word_at_position[recognized_word_at_position == None] = ''
+        # recognized_word_at_position = recognized_word_at_position[recognized_word_at_position != '']
+        tokens_read = tokens_original[:len(recognized_word_at_position)]
+        read_sequence = ' '.join(tokens_read)
+        print(f'READ SEQUENCE: {read_sequence}')
+        logits = semantic_processing(read_sequence,tokenizer,language_model)
+        probabilities = nn.functional.softmax(logits, dim=1)
+        # pred_word = tokenizer.decode([torch.argmax(logits).item()])
+        top_tokens = [tokenizer.decode(id.item()) for id in torch.topk(logits, k=top_k)[1][0]]
+        top_probabilities = [float(pred) for pred in torch.topk(probabilities, k=top_k)[0][0]]
+        for token,pred in zip(top_tokens,top_probabilities):
+            token = token.strip()
+            if token in lexicon:
+                print(f'PREDICTED: {token}, {pred}')
+                i = lexicon.index(token)
+                print(f'act before: {lexicon_word_activity[i]}')
+                lexicon_word_activity[i] += pred * 0.05
+                print(f'act after: {lexicon_word_activity[i]}')
 
     return lexicon_word_activity, pred_values
 

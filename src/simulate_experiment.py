@@ -169,14 +169,14 @@ def reading(pm,tokens,tokens_original,word_overlap_matrix,lexicon_word_ngrams,le
 
             # after recognition, prediction-based activation of recognized word + 1
             if recognized_word_at_position.any() and fixation < total_n_words-1:
-                if pm.prediction_flag == 'language model':
-                    lexicon_word_activity, pred_values = activate_predicted_upcoming_word(recognized_word_at_position,
+                if pm.prediction_flag in ['language model','cloze']:
+                    lexicon_word_activity, pred_values = activate_predicted_upcoming_word(pm.prediction_flag,
+                                                                                          recognized_word_at_position,
                                                                                           tokens_original,
                                                                                           lexicon_word_activity,
                                                                                           lexicon,
-                                                                                          pred_dict["language model"],
-                                                                                          pred_dict["lm tokenizer"],
-                                                                                          pred_values)
+                                                                                          pred_values,
+                                                                                          pred_dict)
 
             # ---------------------- Make saccade decisions ---------------------
             # word selection and attention shift
