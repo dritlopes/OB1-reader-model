@@ -9,11 +9,11 @@ from reading_components import compute_stimulus, compute_eye_position, compute_w
     activate_predicted_upcoming_word
 from reading_helper_functions import get_threshold, string_to_open_ngrams, build_word_inhibition_matrix,\
     define_slot_matching_order, sample_from_norm_distribution, find_word_edges, update_lexicon_threshold,\
-    get_blankscreen_stimulus
+    get_blankscreen_stimulus, check_predictability
 
 logger = logging.getLogger(__name__)
 
-def reading(pm,tokens,tokens_original,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index,lexicon_thresholds,lexicon,pred_dict,freq_values,save_skipped_words=True):
+def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index,lexicon_thresholds,lexicon,pred_dict,freq_values,save_skipped_words=True):
 
     all_data = {}
     # set to true when end of text is reached
@@ -26,12 +26,11 @@ def reading(pm,tokens,tokens_original,word_overlap_matrix,lexicon_word_ngrams,le
     attend_width = pm.attend_width
     # total number of tokens in input
     total_n_words = len(tokens)
-    # predictability of words in text
-    pred_values = dict()
     # word activity for word in lexicon
     lexicon_word_activity = np.zeros((len(lexicon)), dtype=float)
-    # positions in text whose thresholds have already been updated, avoid updating it every time position is in stimulus
-    updated_thresh_positions = []
+    # positions in text whose thresholds/pre-activation have already been updated
+    # avoid updating it every time position is in stimulus
+    updated_positions = []
     # history of regressions, set to true at a certain position in the text when a regression is performed to that word
     regression_flag = np.zeros(total_n_words, dtype=bool)
     # recognized word at position, which word received the highest activation in each position
@@ -70,7 +69,7 @@ def reading(pm,tokens,tokens_original,word_overlap_matrix,lexicon_word_ngrams,le
         fixation_data['foveal word index'] = fixation
         fixation_data['attentional width'] = attend_width
         fixation_data['foveal word frequency'] = freq_values[tokens[fixation]] if tokens[fixation] in freq_values.keys() else 0
-        # fixation_data['foveal word predictability'] = pred_values[str(fixation)] if str(fixation) in pred_values.keys() else 0
+        fixation_data['foveal word predictability'] = pred_dict[str(fixation)][tokens[fixation]] if str(fixation) in pred_dict.keys() and tokens[fixation] in pred_dict[str(fixation)].keys() else 0
         fixation_data['foveal word length'] = len(tokens[fixation])
         fixation_data['foveal word threshold'] = lexicon_thresholds[tokens_to_lexicon_indices[fixation]]
         fixation_data['offset'] = saccade_info['offset from word center']
@@ -161,7 +160,7 @@ def reading(pm,tokens,tokens_original,word_overlap_matrix,lexicon_word_ngrams,le
             #     updated_thresh_positions, lexicon_thresholds = update_lexicon_threshold(recognized_word_at_position,
             #                                                                             fixation,
             #                                                                             tokens,
-            #                                                                             updated_thresh_positions,
+            #                                                                             updated_positions,
             #                                                                             lexicon_thresholds,
             #                                                                             pm.wordpred_p,
             #                                                                             pred_values,
@@ -169,14 +168,15 @@ def reading(pm,tokens,tokens_original,word_overlap_matrix,lexicon_word_ngrams,le
 
             # after recognition, prediction-based activation of recognized word + 1
             if recognized_word_at_position.any() and fixation < total_n_words-1:
-                if pm.prediction_flag in ['language model','cloze']:
-                    lexicon_word_activity, pred_values = activate_predicted_upcoming_word(pm.prediction_flag,
-                                                                                          recognized_word_at_position,
-                                                                                          tokens_original,
-                                                                                          lexicon_word_activity,
-                                                                                          lexicon,
-                                                                                          pred_values,
-                                                                                          pred_dict)
+                # check whether we should pre-activate and in relation to which position (n+1 or n+2)
+                position = check_predictability(recognized_word_at_position, fixation, tokens, updated_positions)
+                if position:
+                    if pm.prediction_flag in ['language model','cloze']: # TODO implement grammar and uniform baselines
+                        lexicon_word_activity = activate_predicted_upcoming_word(position,
+                                                                                  lexicon_word_activity,
+                                                                                  lexicon,
+                                                                                  pred_dict)
+                        updated_positions.append(position)
 
             # ---------------------- Make saccade decisions ---------------------
             # word selection and attention shift
@@ -509,21 +509,18 @@ def simulate_experiment(pm):
 
     if pm.task_to_run == 'continuous reading':
 
-        pred_dict = get_pred_dict(pm, set(tokens))
+        word_predictions = get_pred_dict(pm,lexicon)
 
-        for text in pm.stim_all[:1]:
-            text_tokens = [token for token in text.split()]
-            text_tokens_pre_processed = [pre_process_string(token) for token in text.split()]
-            assert len(text_tokens) == len(text_tokens_pre_processed)
+        for i, text in enumerate(pm.stim_all[:1]):
+            text_tokens = [pre_process_string(token) for token in text.split()]
             text_data, skipped_words = reading(pm,
-                                                text_tokens_pre_processed,
                                                 text_tokens,
                                                 word_inhibition_matrix,
                                                 lexicon_word_ngrams,
                                                 lexicon_word_index,
                                                 lexicon_thresholds,
                                                 lexicon,
-                                                pred_dict,
+                                                word_predictions[str(i)],
                                                 word_frequencies)
             all_data.append(text_data)
             skipped_data.append(skipped_words)

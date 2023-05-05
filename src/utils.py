@@ -7,6 +7,7 @@ import chardet
 import json
 import re
 from transformers import GPT2LMHeadModel, GPT2Tokenizer, set_seed
+from reading_components import semantic_processing
 
 def get_stimulus_text_from_file(filepath, sep='\t'):
 
@@ -115,7 +116,7 @@ def create_freq_file(language, task_words, output_file_frequency_map, freq_thres
 
 def get_word_freq(pm, unique_words, n_high_freq_words = 500, freq_threshold = 0.15, verbose=True):
 
-    output_word_frequency_map = f"../data/{pm.task_to_run}_{pm.stim_name}_frequency_map_{pm.language}.json"
+    output_word_frequency_map = f"../data/frequency_map_{pm.stim_name}_{pm.task_to_run}_{pm.language}.json"
 
     # AL: in case freq file needs to be created from original files
     if not os.path.exists(output_word_frequency_map):
@@ -127,25 +128,22 @@ def get_word_freq(pm, unique_words, n_high_freq_words = 500, freq_threshold = 0.
     return word_freq_dict
 
 
-def create_pred_file(pm, task_words, output_file_pred_map):
+def create_pred_file(pm, output_file_pred_map, lexicon, topk):
 
-    if pm.prediction_flag == 'grammar':
+    word_pred_values_dict = dict()
 
-        if pm.task == 'continuous reading':
-            with open("../data/PSCALLsyntax_probabilites.pkl", "r") as f:
-                word_pred_values = np.array(pickle.load(f)["pred"].tolist())
-        else:
-            grammar_prob_dt = pd.read_csv('../data/POSprob_' + pm.task + '.csv')
-            grammar_prob = grammar_prob_dt.values.tolist()
-            grammar_prob = np.array(grammar_prob)
-            if pm.task_to_run == 'Sentence':
-                word_pred_values = np.reshape(grammar_prob, (2, 400, 4))
-            elif pm.task_to_run == 'Transposed':
-                word_pred_values = np.reshape(grammar_prob, (2, 240, 5))
-            elif pm.task_to_run == 'Classification':
-                word_pred_values = np.reshape(grammar_prob, (2, 200, 3))
-            else:
-                raise NotImplementedError(f'Grammar probabilities not implemented for {pm.task} yet')
+    if pm.prediction_flag == 'language model':
+
+        # initialize language model and its tokenizer
+        language_model = GPT2LMHeadModel.from_pretrained('gpt2')
+        lm_tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+        # in case you want to reproduce predictions
+        set_seed(42)
+        # list of words, set of words, sentences or passages. Each one is equivalent to one trial in an experiment
+        for i, sequence in enumerate(pm.stim_all):
+            sequence = sequence.split(' ')
+            pred_dict = semantic_processing(sequence, lm_tokenizer, language_model, lexicon, topk)
+            word_pred_values_dict[str(i)] = pred_dict
 
     elif pm.prediction_flag == 'cloze':
 
@@ -159,43 +157,51 @@ def create_pred_file(pm, task_words, output_file_pred_map):
             filepath = "../data/Provo_Corpus-Predictability_Norms.csv"
             my_data = pd.read_csv(filepath, delimiter=",",
                                   encoding=chardet.detect(open(filepath, "rb").read())['encoding'])
-            word_pred_values = []
-            for text_position, responses in my_data.groupby(['Text_ID', 'Word_Number']):
-                responses = responses.to_dict('records')
-                word_pred_values.append([(response['Response'], float(response['Response_Proportion'])) for response in responses])
+
+            for text_id, info in my_data.groupby(['Text_ID']):
+                text_id = str(int(text_id) - 1)
+                word_pred_values_dict[text_id] = dict()
+                for text_position, responses in info.groupby(['Word_Number']):
+                    responses = responses.to_dict('records')
+                    word_pred_values_dict[str(text_id)][str(int(text_position) - 1)] = dict()
+                    for response in responses:
+                        word_pred_values_dict[str(text_id)][str(int(text_position) - 1)][response['Response']] = float(response['Response_Proportion'])
+
+    elif pm.prediction_flag == 'grammar':
+        pass
+        # if pm.task == 'continuous reading':
+        #     with open("../data/PSCALLsyntax_probabilites.pkl", "r") as f:
+        #         word_pred_values = np.array(pickle.load(f)["pred"].tolist())
+        # else:
+        #     grammar_prob_dt = pd.read_csv('../data/POSprob_' + pm.task + '.csv')
+        #     grammar_prob = grammar_prob_dt.values.tolist()
+        #     grammar_prob = np.array(grammar_prob)
+        #     if pm.task_to_run == 'Sentence':
+        #         word_pred_values = np.reshape(grammar_prob, (2, 400, 4))
+        #     elif pm.task_to_run == 'Transposed':
+        #         word_pred_values = np.reshape(grammar_prob, (2, 240, 5))
+        #     elif pm.task_to_run == 'Classification':
+        #         word_pred_values = np.reshape(grammar_prob, (2, 200, 3))
+        #     else:
+        #         raise NotImplementedError(f'Grammar probabilities not implemented for {pm.task} yet')
 
     else: # prediction_flag == uniform
-        word_pred_values = np.repeat(0.25, len(task_words))
-
-    word_pred_values_dict = dict()
-    for i, pred in enumerate(word_pred_values):
-        # word_pred_values_dict[str(i)] = float(pred)
-        word_pred_values_dict[str(i)] = pred
+        pass
+        # word_pred_values = np.repeat(0.25, len(task_trials))
 
     with open(output_file_pred_map, "w") as f:
         json.dump(word_pred_values_dict, f, ensure_ascii=False)
 
-def get_pred_dict(pm, task_words):
+def get_pred_dict(pm, lexicon, topk=15):
 
-    if pm.prediction_flag == 'language model':
+    output_word_pred_map = f"../data/prediction_map_{pm.stim_name}_{pm.prediction_flag}_{pm.task_to_run}_{pm.language}.json"
 
-        # initialize language model and its tokenizer
-        language_model = GPT2LMHeadModel.from_pretrained('gpt2')
-        lm_tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
-        # in case you want to reproduce predictions
-        set_seed(42)
-        word_pred_dict = {'language model': language_model,
-                          'lm tokenizer': lm_tokenizer}
+    # AL: in case pred file needs to be created from original files
+    if not os.path.exists(output_word_pred_map):
+        create_pred_file(pm, output_word_pred_map, lexicon, topk)
 
-    else:
-        output_word_pred_map = f"../data/{pm.task_to_run}_{pm.stim_name}_prediction_map_{pm.language}.json"
-
-        # AL: in case pred file needs to be created from original files
-        if not os.path.exists(output_word_pred_map):
-            create_pred_file(pm, task_words, output_word_pred_map)
-
-        with open(output_word_pred_map, "r") as f:
-            word_pred_dict = json.load(f)
+    with open(output_word_pred_map, "r") as f:
+        word_pred_dict = json.load(f)
 
     return word_pred_dict
 

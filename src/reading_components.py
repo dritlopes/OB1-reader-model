@@ -176,58 +176,46 @@ def match_active_words_to_input_slots(order_match_check, stimulus, recognized_wo
 
     return recognized_word_at_position, lexicon_word_activity
 
-def semantic_processing(sequence, tokenizer, model):
+def semantic_processing(text, tokenizer, language_model, lexicon, top_k):
 
-    # pre-process text
-    encoded_input = tokenizer(sequence, return_tensors='pt')
-    # get logits
-    # output contains at minimum the prediction scores of the language modelling head,
-    # i.e. scores for each vocab token given by a feed-forward neural network
-    output = model(**encoded_input)
-    # logits are prediction scores of language modelling head; of shape (batch_size, sequence_length, config.vocab_size)
-    logits = output.logits[:, -1, :]
-
-    return logits
-
-def activate_predicted_upcoming_word(prediction_flag, recognized_word_at_position, tokens_original, lexicon_word_activity, lexicon, pred_values, pred_dict, top_k=5):
-
-    recognized_word_at_position = recognized_word_at_position[recognized_word_at_position != None]
-    # TODO add conditions for pre-activation (see update_lexicon_threshold)
-    # TODO fill in pred_values for language model
-
-    if prediction_flag == 'cloze':
-        predicted = pred_dict[str(len(recognized_word_at_position))]
-        for token, pred in predicted:
-            if token in lexicon:
-                print(f'PREDICTED: {token}, {pred}')
-                i = lexicon.index(token)
-                print(f'act before: {lexicon_word_activity[i]}')
-                lexicon_word_activity[i] += pred * 0.05
-                print(f'act after: {lexicon_word_activity[i]}')
-
-    elif prediction_flag == 'language model':
-        language_model = pred_dict['language model']
-        tokenizer = pred_dict['lm tokenizer']
-        # recognized_word_at_position[recognized_word_at_position == None] = ''
-        # recognized_word_at_position = recognized_word_at_position[recognized_word_at_position != '']
-        tokens_read = tokens_original[:len(recognized_word_at_position)]
-        read_sequence = ' '.join(tokens_read)
-        print(f'READ SEQUENCE: {read_sequence}')
-        logits = semantic_processing(read_sequence,tokenizer,language_model)
-        probabilities = nn.functional.softmax(logits, dim=1)
-        # pred_word = tokenizer.decode([torch.argmax(logits).item()])
+    pred_dict = dict()
+    for i in range(1,len(text)):
+        sequence = ' '.join(text[:i])
+        # pre-process text
+        encoded_input = tokenizer(sequence, return_tensors='pt')
+        # output contains at minimum the prediction scores of the language modelling head,
+        # i.e. scores for each vocab token given by a feed-forward neural network
+        output = language_model(**encoded_input)
+        # logits are prediction scores of language modelling head;
+        # of shape (batch_size, sequence_length, config.vocab_size)
+        logits = output.logits[:, -1, :]
         top_tokens = [tokenizer.decode(id.item()) for id in torch.topk(logits, k=top_k)[1][0]]
+        # convert raw scores into probabilities (between 0 and 1)
+        probabilities = nn.functional.softmax(logits, dim=1)
         top_probabilities = [float(pred) for pred in torch.topk(probabilities, k=top_k)[0][0]]
-        for token,pred in zip(top_tokens,top_probabilities):
+
+        pred_dict[str(i)] = dict()
+        for token, pred in zip(top_tokens,top_probabilities):
             token = token.strip()
             if token in lexicon:
-                print(f'PREDICTED: {token}, {pred}')
-                i = lexicon.index(token)
-                print(f'act before: {lexicon_word_activity[i]}')
-                lexicon_word_activity[i] += pred * 0.05
-                print(f'act after: {lexicon_word_activity[i]}')
+                #print(token,pred)
+                pred_dict[str(i)][token] = round(pred,3)
+                #print(pred_dict[str(i)])
 
-    return lexicon_word_activity, pred_values
+    return pred_dict
+
+def activate_predicted_upcoming_word(position, lexicon_word_activity, lexicon, pred_dict):
+
+    predicted = pred_dict[str(position)]
+    for token, pred in predicted.items():
+        if token in lexicon:
+            print(f'PREDICTED: {token}, {pred}')
+            i = lexicon.index(token)
+            print(f'act before: {lexicon_word_activity[i]}')
+            lexicon_word_activity[i] += pred * 0.05
+            print(f'act after: {lexicon_word_activity[i]}')
+
+    return lexicon_word_activity
 
 def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_position_in_stimulus,regression_flag,recognized_word_at_position,lexicon_word_activity,eye_position,fixation_counter,attention_position,attend_width,fix_lexicon_index,pm,saccade_info):
 

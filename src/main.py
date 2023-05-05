@@ -106,8 +106,8 @@ def main():
         print("Step-size: " + str(pm.epsilon))
     print("-------------------")
 
-    output_file_results, output_file_skipped = (
-        "../results/results_" + pm.task_to_run + ".pkl", "../results/skipped_words_" + pm.task_to_run + ".pkl")
+    output_file_results = f"../results/simulation_{pm.stim_name}_{pm.task_to_run}_{pm.prediction_flag}_{dt_string}.pkl"
+    output_file_skipped = f"../results/skipped_words_{pm.stim_name}_{pm.task_to_run}_{pm.prediction_flag}_{dt_string}.pkl"
 
     start_time = time.perf_counter()
     simulate_reading(pm, output_file_results, output_file_skipped)

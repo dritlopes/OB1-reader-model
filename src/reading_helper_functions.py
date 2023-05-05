@@ -77,25 +77,31 @@ def update_threshold(word_position, word_threshold, max_predictability, pred_p, 
 
 def update_lexicon_threshold(recognized_word_at_position,fixation,tokens,updated_thresh_positions,lexicon_thresholds,wordpred_p,pred_values,tokens_to_lexicon_indices):
 
-    # update the threshold for the next word only if word at fixation has been recognized
-    if recognized_word_at_position[fixation] == tokens[fixation]:
-        position = fixation + 1
-        # if next word has already been recognized, update threshold of n+2 word
-        if fixation < len(tokens) - 2 and recognized_word_at_position[position] == tokens[position]:
-            position = fixation + 2
-        # and only if next word has not been recognized (either n+1 or n+2)
-        if not recognized_word_at_position[position]:
-            # and if it has not been updated yet
-            if position not in updated_thresh_positions:
-                position_in_lexicon = tokens_to_lexicon_indices[position]
-                lexicon_thresholds[position_in_lexicon] = update_threshold(position,
-                                                                           lexicon_thresholds[position_in_lexicon],
-                                                                           max(pred_values.values()),
-                                                                           wordpred_p,
-                                                                           pred_values)
-                updated_thresh_positions.append(position)
+    position = check_predictability(recognized_word_at_position, fixation, tokens, updated_thresh_positions)
+    if position:
+        position_in_lexicon = tokens_to_lexicon_indices[position]
+        lexicon_thresholds[position_in_lexicon] = update_threshold(position,
+                                                                   lexicon_thresholds[position_in_lexicon],
+                                                                   max(pred_values.values()),
+                                                                   wordpred_p,
+                                                                   pred_values)
+        updated_thresh_positions.append(position)
 
     return updated_thresh_positions, lexicon_thresholds
+
+def check_predictability(recognized_word_at_position, fixation, tokens, updated_positions):
+
+    position = None
+    # update next word only if word at fixation has been recognized correctly
+    if recognized_word_at_position[fixation] == tokens[fixation]:
+        # and next word has not been recognized yet, nor has been already updated
+        if not recognized_word_at_position[fixation + 1] and fixation + 1 not in updated_positions:
+            position = fixation + 1
+        # if n+1 has already been recognized or updated, update n+2 word if it exists
+        elif fixation < len(tokens) - 2 and recognized_word_at_position[fixation + 1] == tokens[fixation + 1]:
+            position = fixation + 2
+
+    return position
 
 def is_similar_word_length(len1, len2, len_sim_constant):
 
