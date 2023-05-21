@@ -22,6 +22,8 @@ df_all_tokens.fillna({'wordskip': False, 'fixation duration': 0.0}, inplace=True
 df_all_tokens = df_all_tokens.set_index('foveal word index')
 df_all_tokens = df_all_tokens.sort_index()
 
+# Distribution
+
 # --------- General fixation duration measures  ---------
 # saccade type counts
 saccade_type_counts = df_sim_results['saccade type'].value_counts()

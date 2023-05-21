@@ -179,6 +179,8 @@ def match_active_words_to_input_slots(order_match_check, stimulus, recognized_wo
 def semantic_processing(text, tokenizer, language_model, lexicon, top_k):
 
     pred_dict = dict()
+    unknown_tokens = dict()
+
     for i in range(1,len(text)):
         sequence = ' '.join(text[:i])
         # pre-process text
@@ -195,14 +197,26 @@ def semantic_processing(text, tokenizer, language_model, lexicon, top_k):
         top_probabilities = [float(pred) for pred in torch.topk(probabilities, k=top_k)[0][0]]
 
         pred_dict[str(i)] = dict()
+        unknown_tokens[str(i)] = dict()
         for token, pred in zip(top_tokens,top_probabilities):
             token = token.strip()
-            if token in lexicon:
+            if token in lexicon: # TODO token should undergo same-preprocessing as words in lexicon. Add lemmatization
                 #print(token,pred)
                 pred_dict[str(i)][token] = round(pred,3)
                 #print(pred_dict[str(i)])
+            else: # in case token is a sub-word, try to concatenate token with next predicted token
+                concat_string = sequence + ' ' + token
+                input = tokenizer(concat_string, return_tensors='pt')
+                output = language_model(**input)
+                logits = output.logits[:, -1, :]
+                pred_token = tokenizer.decode([torch.argmax(logits).item()])
+                pred_token = pred_token.strip()
+                if token + pred_token in lexicon:
+                    pred_dict[str(i)][token+pred_token] = round(pred, 3)
+                else:
+                    unknown_tokens[str(i)][token] = round(pred, 3)
 
-    return pred_dict
+    return pred_dict, unknown_tokens
 
 def activate_predicted_upcoming_word(position, lexicon_word_activity, lexicon, pred_dict):
 

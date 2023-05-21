@@ -131,6 +131,7 @@ def get_word_freq(pm, unique_words, n_high_freq_words = 500, freq_threshold = 0.
 def create_pred_file(pm, output_file_pred_map, lexicon, topk):
 
     word_pred_values_dict = dict()
+    unknown_word_pred_values_dict = dict()
 
     if pm.prediction_flag == 'language model':
 
@@ -142,8 +143,9 @@ def create_pred_file(pm, output_file_pred_map, lexicon, topk):
         # list of words, set of words, sentences or passages. Each one is equivalent to one trial in an experiment
         for i, sequence in enumerate(pm.stim_all):
             sequence = sequence.split(' ')
-            pred_dict = semantic_processing(sequence, lm_tokenizer, language_model, lexicon, topk)
+            pred_dict, unknown_dict = semantic_processing(sequence, lm_tokenizer, language_model, lexicon, topk)
             word_pred_values_dict[str(i)] = pred_dict
+            unknown_word_pred_values_dict[str(i)] = unknown_dict
 
     elif pm.prediction_flag == 'cloze':
 
@@ -161,11 +163,15 @@ def create_pred_file(pm, output_file_pred_map, lexicon, topk):
             for text_id, info in my_data.groupby(['Text_ID']):
                 text_id = str(int(text_id) - 1)
                 word_pred_values_dict[text_id] = dict()
+                unknown_word_pred_values_dict[text_id] = dict()
                 for text_position, responses in info.groupby(['Word_Number']):
                     responses = responses.to_dict('records')
-                    word_pred_values_dict[str(text_id)][str(int(text_position) - 1)] = dict()
+                    word_pred_values_dict[text_id][str(int(text_position) - 1)] = dict()
+                    unknown_word_pred_values_dict[text_id][str(int(text_position) - 1)] = dict()
                     for response in responses:
-                        word_pred_values_dict[str(text_id)][str(int(text_position) - 1)][response['Response']] = float(response['Response_Proportion'])
+                        word_pred_values_dict[text_id][str(int(text_position) - 1)][response['Response']] = float(response['Response_Proportion'])
+                        if response['Response'] not in lexicon:
+                            unknown_word_pred_values_dict[text_id][str(int(text_position) - 1)][response['Response']] = float(response['Response_Proportion'])
 
     elif pm.prediction_flag == 'grammar':
         pass
@@ -191,6 +197,13 @@ def create_pred_file(pm, output_file_pred_map, lexicon, topk):
 
     with open(output_file_pred_map, "w") as f:
         json.dump(word_pred_values_dict, f, ensure_ascii=False)
+
+    if unknown_word_pred_values_dict:
+        output_file = output_file_pred_map.replace('.json', '') + '_unknown.json'
+        with open(output_file, "w") as f:
+            json.dump(unknown_word_pred_values_dict, f, ensure_ascii=False)
+
+    exit()
 
 def get_pred_dict(pm, lexicon, topk=15):
 
