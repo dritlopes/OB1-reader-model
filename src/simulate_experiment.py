@@ -3,11 +3,11 @@ import numpy as np
 import pickle
 from collections import defaultdict
 import math
-from utils import get_word_freq, get_pred_dict, check_previous_inhibition_matrix, pre_process_string
+from utils import get_word_freq, get_pred_dict, set_up_inhibition_matrix, pre_process_string
 from reading_components import compute_stimulus, compute_eye_position, compute_words_input, update_word_activity, \
     match_active_words_to_input_slots, compute_next_attention_position, compute_next_eye_position, \
     activate_predicted_upcoming_word
-from reading_helper_functions import get_threshold, string_to_open_ngrams, build_word_inhibition_matrix,\
+from reading_helper_functions import get_threshold, string_to_open_ngrams, \
     define_slot_matching_order, sample_from_norm_distribution, find_word_edges, update_lexicon_threshold,\
     get_blankscreen_stimulus, check_predictability
 
@@ -78,6 +78,7 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
         fixation_data['saccade distance'] = saccade_info['saccade distance']
         fixation_data['saccade cause'] = saccade_info['saccade cause']
         fixation_data['saccade type by error'] = saccade_info['saccade type by error']
+        fixation_data['recognition cycle'] = None
 
         # ---------------------- Define the stimulus and eye position ---------------------
         stimulus, stimulus_position, fixated_position_in_stimulus = compute_stimulus(fixation, tokens)
@@ -450,11 +451,17 @@ def simulate_experiment(pm):
     word_frequencies = get_word_freq(pm, set([token.lower() for token in tokens]))
     max_frequency = max(word_frequencies.values())
     lexicon = list(set(tokens) | set(word_frequencies.keys()))
+    lexicon = [pre_process_string(word, lemmatize=pm.lemmatize) for word in lexicon]
 
     # write out lexicon for consulting purposes
-    lexicon_file_name = '../data/Lexicon.dat'
-    with open(lexicon_file_name, "wb") as f:
+    lexicon_filename = '../data/lexicon.pkl'
+    with open(lexicon_filename, "wb") as f:
         pickle.dump(lexicon, f)
+
+    # write out pre-processed stimulus for consulting purposes
+    preprocessed_stimulus_filename = '../data/pre-processed_stimuli.pkl'
+    with open(preprocessed_stimulus_filename, "wb") as f:
+        pickle.dump(tokens, f)
 
     print('Setting word recognition thresholds...')
     # define word recognition thresholds
@@ -471,6 +478,8 @@ def simulate_experiment(pm):
     total_n_words = len(tokens)
     tokens_to_lexicon_indices = np.zeros((total_n_words), dtype=int)
     for i, word in enumerate(tokens):
+        if pm.lemmatize:
+            word = pre_process_string(word, lemmatize=True)
         tokens_to_lexicon_indices[i] = lexicon.index(word)
 
     print('Finding ngrams from lexicon...')
@@ -485,12 +494,7 @@ def simulate_experiment(pm):
 
     print('Computing word-to-word inhibition matrix...')
     # set up word-to-word inhibition matrix
-    previous_matrix_usable = check_previous_inhibition_matrix(pm,lexicon,lexicon_word_ngrams)
-    if previous_matrix_usable:
-        with open('../data/Inhibition_matrix_previous.dat', "rb") as f:
-            word_inhibition_matrix = pickle.load(f)
-    else:
-        word_inhibition_matrix = build_word_inhibition_matrix(lexicon,lexicon_word_ngrams,pm,tokens_to_lexicon_indices)
+    word_inhibition_matrix = set_up_inhibition_matrix(pm, lexicon, lexicon_word_ngrams, tokens_to_lexicon_indices)
     print("Inhibition grid ready.")
 
     # recognition threshold for each word in lexicon
@@ -509,9 +513,10 @@ def simulate_experiment(pm):
 
     if pm.task_to_run == 'continuous reading':
 
-        word_predictions = get_pred_dict(pm,lexicon)
+        word_predictions = get_pred_dict(pm, lexicon, topk=15, round=3)
 
         for i, text in enumerate(pm.stim_all[:1]):
+
             text_tokens = [pre_process_string(token) for token in text.split()]
             text_data, skipped_words = reading(pm,
                                                 text_tokens,

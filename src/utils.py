@@ -8,6 +8,15 @@ import json
 import re
 from transformers import GPT2LMHeadModel, GPT2Tokenizer, set_seed
 from reading_components import semantic_processing
+from reading_helper_functions import build_word_inhibition_matrix
+import logging
+import spacy
+import torch
+from collections import defaultdict
+
+logger = logging.getLogger(__name__)
+# please make sure spacy model is downloaded using "python -m spacy download en_core_web_sm"
+spacy_model = spacy.load("en_core_web_sm")
 
 def get_stimulus_text_from_file(filepath, sep='\t'):
 
@@ -25,7 +34,7 @@ def get_stimulus_text_from_file(filepath, sep='\t'):
 
     return data, stim_name
 
-def pre_process_string(string, remove_punctuation=True, all_lowercase=True, strip_spaces=True):
+def pre_process_string(string, remove_punctuation=True, all_lowercase=True, strip_spaces=True, lemmatize=False):
 
     if remove_punctuation:
         string = re.sub(r'[^\w\s]', '', string)
@@ -33,13 +42,18 @@ def pre_process_string(string, remove_punctuation=True, all_lowercase=True, stri
         string = string.lower()
     if strip_spaces:
         string = string.strip()
+    if lemmatize:
+        if string:
+            token = spacy_model(string)[0]
+            if token:
+                string = str(token.lemma_)
     return string
 
 def create_freq_file(language, task_words, output_file_frequency_map, freq_threshold, n_high_freq_words, task, verbose):
 
     # TODO AL: this was needed to reproduce results on PSCall because the overlap between the words and SUBTLEX-DE was low (less than half). Need to fix this later
     if task == 'continuous reading' and language == 'german':
-        filepath = "../data/PSCall_freq_pred.txt"
+        filepath = "../data/frequency/PSCall_freq_pred.txt"
         my_data = pd.read_csv(filepath, delimiter="\t",
                               encoding=chardet.detect(open(filepath, "rb").read())['encoding'])
         my_data['word'] = my_data['word'].astype('unicode')
@@ -116,7 +130,7 @@ def create_freq_file(language, task_words, output_file_frequency_map, freq_thres
 
 def get_word_freq(pm, unique_words, n_high_freq_words = 500, freq_threshold = 0.15, verbose=True):
 
-    output_word_frequency_map = f"../data/frequency_map_{pm.stim_name}_{pm.task_to_run}_{pm.language}.json"
+    output_word_frequency_map = f"../data/frequency/frequency_map_{pm.stim_name}_{pm.task_to_run}_{pm.language}.json"
 
     # AL: in case freq file needs to be created from original files
     if not os.path.exists(output_word_frequency_map):
@@ -128,7 +142,7 @@ def get_word_freq(pm, unique_words, n_high_freq_words = 500, freq_threshold = 0.
     return word_freq_dict
 
 
-def create_pred_file(pm, output_file_pred_map, lexicon, topk):
+def create_pred_file(pm, output_file_pred_map, lexicon, topk, round_n):
 
     word_pred_values_dict = dict()
     unknown_word_pred_values_dict = dict()
@@ -143,20 +157,50 @@ def create_pred_file(pm, output_file_pred_map, lexicon, topk):
         # list of words, set of words, sentences or passages. Each one is equivalent to one trial in an experiment
         for i, sequence in enumerate(pm.stim_all):
             sequence = sequence.split(' ')
-            pred_dict, unknown_dict = semantic_processing(sequence, lm_tokenizer, language_model, lexicon, topk)
+            pred_dict = dict()
+            unknown_tokens = dict()
+            pred_info = semantic_processing(sequence, lm_tokenizer, language_model, topk)
+            for pos in range(1, len(sequence)-1):
+                pred_dict[str(pos)] = dict()
+                unknown_tokens[str(pos)] = dict()
+                for token, pred in zip(pred_info[pos][0], pred_info[pos][1]):
+                    token_processed = pre_process_string(token, lemmatize=pm.lemmatize)
+                    pred_dict[str(pos)][token_processed] = round(pred, round_n)
+                    if token_processed not in lexicon:
+                        unknown_tokens[str(pos)][token] = round(pred, round_n)
+                    # else: # in case token is a sub-word, try to concatenate token with next predicted token
+                    #     concat_string = ' '.join(sequence[:i]) + ' ' + token
+                    #     input = lm_tokenizer(concat_string, return_tensors='pt')
+                    #     output = language_model(**input)
+                    #     logits = output.logits[:, -1, :]
+                    #     pred_token = lm_tokenizer.decode([torch.argmax(logits).item()])
+                    #     # pred_token = pre_process_string(pred_token)
+                    #     merged_token = pre_process_string(token + pred_token, lemmatize = True)
+                    #     if merged_token in lexicon:
+                    #         pred_dict[str(pos)][merged_token] = round(pred, 3)
+                    #         logger.info(f'{token} + {pred_token} = {merged_token}')
+                    #     else:
+                    #         unknown_tokens[str(pos)][token] = round(pred, 3)
+
             word_pred_values_dict[str(i)] = pred_dict
-            unknown_word_pred_values_dict[str(i)] = unknown_dict
+            unknown_word_pred_values_dict[str(i)] = unknown_tokens
+
+        # logger.info('Predicting 1 subtoken')
+        # logger.info('Unknown tokens predicted by gpt2: ' +
+        #       str(sum([len(words.keys()) for text, info in unknown_word_pred_values_dict.items() if info for idx, words in info.items()])))
+        # logger.info('Known tokens predicted by gpt2: ' +
+        #       str(sum([len(words.keys()) for text, info in word_pred_values_dict.items() if info for idx, words in info.items()])))
 
     elif pm.prediction_flag == 'cloze':
 
         if 'psc' in pm.stim_name.lower():
-            filepath = "../data/PSCall_freq_pred.txt"
+            filepath = "../data/predictability/PSCall_freq_pred.txt"
             my_data = pd.read_csv(filepath, delimiter="\t",
                                   encoding=chardet.detect(open(filepath, "rb").read())['encoding'])
-            word_pred_values = np.array(my_data['pred'].tolist())
+            word_pred_values_dict = np.array(my_data['pred'].tolist())
 
         elif 'provo' in pm.stim_name.lower():
-            filepath = "../data/Provo_Corpus-Predictability_Norms.csv"
+            filepath = "../data/predictability/Provo_Corpus-Predictability_Norms.csv"
             my_data = pd.read_csv(filepath, delimiter=",",
                                   encoding=chardet.detect(open(filepath, "rb").read())['encoding'])
 
@@ -169,9 +213,18 @@ def create_pred_file(pm, output_file_pred_map, lexicon, topk):
                     word_pred_values_dict[text_id][str(int(text_position) - 1)] = dict()
                     unknown_word_pred_values_dict[text_id][str(int(text_position) - 1)] = dict()
                     for response in responses:
-                        word_pred_values_dict[text_id][str(int(text_position) - 1)][response['Response']] = float(response['Response_Proportion'])
-                        if response['Response'] not in lexicon:
-                            unknown_word_pred_values_dict[text_id][str(int(text_position) - 1)][response['Response']] = float(response['Response_Proportion'])
+                        if response['Response'] and type(response['Response']) == str:
+                            word = pre_process_string(response['Response'],lemmatize=pm.lemmatize)
+                            word_pred_values_dict[text_id][str(int(text_position) - 1)][word] = float(response['Response_Proportion'])
+                            if word not in lexicon:
+                                unknown_word_pred_values_dict[text_id][str(int(text_position) - 1)][word] = float(response['Response_Proportion'])
+
+            logger.info('Unknown tokens predicted in cloze task: ' +
+                        str(sum([len(words.keys()) for text, info in unknown_word_pred_values_dict.items() if info for
+                             idx, words in info.items()])))
+            logger.info('Known tokens predicted in cloze task: ' +
+                        str(sum([len(words.keys()) for text, info in word_pred_values_dict.items() if info for
+                             idx, words in info.items()])))
 
     elif pm.prediction_flag == 'grammar':
         pass
@@ -203,15 +256,15 @@ def create_pred_file(pm, output_file_pred_map, lexicon, topk):
         with open(output_file, "w") as f:
             json.dump(unknown_word_pred_values_dict, f, ensure_ascii=False)
 
-    exit()
+def get_pred_dict(pm, lexicon, topk, round = 3):
 
-def get_pred_dict(pm, lexicon, topk=15):
-
-    output_word_pred_map = f"../data/prediction_map_{pm.stim_name}_{pm.prediction_flag}_{pm.task_to_run}_{pm.language}.json"
+    output_word_pred_map = f"../data/predictability/prediction_map_{pm.stim_name}_{pm.prediction_flag}_{pm.task_to_run}_{pm.language}.json"
+    if pm.prediction_flag == 'language model':
+        output_word_pred_map = output_word_pred_map.replace('.json',f'_topk{topk}.json')
 
     # AL: in case pred file needs to be created from original files
     if not os.path.exists(output_word_pred_map):
-        create_pred_file(pm, output_word_pred_map, lexicon, topk)
+        create_pred_file(pm, output_word_pred_map, lexicon, topk, round)
 
     with open(output_word_pred_map, "r") as f:
         word_pred_dict = json.load(f)
@@ -220,12 +273,15 @@ def get_pred_dict(pm, lexicon, topk=15):
 
 def check_previous_inhibition_matrix(pm,lexicon,lexicon_word_bigrams,verbose=False):
 
-    if os.path.exists('../data/Inhib_matrix_params_latest_run.dat'):
+    inhib_matrix_parameters = '../data/inhib_matrix_params_latest_run.pkl'
+    inhib_matrix_previous = '../data/inhibition_matrix_previous.pkl'
 
-        with open('../data/Inhib_matrix_params_latest_run.dat', "rb") as f:
+    if os.path.exists(inhib_matrix_parameters):
+
+        with open(inhib_matrix_parameters, "rb") as f:
             parameters_previous = pickle.load(f)
 
-        size_of_file = os.path.getsize('../data/Inhibition_matrix_previous.dat')
+        size_of_file = os.path.getsize(inhib_matrix_previous)
 
         # NV: compare the previous params with the actual ones.
         # the idea is that the matrix is fully dependent on these parameters alone.
@@ -239,6 +295,38 @@ def check_previous_inhibition_matrix(pm,lexicon,lexicon_word_bigrams,verbose=Fal
             previous_matrix_usable = False
     else:
         previous_matrix_usable = False
-        if verbose: print('no previous inhibition matrix')
+        if verbose:
+            print('no previous inhibition matrix')
 
     return previous_matrix_usable
+
+def set_up_inhibition_matrix(pm, lexicon, lexicon_word_ngrams, tokens_to_lexicon_indices):
+
+    previous_matrix_usable = check_previous_inhibition_matrix(pm,lexicon,lexicon_word_ngrams)
+
+    if previous_matrix_usable:
+        with open('../data/Inhibition_matrix_previous.pkl', "rb") as f:
+            word_inhibition_matrix = pickle.load(f)
+    else:
+        word_inhibition_matrix = build_word_inhibition_matrix(lexicon,lexicon_word_ngrams,pm,tokens_to_lexicon_indices)
+
+    return word_inhibition_matrix
+
+def write_out_simulation_data(simulation_data,outfile_sim_data, type='fixated'):
+
+    simulation_results = defaultdict(list)
+
+    for fixation in simulation_data:
+        if type == 'fixated':
+            for fix_counter, fix_info in fixation.items():
+                simulation_results['fixation_counter'].append(fix_counter)
+                for info_name, info_value in fix_info.items():
+                    simulation_results[info_name].append(info_value)
+        elif type == 'skipped':
+            for text in simulation_data:
+                for skipped in text:
+                    for info_name, info_value in skipped.items():
+                        simulation_results[info_name].append(info_value)
+
+    simulation_results_df = pd.DataFrame.from_dict(simulation_results)
+    simulation_results_df.to_csv(outfile_sim_data, sep='\t', index=False)

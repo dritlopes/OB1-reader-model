@@ -1,13 +1,18 @@
 import pandas as pd
 import pickle
+import json
+import seaborn as sns
+import numpy as np
+from collections import defaultdict
 
 # read in simulation data
-sim_filepath = '../results/results_continuous reading.pkl'
+# TODO add terminal arguments
+sim_filepath = '../results/simulation_Provo_Corpus_continuous reading_cloze__05_05_2023_10-57-30.pkl'
 with open(sim_filepath, 'rb') as infile:
     simulation_results = pickle.load(infile)
 # read in words that have been skipped and never fixated (they are not included in fixation data,
 # but should be considered for wordskip results
-skipped_filepath = '../results/skipped_words_continuous reading.pkl'
+skipped_filepath = '../results/skipped_words_Provo_Corpus_continuous reading_cloze__05_05_2023_10-57-30.pkl'
 with open(skipped_filepath, 'rb') as infile:
     skipped_words = pickle.load(infile)
 
@@ -21,8 +26,6 @@ df_all_tokens = pd.concat([df_sim_results,df_skipped_words], axis=0)
 df_all_tokens.fillna({'wordskip': False, 'fixation duration': 0.0}, inplace=True)
 df_all_tokens = df_all_tokens.set_index('foveal word index')
 df_all_tokens = df_all_tokens.sort_index()
-
-# Distribution
 
 # --------- General fixation duration measures  ---------
 # saccade type counts

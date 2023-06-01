@@ -176,12 +176,12 @@ def match_active_words_to_input_slots(order_match_check, stimulus, recognized_wo
 
     return recognized_word_at_position, lexicon_word_activity
 
-def semantic_processing(text, tokenizer, language_model, lexicon, top_k):
+def semantic_processing(text, tokenizer, language_model, top_k):
 
-    pred_dict = dict()
-    unknown_tokens = dict()
+    pred_info = dict()
 
-    for i in range(1,len(text)):
+    for i in range(1, len(text)-1):
+
         sequence = ' '.join(text[:i])
         # pre-process text
         encoded_input = tokenizer(sequence, return_tensors='pt')
@@ -191,32 +191,25 @@ def semantic_processing(text, tokenizer, language_model, lexicon, top_k):
         # logits are prediction scores of language modelling head;
         # of shape (batch_size, sequence_length, config.vocab_size)
         logits = output.logits[:, -1, :]
-        top_tokens = [tokenizer.decode(id.item()) for id in torch.topk(logits, k=top_k)[1][0]]
         # convert raw scores into probabilities (between 0 and 1)
         probabilities = nn.functional.softmax(logits, dim=1)
-        top_probabilities = [float(pred) for pred in torch.topk(probabilities, k=top_k)[0][0]]
 
-        pred_dict[str(i)] = dict()
-        unknown_tokens[str(i)] = dict()
-        for token, pred in zip(top_tokens,top_probabilities):
-            token = token.strip()
-            if token in lexicon: # TODO token should undergo same-preprocessing as words in lexicon. Add lemmatization
-                #print(token,pred)
-                pred_dict[str(i)][token] = round(pred,3)
-                #print(pred_dict[str(i)])
-            else: # in case token is a sub-word, try to concatenate token with next predicted token
-                concat_string = sequence + ' ' + token
-                input = tokenizer(concat_string, return_tensors='pt')
-                output = language_model(**input)
-                logits = output.logits[:, -1, :]
-                pred_token = tokenizer.decode([torch.argmax(logits).item()])
-                pred_token = pred_token.strip()
-                if token + pred_token in lexicon:
-                    pred_dict[str(i)][token+pred_token] = round(pred, 3)
-                else:
-                    unknown_tokens[str(i)][token] = round(pred, 3)
+        if top_k == 'target_word':
+            target_word = ' ' + text[i]
+            target_token = tokenizer.encode(target_word, return_tensors='pt')
+            if target_token.size(dim=1) > 0:
+                top_tokens = [target_word]
+                target_id = target_token[0][0]
+                top_probabilities = [float(probabilities[0,target_id])]
+                pred_info[i] = (top_tokens, top_probabilities)
+        else:
+            if top_k in 'all':
+                top_k = len(logits[0])
+            top_tokens = [tokenizer.decode(id.item()) for id in torch.topk(logits, k=top_k)[1][0]]
+            top_probabilities = [float(pred) for pred in torch.topk(probabilities, k=top_k)[0][0]]
+            pred_info[i] = (top_tokens, top_probabilities)
 
-    return pred_dict, unknown_tokens
+    return pred_info
 
 def activate_predicted_upcoming_word(position, lexicon_word_activity, lexicon, pred_dict):
 
@@ -261,7 +254,7 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
             if word_reminder_length > 0:
                 next_fixation = 0
                 if fixation_counter - 1 in all_data.keys():
-                    if not all_data[fixation_counter - 1]['refixated']:
+                    if not all_data[fixation_counter - 1]['saccade type'] == 'refixation':
                         refix_size = np.round(word_reminder_length * refix_size)
 
     # forward saccade: perform normal forward saccade (unless at the last position in the text)

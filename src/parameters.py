@@ -189,6 +189,7 @@ def return_task_params(task_attributes):
     # uniform_prob = False  # Overwrites cloze/grammar probabilities with 0.25 for all words
     # grammar_weight = 0.5  # only used when using grammar_prob
     prediction_flag = 'language model' # cloze # uniform # grammar # language model
+    lemmatize = False
 
     # attention
     attend_width = 15 # 5.0 for natural reading # 8.0  # NV: #!!!: was set to 15 for flanker, 20 for sentence and 3 for transposed
