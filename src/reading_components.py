@@ -179,8 +179,8 @@ def match_active_words_to_input_slots(order_match_check, stimulus, recognized_wo
 def semantic_processing(text, tokenizer, language_model, top_k):
 
     pred_info = dict()
-
-    for i in range(1, len(text)-1):
+    #print(text, len(text))
+    for i in range(1, len(text)):
 
         sequence = ' '.join(text[:i])
         # pre-process text
@@ -196,15 +196,17 @@ def semantic_processing(text, tokenizer, language_model, top_k):
 
         if top_k == 'target_word':
             target_word = ' ' + text[i]
+            #print(target_word)
             target_token = tokenizer.encode(target_word, return_tensors='pt')
+            #print(target_token, [tokenizer.decode(token) for token in target_token[0]])
             if target_token.size(dim=1) > 0:
                 top_tokens = [target_word]
                 target_id = target_token[0][0]
                 top_probabilities = [float(probabilities[0,target_id])]
                 pred_info[i] = (top_tokens, top_probabilities)
+                #print(pred_info[i])
         else:
-            if top_k in 'all':
-                top_k = len(logits[0])
+            if top_k == 'all': top_k = len(logits[0])
             top_tokens = [tokenizer.decode(id.item()) for id in torch.topk(logits, k=top_k)[1][0]]
             top_probabilities = [float(pred) for pred in torch.topk(probabilities, k=top_k)[0][0]]
             pred_info[i] = (top_tokens, top_probabilities)

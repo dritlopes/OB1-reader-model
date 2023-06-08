@@ -142,7 +142,7 @@ def get_word_freq(pm, unique_words, n_high_freq_words = 500, freq_threshold = 0.
     return word_freq_dict
 
 
-def create_pred_file(pm, output_file_pred_map, lexicon, topk, round_n):
+def create_pred_file(pm, output_file_pred_map, lexicon, topk):
 
     word_pred_values_dict = dict()
     unknown_word_pred_values_dict = dict()
@@ -156,18 +156,18 @@ def create_pred_file(pm, output_file_pred_map, lexicon, topk, round_n):
         set_seed(42)
         # list of words, set of words, sentences or passages. Each one is equivalent to one trial in an experiment
         for i, sequence in enumerate(pm.stim_all):
-            sequence = sequence.split(' ')
+            sequence = [token for token in sequence.split(' ') if token != '']
             pred_dict = dict()
             unknown_tokens = dict()
             pred_info = semantic_processing(sequence, lm_tokenizer, language_model, topk)
-            for pos in range(1, len(sequence)-1):
+            for pos in range(1, len(sequence)):
                 pred_dict[str(pos)] = dict()
                 unknown_tokens[str(pos)] = dict()
                 for token, pred in zip(pred_info[pos][0], pred_info[pos][1]):
                     token_processed = pre_process_string(token, lemmatize=pm.lemmatize)
-                    pred_dict[str(pos)][token_processed] = round(pred, round_n)
+                    pred_dict[str(pos)][token_processed] = pred
                     if token_processed not in lexicon:
-                        unknown_tokens[str(pos)][token] = round(pred, round_n)
+                        unknown_tokens[str(pos)][token] = pred
                     # else: # in case token is a sub-word, try to concatenate token with next predicted token
                     #     concat_string = ' '.join(sequence[:i]) + ' ' + token
                     #     input = lm_tokenizer(concat_string, return_tensors='pt')
@@ -214,7 +214,7 @@ def create_pred_file(pm, output_file_pred_map, lexicon, topk, round_n):
                     unknown_word_pred_values_dict[text_id][str(int(text_position) - 1)] = dict()
                     for response in responses:
                         if response['Response'] and type(response['Response']) == str:
-                            word = pre_process_string(response['Response'],lemmatize=pm.lemmatize)
+                            word = pre_process_string(response['Response'], lemmatize=pm.lemmatize)
                             word_pred_values_dict[text_id][str(int(text_position) - 1)][word] = float(response['Response_Proportion'])
                             if word not in lexicon:
                                 unknown_word_pred_values_dict[text_id][str(int(text_position) - 1)][word] = float(response['Response_Proportion'])
@@ -256,7 +256,7 @@ def create_pred_file(pm, output_file_pred_map, lexicon, topk, round_n):
         with open(output_file, "w") as f:
             json.dump(unknown_word_pred_values_dict, f, ensure_ascii=False)
 
-def get_pred_dict(pm, lexicon, topk, round = 3):
+def get_pred_dict(pm, lexicon, topk):
 
     output_word_pred_map = f"../data/predictability/prediction_map_{pm.stim_name}_{pm.prediction_flag}_{pm.task_to_run}_{pm.language}.json"
     if pm.prediction_flag == 'language model':
@@ -264,7 +264,7 @@ def get_pred_dict(pm, lexicon, topk, round = 3):
 
     # AL: in case pred file needs to be created from original files
     if not os.path.exists(output_word_pred_map):
-        create_pred_file(pm, output_word_pred_map, lexicon, topk, round)
+        create_pred_file(pm, output_word_pred_map, lexicon, topk)
 
     with open(output_word_pred_map, "r") as f:
         word_pred_dict = json.load(f)
@@ -316,17 +316,37 @@ def write_out_simulation_data(simulation_data,outfile_sim_data, type='fixated'):
 
     simulation_results = defaultdict(list)
 
-    for fixation in simulation_data:
-        if type == 'fixated':
-            for fix_counter, fix_info in fixation.items():
-                simulation_results['fixation_counter'].append(fix_counter)
-                for info_name, info_value in fix_info.items():
-                    simulation_results[info_name].append(info_value)
-        elif type == 'skipped':
-            for text in simulation_data:
+    for sim_index, texts_simulations in simulation_data.items():
+        for text_index, text in texts_simulations.items():
+            if type == 'fixated':
+                for fix_counter, fix_info in text.items():
+                    simulation_results['fixation_counter'].append(fix_counter)
+                    simulation_results['text_id'].append(text_index)
+                    simulation_results['simulation_id'].append(sim_index)
+                    for info_name, info_value in fix_info.items():
+                        simulation_results[info_name].append(info_value)
+            elif type == 'skipped':
                 for skipped in text:
+                    simulation_results['text_id'].append(text_index)
+                    simulation_results['simulation_id'].append(sim_index)
                     for info_name, info_value in skipped.items():
                         simulation_results[info_name].append(info_value)
 
     simulation_results_df = pd.DataFrame.from_dict(simulation_results)
     simulation_results_df.to_csv(outfile_sim_data, sep='\t', index=False)
+
+def find_wordskips(all_data):
+
+    wordskip_indices = set()
+    counter = 0
+
+    word_indices = [fx['foveal word index'] for fx in all_data.values()]
+    saccades = [fx['saccade type'] for fx in all_data.values()]
+
+    for word_i, saccade in zip(word_indices, saccades):
+        if saccade == 'wordskip':
+            if counter - 1 > 0 and saccades[counter - 1] != 'regression':
+                wordskip_indices.add(word_i - 1)
+        counter += 1
+
+    return wordskip_indices

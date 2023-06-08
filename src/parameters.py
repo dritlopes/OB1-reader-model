@@ -188,7 +188,7 @@ def return_task_params(task_attributes):
     # use_grammar_prob = False  # True for using grammar probabilities, False for using cloze, overwritten by uniform_pred
     # uniform_prob = False  # Overwrites cloze/grammar probabilities with 0.25 for all words
     # grammar_weight = 0.5  # only used when using grammar_prob
-    prediction_flag = 'language model' # cloze # uniform # grammar # language model
+    prediction_flag = 'cloze' # cloze # uniform # grammar # language model
     lemmatize = False
 
     # attention

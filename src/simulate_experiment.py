@@ -3,7 +3,7 @@ import numpy as np
 import pickle
 from collections import defaultdict
 import math
-from utils import get_word_freq, get_pred_dict, set_up_inhibition_matrix, pre_process_string
+from utils import get_word_freq, get_pred_dict, set_up_inhibition_matrix, pre_process_string, find_wordskips
 from reading_components import compute_stimulus, compute_eye_position, compute_words_input, update_word_activity, \
     match_active_words_to_input_slots, compute_next_attention_position, compute_next_eye_position, \
     activate_predicted_upcoming_word
@@ -270,15 +270,7 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
     skipped_words = []
     if save_skipped_words:
         # find which words were skipped on first pass
-        wordskip_indices = set()
-        counter = 0
-        word_indices = [fx['foveal word index'] for fx in all_data.values()]
-        saccades = [fx['saccade type'] for fx in all_data.values()]
-        for word_i, saccade in zip(word_indices, saccades):
-            if saccade == 'wordskip':
-                if counter - 1 > 0 and saccades[counter - 1] != 'regression':
-                    wordskip_indices.add(word_i - 1)
-            counter += 1
+        wordskip_indices = find_wordskips(all_data)
         # store info on each word
         for i in wordskip_indices:
             skipped_words.append({'foveal word': tokens[i],
@@ -509,34 +501,40 @@ def simulate_experiment(pm):
     print("")
 
     # read text/trials
-    skipped_data, all_data = [],[]
+    skipped_data, all_data = defaultdict(), defaultdict()
 
-    if pm.task_to_run == 'continuous reading':
+    for sim_number in range(pm.number_of_simulations):
 
-        word_predictions = get_pred_dict(pm, lexicon, topk=15, round=3)
+        if pm.task_to_run == 'continuous reading':
 
-        for i, text in enumerate(pm.stim_all[:1]):
+            texts_simulations, texts_skipped = defaultdict(), defaultdict()
+            word_predictions = get_pred_dict(pm, lexicon, topk=15)
 
-            text_tokens = [pre_process_string(token) for token in text.split()]
-            text_data, skipped_words = reading(pm,
-                                                text_tokens,
-                                                word_inhibition_matrix,
-                                                lexicon_word_ngrams,
-                                                lexicon_word_index,
-                                                lexicon_thresholds,
-                                                lexicon,
-                                                word_predictions[str(i)],
-                                                word_frequencies)
-            all_data.append(text_data)
-            skipped_data.append(skipped_words)
+            for i, text in enumerate(pm.stim_all[:1]):
 
-    else:
-        all_data = word_recognition(pm,
-                                    word_inhibition_matrix,
-                                    lexicon_word_ngrams,
-                                    lexicon_word_index,
-                                    word_thresh_dict,
-                                    lexicon,
-                                    word_frequencies)
+                text_tokens = [pre_process_string(token) for token in text.split()]
+                text_data, skipped_words = reading(pm,
+                                                    text_tokens,
+                                                    word_inhibition_matrix,
+                                                    lexicon_word_ngrams,
+                                                    lexicon_word_index,
+                                                    lexicon_thresholds,
+                                                    lexicon,
+                                                    word_predictions[str(i)],
+                                                    word_frequencies)
+                texts_simulations[i] = text_data
+                texts_skipped[i] = skipped_words
+
+            all_data[sim_number] = texts_simulations
+            skipped_data[sim_number] = texts_skipped
+
+        else:
+            all_data = word_recognition(pm,
+                                        word_inhibition_matrix,
+                                        lexicon_word_ngrams,
+                                        lexicon_word_index,
+                                        word_thresh_dict,
+                                        lexicon,
+                                        word_frequencies)
 
     return all_data, skipped_data
