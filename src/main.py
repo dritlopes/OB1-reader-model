@@ -7,25 +7,22 @@ from simulate_experiment import simulate_experiment
 from utils import write_out_simulation_data
 import os
 import pickle
+from evaluation import evaluate_output
 
 
-def simulate_reading(parameters, outfile_sim_data, output_file_parameters, outfile_skipped=None):
+def simulate_reading(parameters, outfile_sim_data, output_file_parameters):
 
     if parameters.run_exp:
-        simulation_data, skipped_words = simulate_experiment(parameters)
+        simulation_data = simulate_experiment(parameters)
         if outfile_sim_data:
             write_out_simulation_data(simulation_data, outfile_sim_data)
         if output_file_parameters:
             prs = vars(parameters)
             with open(output_file_parameters, 'wb') as outfile:
                 pickle.dump(prs, outfile)
-        if outfile_skipped:
-            write_out_simulation_data(skipped_words, outfile_skipped, type='skipped')
 
     if parameters.analyze_results:
-        pass
-        # get_results_simulation(task, output_file_all_data,
-        #                        output_file_unrecognized_words)
+        evaluate_output(parameters, outfile_sim_data)
 
     if parameters.optimize:
         pass
@@ -67,6 +64,7 @@ def main():
         parser.add_argument('--run_exp',default='True',help='Should the experiment simulation run?',choices=['True','False']),
         parser.add_argument('--number_of_simulations',default=1,help='How many times should I run a simulation?')
         parser.add_argument('--analyze_results',default="False",help='Should the results be analyzed?',choices=["True","False"])
+        parser.add_argument('--eye_tracking_filepath', default=None, help='If analyzing results, where are the observed values which the model output should be compared with?')
         parser.add_argument('--optimize',default="False",help='Should the parameters be optimized using evolutionary algorithms?',choices=["True","False"])
         parser.add_argument('--print_stim',default="False",choices=["True","False"])
         parser.add_argument('--plotting',default='False',choices=['True','False'])
@@ -79,6 +77,7 @@ def main():
             "run_exp": eval(args.run_exp),
             "number_of_simulations": eval(args.number_of_simulations),
             "analyze_results": eval(args.analyze_results),
+            "eye_tracking_filepath": args.eye_tracking_filepath,
             "optimize": eval(args.optimize),
             "print_stim": eval(args.print_stim),
             "plotting": eval(args.plotting)
@@ -88,9 +87,9 @@ def main():
             "task_to_run" : 'continuous reading', # EmbeddedWords # Flanker # continuous reading
             "stimuli_filepath": "../stimuli/Provo_Corpus.csv", # ../stimuli/EmbeddedWords_stimuli_all.csv #  "../stimuli/Flanker_stimuli_all.csv" # "../stimuli/PSC_test.txt"
             "stimuli_separator": "\t",
-            "language": 'english', # english # french # german
+            "language": 'english',
             "run_exp": True,
-            "number_of_simulations": 1,
+            "number_of_simulations": 25,
             "analyze_results": False,
             "optimize": False,
             "print_stim": False,
@@ -115,11 +114,10 @@ def main():
     print("-------------------")
 
     output_file_results = f"../results/simulation_{pm.stim_name}_{pm.task_to_run}_{dt_string}.csv"
-    output_file_skipped = f"../results/skipped_words_{pm.stim_name}_{pm.task_to_run}_{dt_string}.csv"
     output_file_parameters = f"../results/parameters_{pm.stim_name}_{pm.task_to_run}_{dt_string}.pkl"
 
     start_time = time.perf_counter()
-    simulate_reading(pm, output_file_results, output_file_parameters, output_file_skipped)
+    simulate_reading(pm, output_file_results, output_file_parameters)
     time_elapsed = time.perf_counter() - start_time
     print("Time elapsed: " + str(time_elapsed))
 

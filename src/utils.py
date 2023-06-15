@@ -142,7 +142,7 @@ def get_word_freq(pm, unique_words, n_high_freq_words = 500, freq_threshold = 0.
     return word_freq_dict
 
 
-def create_pred_file(pm, output_file_pred_map, lexicon, topk):
+def create_pred_file(pm, output_file_pred_map, lexicon):
 
     word_pred_values_dict = dict()
     unknown_word_pred_values_dict = dict()
@@ -153,18 +153,18 @@ def create_pred_file(pm, output_file_pred_map, lexicon, topk):
         language_model = GPT2LMHeadModel.from_pretrained('gpt2')
         lm_tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
         # in case you want to reproduce predictions
-        set_seed(42)
+        set_seed(pm.seed)
         # list of words, set of words, sentences or passages. Each one is equivalent to one trial in an experiment
         for i, sequence in enumerate(pm.stim_all):
             sequence = [token for token in sequence.split(' ') if token != '']
             pred_dict = dict()
             unknown_tokens = dict()
-            pred_info = semantic_processing(sequence, lm_tokenizer, language_model, topk)
+            pred_info = semantic_processing(sequence, lm_tokenizer, language_model, pm.topk)
             for pos in range(1, len(sequence)):
                 pred_dict[str(pos)] = dict()
                 unknown_tokens[str(pos)] = dict()
                 for token, pred in zip(pred_info[pos][0], pred_info[pos][1]):
-                    token_processed = pre_process_string(token, lemmatize=pm.lemmatize)
+                    token_processed = pre_process_string(token)
                     pred_dict[str(pos)][token_processed] = pred
                     if token_processed not in lexicon:
                         unknown_tokens[str(pos)][token] = pred
@@ -256,15 +256,15 @@ def create_pred_file(pm, output_file_pred_map, lexicon, topk):
         with open(output_file, "w") as f:
             json.dump(unknown_word_pred_values_dict, f, ensure_ascii=False)
 
-def get_pred_dict(pm, lexicon, topk):
+def get_pred_dict(pm, lexicon):
 
     output_word_pred_map = f"../data/predictability/prediction_map_{pm.stim_name}_{pm.prediction_flag}_{pm.task_to_run}_{pm.language}.json"
     if pm.prediction_flag == 'language model':
-        output_word_pred_map = output_word_pred_map.replace('.json',f'_topk{topk}.json')
+        output_word_pred_map = output_word_pred_map.replace('.json',f'_topk{pm.topk}.json')
 
     # AL: in case pred file needs to be created from original files
     if not os.path.exists(output_word_pred_map):
-        create_pred_file(pm, output_word_pred_map, lexicon, topk)
+        create_pred_file(pm, output_word_pred_map, lexicon)
 
     with open(output_word_pred_map, "r") as f:
         word_pred_dict = json.load(f)
@@ -335,18 +335,18 @@ def write_out_simulation_data(simulation_data,outfile_sim_data, type='fixated'):
     simulation_results_df = pd.DataFrame.from_dict(simulation_results)
     simulation_results_df.to_csv(outfile_sim_data, sep='\t', index=False)
 
-def find_wordskips(all_data):
-
-    wordskip_indices = set()
-    counter = 0
-
-    word_indices = [fx['foveal word index'] for fx in all_data.values()]
-    saccades = [fx['saccade type'] for fx in all_data.values()]
-
-    for word_i, saccade in zip(word_indices, saccades):
-        if saccade == 'wordskip':
-            if counter - 1 > 0 and saccades[counter - 1] != 'regression':
-                wordskip_indices.add(word_i - 1)
-        counter += 1
-
-    return wordskip_indices
+# def find_wordskips(all_data, tokens):
+#
+#     wordskip_indices = set()
+#     counter = 0
+#
+#     word_indices = [fx['foveal word index'] for fx in all_data.values()]
+#     saccades = [fx['saccade type'] for fx in all_data.values()]
+#
+#     for word_i, saccade in zip(word_indices, saccades):
+#         if saccade == 'wordskip':
+#             if counter - 1 > 0 and saccades[counter - 1] != 'regression':
+#                 wordskip_indices.add(word_i - 1)
+#         counter += 1
+#
+#     return wordskip_indices

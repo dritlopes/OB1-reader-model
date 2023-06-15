@@ -3,7 +3,7 @@ import numpy as np
 import pickle
 from collections import defaultdict
 import math
-from utils import get_word_freq, get_pred_dict, set_up_inhibition_matrix, pre_process_string, find_wordskips
+from utils import get_word_freq, get_pred_dict, set_up_inhibition_matrix, pre_process_string
 from reading_components import compute_stimulus, compute_eye_position, compute_words_input, update_word_activity, \
     match_active_words_to_input_slots, compute_next_attention_position, compute_next_eye_position, \
     activate_predicted_upcoming_word
@@ -267,16 +267,16 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
         fixation, next_eye_position, saccade_info = compute_next_eye_position(pm, saccade_info, eye_position, stimulus, fixation, total_n_words, word_edges, fixated_position_in_stimulus)
 
     # register words in text that were skipped and never fixated
-    skipped_words = []
-    if save_skipped_words:
-        # find which words were skipped on first pass
-        wordskip_indices = find_wordskips(all_data)
-        # store info on each word
-        for i in wordskip_indices:
-            skipped_words.append({'foveal word': tokens[i],
-                                  'foveal word index': i,
-                                  'foveal word length': len(tokens[i]),
-                                  'foveal word frequency': freq_values[tokens[i]]})
+    # skipped_words = []
+    # if save_skipped_words:
+    #     # find which words were skipped on first pass
+    #     wordskip_indices = find_wordskips(all_data)
+    #     # store info on each word
+    #     for i in wordskip_indices:
+    #         skipped_words.append({'foveal word': tokens[i],
+    #                               'foveal word index': i,
+    #                               'foveal word length': len(tokens[i]),
+    #                               'foveal word frequency': freq_values[tokens[i]]})
                                   #'foveal word predictability': pred_values[str(i)]})
 
     # # register words in text in which no word in lexicon reaches recognition threshold
@@ -285,7 +285,7 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
     #     if not recognized_word_at_position[position]:
     #         unrecognized_words[position] = tokens[position]
 
-    return all_data, skipped_words
+    return all_data
 
 def word_recognition(pm,word_inhibition_matrix,lexicon_word_ngrams,lexicon_word_index,lexicon_thresholds_dict,lexicon,word_frequencies):
 
@@ -501,32 +501,30 @@ def simulate_experiment(pm):
     print("")
 
     # read text/trials
-    skipped_data, all_data = defaultdict(), defaultdict()
+    all_data = defaultdict()
 
     for sim_number in range(pm.number_of_simulations):
 
         if pm.task_to_run == 'continuous reading':
 
-            texts_simulations, texts_skipped = defaultdict(), defaultdict()
-            word_predictions = get_pred_dict(pm, lexicon, topk=15)
+            texts_simulations = defaultdict()
+            word_predictions = get_pred_dict(pm, lexicon)
 
-            for i, text in enumerate(pm.stim_all[:1]):
+            for i, text in enumerate(pm.stim_all[:2]):
 
                 text_tokens = [pre_process_string(token) for token in text.split()]
-                text_data, skipped_words = reading(pm,
-                                                    text_tokens,
-                                                    word_inhibition_matrix,
-                                                    lexicon_word_ngrams,
-                                                    lexicon_word_index,
-                                                    lexicon_thresholds,
-                                                    lexicon,
-                                                    word_predictions[str(i)],
-                                                    word_frequencies)
+                text_data = reading(pm,
+                                    text_tokens,
+                                    word_inhibition_matrix,
+                                    lexicon_word_ngrams,
+                                    lexicon_word_index,
+                                    lexicon_thresholds,
+                                    lexicon,
+                                    word_predictions[str(i)],
+                                    word_frequencies)
                 texts_simulations[i] = text_data
-                texts_skipped[i] = skipped_words
 
             all_data[sim_number] = texts_simulations
-            skipped_data[sim_number] = texts_skipped
 
         else:
             all_data = word_recognition(pm,
@@ -537,4 +535,4 @@ def simulate_experiment(pm):
                                         lexicon,
                                         word_frequencies)
 
-    return all_data, skipped_data
+    return all_data

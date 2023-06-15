@@ -218,11 +218,11 @@ def activate_predicted_upcoming_word(position, lexicon_word_activity, lexicon, p
     predicted = pred_dict[str(position)]
     for token, pred in predicted.items():
         if token in lexicon:
-            print(f'PREDICTED: {token}, {pred}')
+            #print(f'PREDICTED: {token}, {pred}')
             i = lexicon.index(token)
-            print(f'act before: {lexicon_word_activity[i]}')
+            #print(f'act before: {lexicon_word_activity[i]}')
             lexicon_word_activity[i] += pred * 0.05
-            print(f'act after: {lexicon_word_activity[i]}')
+            #print(f'act after: {lexicon_word_activity[i]}')
 
     return lexicon_word_activity
 
