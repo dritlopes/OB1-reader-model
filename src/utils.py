@@ -10,31 +10,39 @@ from transformers import GPT2LMHeadModel, GPT2Tokenizer, set_seed
 from reading_components import semantic_processing
 from reading_helper_functions import build_word_inhibition_matrix
 import logging
-import spacy
 import torch
 from collections import defaultdict
 
 logger = logging.getLogger(__name__)
-# please make sure spacy model is downloaded using "python -m spacy download en_core_web_sm"
-spacy_model = spacy.load("en_core_web_sm")
 
 def get_stimulus_text_from_file(filepath, sep='\t'):
 
-    encoding = chardet.detect(open(filepath, "rb").read())['encoding']
+    # encoding = chardet.detect(open(filepath, "rb").read())['encoding']
     stim_name = os.path.basename(filepath).replace('.txt', '').replace('.csv', '')
 
     if ".txt" in filepath:
+        encoding = chardet.detect(open(filepath, "rb").read())['encoding']
         with codecs.open(filepath, encoding=encoding, errors='strict') as infile:
             text = infile.read()
             text = text.encode('UTF-8').decode('UTF-8')
             data = {'all': [text]}
 
     else:
-        data = pd.read_csv(filepath, sep=sep, encoding=encoding)
-
+        data = pd.read_csv(filepath, sep=sep, encoding="ISO-8859-1")
+        if stim_name == 'Provo_Corpus-Predictability_Norms':
+            ids, texts, words, word_ids = [], [], [], []
+            for i, text_info in data.groupby('Text_ID'):
+                ids.append(int(i))
+                texts.append(text_info['Text'].tolist()[0])
+                words.append(text_info['Word'].unique().tolist())
+                word_ids.append(text_info['Word_Number'].unique().tolist())
+            data = pd.DataFrame(data={'id': ids,
+                                     'all': texts,
+                                     'words': words,
+                                     'word_ids': word_ids})
     return data, stim_name
 
-def pre_process_string(string, remove_punctuation=True, all_lowercase=True, strip_spaces=True, lemmatize=False):
+def pre_process_string(string, remove_punctuation=True, all_lowercase=True, strip_spaces=True):
 
     if remove_punctuation:
         string = re.sub(r'[^\w\s]', '', string)
@@ -42,11 +50,6 @@ def pre_process_string(string, remove_punctuation=True, all_lowercase=True, stri
         string = string.lower()
     if strip_spaces:
         string = string.strip()
-    if lemmatize:
-        if string:
-            token = spacy_model(string)[0]
-            if token:
-                string = str(token.lemma_)
     return string
 
 def create_freq_file(language, task_words, output_file_frequency_map, freq_threshold, n_high_freq_words, task, verbose):

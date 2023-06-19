@@ -443,7 +443,7 @@ def simulate_experiment(pm):
     word_frequencies = get_word_freq(pm, set([token.lower() for token in tokens]))
     max_frequency = max(word_frequencies.values())
     lexicon = list(set(tokens) | set(word_frequencies.keys()))
-    lexicon = [pre_process_string(word, lemmatize=pm.lemmatize) for word in lexicon]
+    lexicon = [pre_process_string(word) for word in lexicon]
 
     # write out lexicon for consulting purposes
     lexicon_filename = '../data/lexicon.pkl'
@@ -470,8 +470,6 @@ def simulate_experiment(pm):
     total_n_words = len(tokens)
     tokens_to_lexicon_indices = np.zeros((total_n_words), dtype=int)
     for i, word in enumerate(tokens):
-        if pm.lemmatize:
-            word = pre_process_string(word, lemmatize=True)
         tokens_to_lexicon_indices[i] = lexicon.index(word)
 
     print('Finding ngrams from lexicon...')

@@ -42,13 +42,13 @@ def get_first_pass_fixations(simulation_df:pd.DataFrame):
 
     return first_pass
 
-def get_skipped_words(first_pass:pd.DataFrame, words_in_text):
+def get_skipped_words(first_pass:pd.DataFrame, words_in_text:list):
 
     """
     For each simulation, compare token ids in first pass with token ids from specific text. The token indicices not in first pass are considered skipped
     :param first_pass: pandas dataframe containing fixations in first-pass
-    :param words_in_text:
-    :return: pandas dataframe with only words skipped by in least one simulation
+    :param words_in_text: list of words in text
+    :return: pandas dataframe with only words skipped by in at least one simulation
     """
     skipped_words = defaultdict(list)
 
@@ -171,7 +171,7 @@ def normalize(sample:list):
     normalized = (sample - min(sample)) / (max(sample) - min(sample))
     return normalized
 
-def compute_word_level_eye_movement_measures(simulation_output:pd.DataFrame):
+def compute_word_level_eye_movement_measures(simulation_output:pd.DataFrame, text_words:defaultdict):
 
     """
     Transform fixation data into word-centred data, where each row is a word in each text/trial.
@@ -192,8 +192,8 @@ def compute_word_level_eye_movement_measures(simulation_output:pd.DataFrame):
     for measure in measures:
 
         if measure == 'skipping_proportion':
-            skipped_words = get_skipped_words(first_pass, words_in_text=None) # TODO get words in text
-            to_add = compute_skipping_probability(first_pass,skipped_words)
+            skipped_words = get_skipped_words(first_pass, text_words)
+            to_add = compute_skipping_probability(first_pass, skipped_words)
         elif measure == 'single_fix_proportion':
             to_add = compute_single_fix(first_pass)
         elif measure == 'first_fix_duration':
@@ -208,12 +208,38 @@ def compute_word_level_eye_movement_measures(simulation_output:pd.DataFrame):
         # TODO check alignment of words, add word column to dataframes
     return results
 
+def get_text_words(stimuli):
+
+    words_in_text = defaultdict(list)
+    for word_info, rows in stimuli.groupby(['Text_ID', 'Word_Number']):
+        words_in_text[int(word_info[0])].append(rows['Word'].tolist()[0])
+    return words_in_text
+
 def evaluate_output (parameters, output_filepath:str):
 
     simulation_output = pd.read_csv(output_filepath, sep='\t')
-    # TODO rename columns in simulation df
-    if parameters.task == 'continuous reading':
+    simulation_output = simulation_output.rename(columns={'foveal word index': 'word_id',
+                                                          'foveal word': 'word'})
+    if parameters.task_to_run == 'continuous reading':
+
         # exclude first word of every passage (not in eye tracking -PROVO- data either)
-        simulation_output = simulation_output[simulation_output['foveal word index'] != 0]
+        simulation_output = simulation_output[simulation_output['word_id'] != 0]
+
+        # read in stimulus to find skipped words
+        # encoding = chardet.detect(open(parameters.stimuli_filepath, "rb").read())['encoding']
+        stimuli = pd.read_csv(parameters.stimuli_filepath, encoding="ISO-8859-1")
+        text_words = get_text_words(stimuli)
+
         # get word-level eye-movement measures
-        eye_movement_measures = compute_word_level_eye_movement_measures(simulation_output)
+        eye_movement_measures = compute_word_level_eye_movement_measures(simulation_output, text_words)
+
+        # read in eye_tracking data for comparing simulation with observed measures
+        # encoding = chardet.detect(open(parameters.eye_tracking_filepath, "rb").read())['encoding']
+        eye_tracking = pd.read_csv(parameters.eye_tracking_filepath, encoding="ISO-8859-1")
+        # remove rows where Word_Number is nan value, to be able to convert floats to ints
+        eye_tracking = eye_tracking.dropna(subset=['Word_Number'])
+        # - 1 to be compatible with index used in simulation (starting from 0, instead of 1)
+        eye_tracking['Word_Number'] = eye_tracking['Word_Number'].astype(int).apply(lambda x: x - 1)
+        eye_tracking['Text_ID'] = eye_tracking['Text_ID'].apply(lambda x: x - 1)
+        # only including first two texts for now
+        eye_tracking = eye_tracking[eye_tracking['Text_ID'] < 2]
