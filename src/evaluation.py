@@ -9,7 +9,7 @@ import sys
 import chardet
 import matplotlib.pyplot as plt
 
-
+# ---------------- Simulation eye-movement measures ------------------
 def get_first_pass_fixations(simulation_df:pd.DataFrame):
 
     """
@@ -75,6 +75,14 @@ def get_skipped_words(first_pass:pd.DataFrame, words_in_text:defaultdict):
 
 def compute_skipping_probability(first_pass:pd.DataFrame, skipped_words:pd.DataFrame):
 
+    """
+    Given the first-pass fixations and the words skipped by at least one simulation, compute the proportion of
+    simulations in which each word was skipped.
+    :param first_pass: pandas dataframe containing fixations in first-pass
+    :param skipped_words: pandas data frame containing the words skipped in first-pass
+    :return: pandas dataframe with the skipping proportion per word
+    """
+
     skipping_probs = defaultdict(list)
 
     for unique_word, hist in first_pass.groupby(['text_id', 'word_id']):
@@ -108,7 +116,7 @@ def compute_single_fix_probability(first_pass:pd.DataFrame):
     """
     Get single fixation probabilities for each word.
     :param first_pass: pandas dataframe containing fixations in first-pass
-    :return: pandas dataframe with single fixation probabiltiies per word
+    :return: pandas dataframe with single fixation probabilitiies per word
     """
 
     # filter each word's first-pass fixations by those of length 1, thus fixated only once
@@ -138,6 +146,12 @@ def compute_single_fix_probability(first_pass:pd.DataFrame):
     return single_fix_df
 
 def compute_single_fix_duration(first_pass:pd.DataFrame):
+
+    """
+    Get single fixation duration for each word.
+    :param first_pass: pandas dataframe containing fixations in first-pass
+    :return: pandas dataframe with single fixation durations per word
+    """
 
     # filter each word's first-pass fixations by those of length 1, thus fixated only once
     single_fixation_sim = first_pass.groupby(['simulation_id', 'text_id', 'word_id']).filter(
@@ -176,20 +190,7 @@ def compute_total_reading_time(simulation_output:pd.DataFrame):
 
     return total_reading_duration
 
-def compute_mean_squared_error(true_values:list, simulated_values:list):
-    mean2error = sum([(simulated_value - true_value) ** 2 for simulated_value, true_value in
-                      zip(simulated_values, true_values)]) / len(simulated_values)
-    return mean2error
-
-def compute_mean_squared_error_of_word(true_value:float, simulated_value:float, standard_deviation:float):
-    mean2error = ((simulated_value - true_value) / standard_deviation) ** 2
-    return mean2error
-
-def normalize(sample:list):
-    normalized = (sample - min(sample)) / (max(sample) - min(sample))
-    return normalized
-
-def compute_word_level_eye_movement_measures(simulation_output:pd.DataFrame, stimuli:pd.DataFrame):
+def compute_word_level_eye_movements(simulation_output:pd.DataFrame, stimuli:pd.DataFrame, measures:list):
 
     """
     Transform fixation data into word-centred data, where each row is a word in each text/trial.
@@ -197,13 +198,6 @@ def compute_word_level_eye_movement_measures(simulation_output:pd.DataFrame, sti
     :param simulation_output: contains the fixations of the model simulation(s)
     :return: a word-centred pandas data frame with word-level eye movement measures
     """
-
-    measures = ['skipping_proportion',
-                'single_fix_proportion',
-                'single_fix_duration',
-                'first_fix_duration',
-                'gaze_duration',
-                'total_reading_time']
     first_pass = get_first_pass_fixations(simulation_output)
     result_dfs = dict()
     for measure in measures:
@@ -223,7 +217,7 @@ def compute_word_level_eye_movement_measures(simulation_output:pd.DataFrame, sti
             to_add = compute_total_reading_time(simulation_output)
         result_dfs[measure] = to_add
 
-    # merge all
+    # merge all, such that each column is one eye-movement measure and each row is a word
     result_columns = defaultdict(list)
     for item, hist in stimuli.groupby(['Text_ID', 'Word_Number']):
         if item[0] in simulation_output["text_id"].tolist():
@@ -240,6 +234,131 @@ def compute_word_level_eye_movement_measures(simulation_output:pd.DataFrame, sti
 
     return results
 
+# ---------------- Observed eye-movement measures ------------------
+def compute_obs_skipping_probability(eye_tracking: pd.DataFrame):
+
+    skipping = eye_tracking.groupby(['Text_ID', 'Word_Number'])['IA_SKIP'].value_counts(
+        normalize=True).reset_index(name='skipping_proportion')
+    skipping = skipping[skipping['IA_SKIP'] == 1]
+    skipping = skipping.drop(labels='IA_SKIP', axis=1)
+    skipping = skipping.rename(columns={'Text_ID': 'text_id', 'Word_Number': 'word_id'})
+
+    return skipping
+
+def compute_obs_single_fix_probability(eye_tracking: pd.DataFrame):
+
+    single_fix = []
+    # determine which words were fixated only once by each participant
+    for word, hist in eye_tracking.groupby(['Participant_ID', 'Text_ID', 'Word_Number']):
+        # single fix is defined as: if gaze duration equals first fixation duration,
+        # then word was fixated only once in first pass
+        if hist['IA_FIRST_RUN_DWELL_TIME'].tolist()[0] == hist['IA_FIRST_FIXATION_DURATION'].tolist()[0]:
+            single_fix.append(1)
+        else:
+            single_fix.append(0)
+    # add binary single fix column
+    eye_tracking['IA_SINGLE_FIX'] = single_fix
+    # count the
+    single_fix_probs_provo = eye_tracking.groupby(['Text_ID', 'Word_Number'])['IA_SINGLE_FIX'].value_counts(
+        normalize=True).reset_index(name='single_fix_proportion')
+    # only keep the proportion of single fix (excluding proportion of not single fix)
+    single_fix_probs_provo = single_fix_probs_provo[single_fix_probs_provo['IA_SINGLE_FIX'] == 1]
+    # drop binary single fix column, we only want the proportion
+    single_fix_proportion_obs = single_fix_probs_provo.drop(labels='IA_SINGLE_FIX', axis=1)
+    single_fix_proportion_obs = single_fix_proportion_obs.rename(columns={'Text_ID': 'text_id', 'Word_Number': 'word_id'})
+
+    return single_fix_proportion_obs
+
+def compute_obs_single_fix_duration(eye_tracking: pd.DataFrame):
+
+    eye_tracking_single_fix = eye_tracking[eye_tracking['IA_SINGLE_FIX'] == 1]
+    eye_tracking_single_fix = eye_tracking_single_fix.groupby(['Text_ID', 'Word_Number'])[
+        ['IA_FIRST_FIXATION_DURATION']].mean().reset_index()
+    eye_tracking_single_fix = eye_tracking_single_fix.rename(
+        columns={'IA_FIRST_FIXATION_DURATION': 'single_fix_duration', 'Text_ID': 'text_id', 'Word_Number': 'word_id'})
+
+    return eye_tracking_single_fix
+
+def compute_obs_first_fix_duration(eye_tracking: pd.DataFrame):
+
+    eye_tracking_fix_duration = eye_tracking.groupby(['Text_ID', 'Word_Number'])['IA_FIRST_FIXATION_DURATION'].mean().reset_index()
+    eye_tracking_fix_duration = eye_tracking_fix_duration.rename(columns={'IA_FIRST_FIXATION_DURATION': 'first_fix_duration',
+                                    'Text_ID': 'text_id', 'Word_Number': 'word_id'})
+    return eye_tracking_fix_duration
+
+def compute_obs_gaze_duration(eye_tracking: pd.DataFrame):
+
+    gaze_duration_obs = eye_tracking.groupby(['Text_ID', 'Word_Number'])[
+        ['IA_FIRST_RUN_DWELL_TIME']].mean().reset_index()
+    gaze_duration_obs = gaze_duration_obs.rename(columns={'IA_FIRST_RUN_DWELL_TIME': 'gaze_duration',
+                                                          'Text_ID': 'text_id', 'Word_Number': 'word_id'})
+
+    return gaze_duration_obs
+
+def compute_obs_total_reading_time(eye_tracking:pd.DataFrame):
+    
+    total_fixation_duration_obs = eye_tracking.groupby(['Text_ID', 'Word_Number'])[
+        ['IA_DWELL_TIME']].mean().reset_index()
+    total_fixation_duration_obs = total_fixation_duration_obs.rename(columns={'IA_DWELL_TIME': 'total_reading_time',
+                                                                              'Text_ID': 'text_id', 'Word_Number': 'word_id'})
+    
+    return total_fixation_duration_obs
+
+def compute_observed_word_level_eye_movements(eye_tracking: pd.DataFrame, measures:list):
+
+    result_dfs = dict()
+
+    for measure in measures:
+
+        if measure == 'skipping_proportion':
+            to_add = compute_obs_skipping_probability(eye_tracking)
+        elif measure == 'single_fix_proportion':
+            to_add = compute_obs_single_fix_probability(eye_tracking)
+        elif measure == 'single_fix_duration':
+            to_add = compute_obs_single_fix_duration(eye_tracking)
+        elif measure == 'first_fix_duration':
+            to_add = compute_obs_first_fix_duration(eye_tracking)
+        elif measure == 'gaze_duration':
+            to_add = compute_obs_gaze_duration(eye_tracking)
+        elif measure == 'total_reading_time':
+            to_add = compute_obs_total_reading_time(eye_tracking)
+
+        result_dfs[measure] = to_add
+
+    result_columns = defaultdict(list)
+    # merge all
+    for item, hist in eye_tracking.groupby(['Text_ID', 'Word_Number']):
+        result_columns['text_id'].append(item[0])
+        result_columns['word_id'].append(item[1])
+        result_columns['word'].append(hist['Word'].tolist()[0])
+        for measure in measures:
+            cell = result_dfs[measure].query(f"text_id=={item[0]} & word_id=={item[1]}")[measure]
+            if len(cell) > 0:
+                result_columns[measure].append(cell.item())
+            else:
+                result_columns[measure].append(np.nan)
+    results = pd.DataFrame(result_columns)
+
+    return results
+
+# ---------------- Score functions ------------------
+def compute_mean_squared_error(true_values:list, simulated_values:list):
+
+    mean2error = sum([(simulated_value - true_value) ** 2 for simulated_value, true_value in
+                      zip(simulated_values, true_values)]) / len(simulated_values)
+    return mean2error
+
+def compute_mean_squared_error_of_word(true_value:float, simulated_value:float, standard_deviation:float):
+
+    mean2error = ((simulated_value - true_value) / standard_deviation) ** 2
+    return mean2error
+
+def normalize(sample:list):
+
+    normalized = (sample - min(sample)) / (max(sample) - min(sample))
+    return normalized
+
+# ---------------- MAIN ------------------
 def evaluate_output (parameters, output_filepath:str):
 
     simulation_output = pd.read_csv(output_filepath, sep='\t')
@@ -253,11 +372,12 @@ def evaluate_output (parameters, output_filepath:str):
         # read in stimulus to add skipped words
         # encoding = chardet.detect(open(parameters.stimuli_filepath, "rb").read())['encoding']
         stimuli = pd.read_csv(parameters.stimuli_filepath, encoding="ISO-8859-1")
+        # - 1 to be compatible with index used in simulation (starting from 0, instead of 1)
         stimuli['Word_Number'] = stimuli['Word_Number'].astype(int).apply(lambda x: x - 1)
         stimuli['Text_ID'] = stimuli['Text_ID'].apply(lambda x: x - 1)
 
-        # get word-level eye-movement measures
-        eye_movement_measures = compute_word_level_eye_movement_measures(simulation_output, stimuli)
+        # get word-level eye-movement measures, averaged over simulations
+        eye_movement_measures = compute_word_level_eye_movements(simulation_output, stimuli, parameters.evaluation_measures)
         filepath = output_filepath.replace('simulation_', 'simulation_eye_movements_')
         eye_movement_measures.to_csv(filepath, sep='\t', index=False)
 
@@ -271,3 +391,8 @@ def evaluate_output (parameters, output_filepath:str):
         eye_tracking['Text_ID'] = eye_tracking['Text_ID'].apply(lambda x: x - 1)
         # only including first two texts for now
         eye_tracking = eye_tracking[eye_tracking['Text_ID'] < 2]
+
+        # get word level measures from eye_tracking, averaged over participants
+        observed_eye_movement_measures = compute_observed_word_level_eye_movements(eye_tracking, parameters.evaluation_measures)
+        filepath = output_filepath.replace('simulation_', 'observed_eye_movements_')
+        observed_eye_movement_measures.to_csv(filepath, sep='\t', index=False)

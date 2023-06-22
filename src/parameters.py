@@ -243,6 +243,14 @@ def return_task_params(task_attributes):
         max_edit_dist = 1 # NV: maximum allowed distance between word and inferred stem, to be considered matching (relates to affix system)
         short_word_cutoff = 3
 
+    # evaluation
+    evaluation_measures = ['skipping_proportion',
+                            'single_fix_proportion',
+                            'single_fix_duration',
+                            'first_fix_duration',
+                            'gaze_duration',
+                            'total_reading_time']
+
     task_params = dict(locals())
     # NV: task_attributes is given as input, so would end up in the namespace if not removed.
     task_params.pop('task_attributes')
