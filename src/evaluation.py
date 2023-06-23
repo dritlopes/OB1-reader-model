@@ -1,9 +1,10 @@
 import pandas as pd
-import seaborn as sb
 import numpy as np
 from collections import defaultdict
-import chardet
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
 import matplotlib.pyplot as plt
+import seaborn as sb
 from utils import get_pred_dict, get_word_freq, pre_process_string
 import math
 
@@ -438,9 +439,8 @@ def evaluate_output (parameters, output_filepath:str):
         eye_tracking = eye_tracking[eye_tracking['Text_ID'] < 2]
 
         # get word-level eye-movement measures, averaged over simulations
-        # TODO add regression destination and regression triggering proportions
-        # TODO add refixation proportion
         stimuli = eye_tracking[['Text_ID', 'Word_Number', 'Word']]
+        # TODO add parameter keep_participant_level
         eye_movement_measures = compute_word_level_eye_movements(simulation_output, stimuli, parameters.evaluation_measures)
         # get word factors: frequency, length, predictability
         eye_movement_measures = get_word_factors(parameters, eye_movement_measures)
@@ -466,7 +466,24 @@ def evaluate_output (parameters, output_filepath:str):
         mean2error_df = pd.DataFrame(mean2errors)
         mean2error_df.to_csv(filepath, sep='\t', index=False)
 
-        # TODO test pred independent variable and measure as dependent variable for simulations and eye-tracking
+        # plot predictability vs. measure
+        predictor_sim = ['OB1-reader' for i in range(len(eye_movement_measures))]
+        eye_movement_measures["predictor"] = predictor_sim
+        predictor_obs = ['PROVO' for i in range(len(observed_eye_movement_measures))]
+        observed_eye_movement_measures["predictor"] = predictor_obs
+        # merge model + eye-tracking
+        data = pd.concat([eye_movement_measures, observed_eye_movement_measures], axis=0).reset_index()
+        for measure in parameters.evaluation_measures:
+            plot = sb.relplot(data=data, x=measure, y='predictability', hue='predictor', kind='line')
+            plot.figure.savefig(f"../results/plot_{measure}_{parameters.prediction_flag}.png")
+
+        # TODO get word-level measures with participant-level preserved for stat tests
+
+        # TODO fit predictability effects
+        # for measure in parameters.evaluation_measures:
+        #     groups = [eye_movement_measures['participant_id'],eye_movement_measures['text_id'],eye_movement_measures['word_id']]
+        #     stats_model = smf.mixedlm(f"{measure} ~ predictability", eye_movement_measures, groups=groups)
+        #     stats_result = stats_model.fit(method=["lbfgs"])
 
 
 
