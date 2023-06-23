@@ -217,7 +217,7 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
                     unknown_word_pred_values_dict[text_id][str(int(text_position) - 1)] = dict()
                     for response in responses:
                         if response['Response'] and type(response['Response']) == str:
-                            word = pre_process_string(response['Response'], lemmatize=pm.lemmatize)
+                            word = pre_process_string(response['Response'])
                             word_pred_values_dict[text_id][str(int(text_position) - 1)][word] = float(response['Response_Proportion'])
                             if word not in lexicon:
                                 unknown_word_pred_values_dict[text_id][str(int(text_position) - 1)][word] = float(response['Response_Proportion'])

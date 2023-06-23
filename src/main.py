@@ -87,8 +87,8 @@ def main():
     else:
         global_parameters = {
             "task_to_run" : 'continuous reading',
-            "stimuli_filepath": "../data/predictability/Provo_Corpus-Predictability_Norms.csv",
-            "stimuli_separator": ",",
+            "stimuli_filepath": "../stimuli/Provo_Corpus.csv",
+            "stimuli_separator": "\t",
             "language": 'english',
             "run_exp": False,
             "number_of_simulations": 2,

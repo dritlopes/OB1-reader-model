@@ -1,13 +1,11 @@
-import numpy as np
 import pandas as pd
-import pickle
-import json
 import seaborn as sb
 import numpy as np
 from collections import defaultdict
-import sys
 import chardet
 import matplotlib.pyplot as plt
+from utils import get_pred_dict, get_word_freq, pre_process_string
+import math
 
 # ---------------- Simulation eye-movement measures ------------------
 def get_first_pass_fixations(simulation_df:pd.DataFrame):
@@ -49,6 +47,18 @@ def get_text_words(stimuli):
     for word_info, rows in stimuli.groupby(['Text_ID', 'Word_Number']):
         words_in_text[int(word_info[0])].append(rows['Word'].tolist()[0])
     return words_in_text
+
+def convert_trial_to_word_level(stimuli):
+
+    stimuli_words = defaultdict(list)
+    for i, text_info in stimuli.iterrows():
+        word_ids = text_info['word_ids'].replace('[','').replace(']','').split(',')
+        words = text_info['words'].replace('[','').replace(']','').split(',')
+        for word_info in zip(word_ids, words):
+            stimuli_words['Text_ID'].append(int(text_info['id']))
+            stimuli_words['Word_Number'].append(word_info[0])
+            stimuli_words['Word'].append(word_info[1].replace("'",""))
+    return pd.DataFrame(stimuli_words)
 
 def get_skipped_words(first_pass:pd.DataFrame, words_in_text:defaultdict):
 
@@ -121,7 +131,6 @@ def compute_single_fix_probability(first_pass:pd.DataFrame):
 
     # filter each word's first-pass fixations by those of length 1, thus fixated only once
     single_fixation_sim = first_pass.groupby(['simulation_id', 'text_id', 'word_id']).filter(lambda x: len(x) == 1).reset_index()
-    single_fixation_sim = single_fixation_sim[['simulation_id', 'text_id', 'word', 'word_id', 'fixation duration']]
     # single_fixation_sim.to_csv('../results/single_fix.csv')
 
     # single fixation probability
@@ -156,7 +165,6 @@ def compute_single_fix_duration(first_pass:pd.DataFrame):
     # filter each word's first-pass fixations by those of length 1, thus fixated only once
     single_fixation_sim = first_pass.groupby(['simulation_id', 'text_id', 'word_id']).filter(
         lambda x: len(x) == 1).reset_index()
-    single_fixation_sim = single_fixation_sim[['simulation_id', 'text_id', 'word', 'word_id', 'fixation duration']]
 
     # single fixation average duration
     single_fixation_duration_sim = single_fixation_sim.groupby(['text_id', 'word_id'])[
@@ -168,7 +176,6 @@ def compute_single_fix_duration(first_pass:pd.DataFrame):
 def compute_first_fixation(first_pass:pd.DataFrame):
 
     first_fixation = first_pass.loc[first_pass.groupby(['simulation_id', 'text_id', 'word_id']).apply(lambda x: x.index[0]).values, :]
-    first_fixation = first_fixation[['simulation_id', 'text_id', 'word', 'word_id', 'fixation duration']]
     first_fixation_duration_sim = first_fixation.groupby(['text_id', 'word_id'])[['fixation duration']].mean().reset_index()
     first_fix_duration = first_fixation_duration_sim.rename(columns={'fixation duration': 'first_fix_duration'})
 
@@ -283,7 +290,7 @@ def compute_obs_first_fix_duration(eye_tracking: pd.DataFrame):
 
     eye_tracking_fix_duration = eye_tracking.groupby(['Text_ID', 'Word_Number'])['IA_FIRST_FIXATION_DURATION'].mean().reset_index()
     eye_tracking_fix_duration = eye_tracking_fix_duration.rename(columns={'IA_FIRST_FIXATION_DURATION': 'first_fix_duration',
-                                    'Text_ID': 'text_id', 'Word_Number': 'word_id'})
+                                                                          'Text_ID': 'text_id', 'Word_Number': 'word_id'})
     return eye_tracking_fix_duration
 
 def compute_obs_gaze_duration(eye_tracking: pd.DataFrame):
@@ -341,12 +348,61 @@ def compute_observed_word_level_eye_movements(eye_tracking: pd.DataFrame, measur
 
     return results
 
-# ---------------- Score functions ------------------
-def compute_mean_squared_error(true_values:list, simulated_values:list):
+def get_word_factors(pm, eye_movements_df):
 
-    mean2error = sum([(simulated_value - true_value) ** 2 for simulated_value, true_value in
-                      zip(simulated_values, true_values)]) / len(simulated_values)
-    return mean2error
+    # predictability
+    pred_map = get_pred_dict(pm,None)
+    pred_column = []
+    for i, item in eye_movements_df.iterrows():
+        pred_value = 0.0
+        if str(item['text_id']) in pred_map.keys():
+            if str(item['word_id']) in pred_map[str(item['text_id'])].keys():
+                word = item['word'].strip()
+                if word in pred_map[str(item['text_id'])][str(item['word_id'])].keys():
+                    pred_value = pred_map[str(item['text_id'])][str(item['word_id'])][word]
+        pred_column.append(pred_value)
+
+    # frequency
+    freq_map = get_word_freq(pm,None)
+    freq_column = []
+    for i, item in eye_movements_df.iterrows():
+        freq_value = 0.0
+        word = item['word'].strip()
+        if word in freq_map.keys():
+            freq_value = freq_map[word]
+        freq_column.append(freq_value)
+
+    # length
+    length_column = []
+    for i, item in eye_movements_df.iterrows():
+        word = item['word'].strip()
+        length_column.append(len(word))
+
+    # merge all
+    eye_movements_df['predictability'] = pred_column
+    eye_movements_df['frequency'] = freq_column
+    eye_movements_df['length'] = length_column
+
+    return eye_movements_df
+
+def drop_nan_values(true_values:pd.Series, simulated_values:pd.Series):
+
+    values = defaultdict(list)
+    counter = 0
+    for true_value, simulated_value in zip(true_values, simulated_values):
+        if not true_values.isnull()[counter] and not simulated_values.isnull()[counter]:
+            values['true'].append(true_value)
+            values['simulated'].append(simulated_value)
+        counter += 1
+    return values
+
+# ---------------- Score functions ------------------
+def compute_root_mean_squared_error(true_values:list, simulated_values:list):
+
+    # mean2error = math.sqrt(sum([(simulated_value - true_value) ** 2 for simulated_value, true_value in
+    #                   zip(simulated_values, true_values)]) / len(simulated_values))
+    root_mean2error = math.sqrt(np.square(np.subtract(simulated_values, true_values)).mean())
+    return root_mean2error
 
 def compute_mean_squared_error_of_word(true_value:float, simulated_value:float, standard_deviation:float):
 
@@ -369,18 +425,6 @@ def evaluate_output (parameters, output_filepath:str):
         # exclude first word of every passage (not in eye tracking -PROVO- data either)
         simulation_output = simulation_output[simulation_output['word_id'] != 0]
 
-        # read in stimulus to add skipped words
-        # encoding = chardet.detect(open(parameters.stimuli_filepath, "rb").read())['encoding']
-        stimuli = pd.read_csv(parameters.stimuli_filepath, encoding="ISO-8859-1")
-        # - 1 to be compatible with index used in simulation (starting from 0, instead of 1)
-        stimuli['Word_Number'] = stimuli['Word_Number'].astype(int).apply(lambda x: x - 1)
-        stimuli['Text_ID'] = stimuli['Text_ID'].apply(lambda x: x - 1)
-
-        # get word-level eye-movement measures, averaged over simulations
-        eye_movement_measures = compute_word_level_eye_movements(simulation_output, stimuli, parameters.evaluation_measures)
-        filepath = output_filepath.replace('simulation_', 'simulation_eye_movements_')
-        eye_movement_measures.to_csv(filepath, sep='\t', index=False)
-
         # read in eye_tracking data for comparing simulation with observed measures
         # encoding = chardet.detect(open(parameters.eye_tracking_filepath, "rb").read())['encoding']
         eye_tracking = pd.read_csv(parameters.eye_tracking_filepath, encoding="ISO-8859-1")
@@ -389,10 +433,40 @@ def evaluate_output (parameters, output_filepath:str):
         # - 1 to be compatible with index used in simulation (starting from 0, instead of 1)
         eye_tracking['Word_Number'] = eye_tracking['Word_Number'].astype(int).apply(lambda x: x - 1)
         eye_tracking['Text_ID'] = eye_tracking['Text_ID'].apply(lambda x: x - 1)
+        eye_tracking['Word'] = [pre_process_string(word) for word in eye_tracking['Word']]
         # only including first two texts for now
         eye_tracking = eye_tracking[eye_tracking['Text_ID'] < 2]
 
+        # get word-level eye-movement measures, averaged over simulations
+        # TODO add regression destination and regression triggering proportions
+        # TODO add refixation proportion
+        stimuli = eye_tracking[['Text_ID', 'Word_Number', 'Word']]
+        eye_movement_measures = compute_word_level_eye_movements(simulation_output, stimuli, parameters.evaluation_measures)
+        # get word factors: frequency, length, predictability
+        eye_movement_measures = get_word_factors(parameters, eye_movement_measures)
+        filepath = output_filepath.replace('simulation_', 'simulation_eye_movements_')
+        eye_movement_measures.to_csv(filepath, sep='\t', index_label='id')
+
         # get word level measures from eye_tracking, averaged over participants
         observed_eye_movement_measures = compute_observed_word_level_eye_movements(eye_tracking, parameters.evaluation_measures)
+        observed_eye_movement_measures = get_word_factors(parameters, observed_eye_movement_measures)
         filepath = output_filepath.replace('simulation_', 'observed_eye_movements_')
-        observed_eye_movement_measures.to_csv(filepath, sep='\t', index=False)
+        observed_eye_movement_measures.to_csv(filepath, sep='\t', index_label='id')
+
+        # mean square error between each measure in simulation and eye-tracking
+        mean2errors = defaultdict(list)
+        for measure in parameters.evaluation_measures:
+            assert len(observed_eye_movement_measures[measure]) == len(eye_movement_measures[measure])
+            # excluding words with nan value, e.g. skipped words of prob 1. Should words that are always skipped be included in the equation?
+            values = drop_nan_values(observed_eye_movement_measures[measure], eye_movement_measures[measure])
+            mean2error = compute_root_mean_squared_error(values['true'], values['simulated'])
+            mean2errors['eye_tracking_measure'].append(measure)
+            mean2errors['mean_squared_error'].append(mean2error)
+        filepath = output_filepath.replace('simulation_', 'root_mean2error_eye_movements_')
+        mean2error_df = pd.DataFrame(mean2errors)
+        mean2error_df.to_csv(filepath, sep='\t', index=False)
+
+        # TODO test pred independent variable and measure as dependent variable for simulations and eye-tracking
+
+
+
