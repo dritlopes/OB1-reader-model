@@ -250,6 +250,7 @@ def return_task_params(task_attributes):
                             'first_fix_duration',
                             'gaze_duration',
                             'total_reading_time']
+    fixed_factors = ['predictability']
 
     task_params = dict(locals())
     # NV: task_attributes is given as input, so would end up in the namespace if not removed.
