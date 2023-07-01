@@ -182,15 +182,18 @@ def return_task_params(task_attributes):
     max_threshold = 0.6 # mm: changed because max activity changed from 1.3 to 1
     # MM: a number of words have no freq because not in corpus, repaired by making freq less important
     wordfreq_p = 0.2  # 0.2 #NV: difference between max and min threshold
-    wordpred_p = 0.2  # Currently not used
+    wordpred_p = 0.2  # used if predictability regulates word threshold
     word_length_similarity_constant = 0.15 # 0.35  # 0.15 # NV: determines how similar the length of 2 words must be for them to be recognised as 'similar word length'
     linear = False
     # use_grammar_prob = False  # True for using grammar probabilities, False for using cloze, overwritten by uniform_pred
     # uniform_prob = False  # Overwrites cloze/grammar probabilities with 0.25 for all words
     # grammar_weight = 0.5  # only used when using grammar_prob
+
+    # pre-activation based on predictability
     prediction_flag = 'cloze' # cloze # uniform # grammar # language model
-    prediction_seed = 42 # in case of a language model providing predictions
+    prediction_seed = None # in case of a language model providing predictions
     topk = 20 # in case of language model providing predictions
+    pred_p = 0.05 # scaling parameters in pre-activation formula
 
     # attention
     attend_width = 15 # 5.0 for natural reading # 8.0  # NV: #!!!: was set to 15 for flanker, 20 for sentence and 3 for transposed
@@ -244,13 +247,12 @@ def return_task_params(task_attributes):
         short_word_cutoff = 3
 
     # evaluation
-    evaluation_measures = ['skipping_proportion',
-                            'single_fix_proportion',
-                            'single_fix_duration',
+    evaluation_measures = ['skip',
+                            'single_fix',
                             'first_fix_duration',
                             'gaze_duration',
                             'total_reading_time']
-    fixed_factors = ['predictability']
+    fixed_factors = ['predictability','length','frequency']
 
     task_params = dict(locals())
     # NV: task_attributes is given as input, so would end up in the namespace if not removed.
@@ -267,6 +269,6 @@ def return_params(global_params):
     task_params = return_task_params(task_attributes)
     
     # put all attributes of separate objects into one pm object
-    pm = SimpleNamespace(**{**global_params, **task_attributes.__dict__, **task_params})
+    pm = SimpleNamespace(**{**task_attributes.__dict__, **task_params, **global_params})
 
     return pm

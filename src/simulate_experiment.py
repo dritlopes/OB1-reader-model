@@ -13,7 +13,7 @@ from reading_helper_functions import get_threshold, string_to_open_ngrams, \
 
 logger = logging.getLogger(__name__)
 
-def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index,lexicon_thresholds,lexicon,pred_dict,freq_values,save_skipped_words=True):
+def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index,lexicon_thresholds,lexicon,pred_dict,freq_values):
 
     all_data = {}
     # set to true when end of text is reached
@@ -108,7 +108,7 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
 
         # ---------------------- Start processing of stimulus ---------------------
         #print('Entering cycle loops to define word activity...')
-        print("fix on: " + tokens[fixation] + '  attent. width: ' + str(attend_width) + ' fixwrd thresh.' + str(round(lexicon_thresholds[tokens_to_lexicon_indices[fixation]],3)))
+        # print("fix on: " + tokens[fixation] + '  attent. width: ' + str(attend_width) + ' fixwrd thresh.' + str(round(lexicon_thresholds[tokens_to_lexicon_indices[fixation]],3)))
         shift = False
         n_cycles = 0
         n_cycles_since_attent_shift = 0
@@ -134,14 +134,14 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
             # update cycle info
             foveal_word_index = lexicon_word_index[tokens[fixation]]
             foveal_word_activity = lexicon_word_activity[foveal_word_index]
-            print('CYCLE ', str(n_cycles), '   activ @fix ', str(round(foveal_word_activity,3)), ' inhib  #@fix', str(round(lexicon_word_inhibition[foveal_word_index],3)))
-            #print('        and act. of Die', str(round(lexicon_word_activity[lexicon_word_index[tokens[0]]],3)))
             fixation_data['foveal word activity per cycle'].append(foveal_word_activity)
             fixation_data['foveal word-to-word inhibition per cycle'].append(abs(lexicon_word_inhibition[foveal_word_index]))
             stim_activity = sum([lexicon_word_activity[lexicon_word_index[word]] for word in stimulus.split() if word in lexicon_word_index.keys()])
             fixation_data['stimulus activity per cycle'].append(stim_activity)
             total_activity = sum(lexicon_word_activity)
             fixation_data['lexicon activity per cycle'].append(total_activity)
+
+            # print('CYCLE ', str(n_cycles), '   activ @fix ', str(round(foveal_word_activity,3)), ' inhib  #@fix', str(round(lexicon_word_inhibition[foveal_word_index],3)))
 
             # ---------------------- Match words in lexicon to slots in input ---------------------
             # word recognition, by checking matching active wrds to slots
@@ -225,7 +225,7 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
                                                                                                     attention_position,
                                                                                                     attend_width, pm)
                         attention_position = np.round(attention_position)
-                    print("  input after attentshift: " + str(round(word_input[tokens_to_lexicon_indices[fixation]], 3)))
+                    # print("  input after attentshift: " + str(round(word_input[tokens_to_lexicon_indices[fixation]], 3)))
 
             if shift:
                 n_cycles_since_attent_shift += 1 # ...count cycles since attention shift
@@ -259,31 +259,11 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
         # Check if end of text is reached AL: if fixation on last word and next saccade not refixation nor regression
         if fixation == total_n_words - 1 and saccade_info['saccade type'] not in ['refixation', 'regression']:
             end_of_text = True
-            print(recognized_word_at_position)
-            print("END REACHED!")
+            # print(recognized_word_at_position)
             continue
 
         # if end of text is not yet reached, compute next eye position and thus next fixation
         fixation, next_eye_position, saccade_info = compute_next_eye_position(pm, saccade_info, eye_position, stimulus, fixation, total_n_words, word_edges, fixated_position_in_stimulus)
-
-    # register words in text that were skipped and never fixated
-    # skipped_words = []
-    # if save_skipped_words:
-    #     # find which words were skipped on first pass
-    #     wordskip_indices = find_wordskips(all_data)
-    #     # store info on each word
-    #     for i in wordskip_indices:
-    #         skipped_words.append({'foveal word': tokens[i],
-    #                               'foveal word index': i,
-    #                               'foveal word length': len(tokens[i]),
-    #                               'foveal word frequency': freq_values[tokens[i]]})
-                                  #'foveal word predictability': pred_values[str(i)]})
-
-    # # register words in text in which no word in lexicon reaches recognition threshold
-    # unrecognized_words = dict()
-    # for position in range(total_n_words):
-    #     if not recognized_word_at_position[position]:
-    #         unrecognized_words[position] = tokens[position]
 
     return all_data
 
@@ -484,7 +464,7 @@ def simulate_experiment(pm):
 
     print('Computing word-to-word inhibition matrix...')
     # set up word-to-word inhibition matrix
-    word_inhibition_matrix = set_up_inhibition_matrix(pm, lexicon, lexicon_word_ngrams, tokens_to_lexicon_indices)
+    word_inhibition_matrix = set_up_inhibition_matrix(pm, lexicon, lexicon_word_ngrams)
     print("Inhibition grid ready.")
 
     # recognition threshold for each word in lexicon
@@ -532,5 +512,8 @@ def simulate_experiment(pm):
                                         word_thresh_dict,
                                         lexicon,
                                         word_frequencies)
+
+        print(f'END of SIMULATION {sim_number}\n')
+    print(f'THE END')
 
     return all_data

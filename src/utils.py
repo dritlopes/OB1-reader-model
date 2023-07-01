@@ -10,8 +10,8 @@ from transformers import GPT2LMHeadModel, GPT2Tokenizer, set_seed
 from reading_components import semantic_processing
 from reading_helper_functions import build_word_inhibition_matrix
 import logging
-import torch
 from collections import defaultdict
+import random
 
 logger = logging.getLogger(__name__)
 
@@ -34,12 +34,8 @@ def get_stimulus_text_from_file(filepath, sep='\t'):
             for i, text_info in data.groupby('Text_ID'):
                 ids.append(int(i))
                 texts.append(text_info['Text'].tolist()[0])
-                words.append(text_info['Word'].unique().tolist())
-                word_ids.append(text_info['Word_Number'].unique().tolist())
             data = pd.DataFrame(data={'id': ids,
-                                     'all': texts,
-                                     'words': words,
-                                     'word_ids': word_ids})
+                                     'all': texts})
     return data, stim_name
 
 def pre_process_string(string, remove_punctuation=True, all_lowercase=True, strip_spaces=True):
@@ -156,7 +152,10 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
         language_model = GPT2LMHeadModel.from_pretrained('gpt2')
         lm_tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
         # in case you want to reproduce predictions
-        set_seed(pm.seed)
+        if not pm.prediction_seed:
+            seed = random.randint(0)
+            pm.prediction_seed = seed
+        set_seed(pm.prediction_seed)
         # list of words, set of words, sentences or passages. Each one is equivalent to one trial in an experiment
         for i, sequence in enumerate(pm.stim_all):
             sequence = [token for token in sequence.split(' ') if token != '']
@@ -274,10 +273,9 @@ def get_pred_dict(pm, lexicon):
 
     return word_pred_dict
 
-def check_previous_inhibition_matrix(pm,lexicon,lexicon_word_bigrams,verbose=False):
+def check_previous_inhibition_matrix(pm,lexicon,lexicon_word_bigrams,inhib_matrix_previous,inhib_matrix_parameters):
 
-    inhib_matrix_parameters = '../data/inhib_matrix_params_latest_run.pkl'
-    inhib_matrix_previous = '../data/inhibition_matrix_previous.pkl'
+    previous_matrix_usable = False
 
     if os.path.exists(inhib_matrix_parameters):
 
@@ -294,24 +292,31 @@ def check_previous_inhibition_matrix(pm,lexicon,lexicon_word_bigrams,verbose=Fal
            str(pm.simil_algo)+str(pm.max_edit_dist) + str(pm.short_word_cutoff)+str(size_of_file) \
            == parameters_previous:
             previous_matrix_usable = True
-        else:
-            previous_matrix_usable = False
-    else:
-        previous_matrix_usable = False
-        if verbose:
-            print('no previous inhibition matrix')
+
+    if not previous_matrix_usable:
+        print('no previous inhibition matrix')
 
     return previous_matrix_usable
 
-def set_up_inhibition_matrix(pm, lexicon, lexicon_word_ngrams, tokens_to_lexicon_indices):
+def set_up_inhibition_matrix(pm, lexicon, lexicon_word_ngrams):
 
-    previous_matrix_usable = check_previous_inhibition_matrix(pm,lexicon,lexicon_word_ngrams)
+    matrix_filepath = '../data/inhibition_matrix_previous.pkl'
+    matrix_parameters_filepath = '../data/inhibition_matrix_parameters_previous.pkl'
+
+    previous_matrix_usable = check_previous_inhibition_matrix(pm, lexicon,
+                                                              lexicon_word_ngrams,
+                                                              matrix_filepath,
+                                                              matrix_parameters_filepath)
 
     if previous_matrix_usable:
-        with open('../data/Inhibition_matrix_previous.pkl', "rb") as f:
+        with open(matrix_filepath, "rb") as f:
             word_inhibition_matrix = pickle.load(f)
     else:
-        word_inhibition_matrix = build_word_inhibition_matrix(lexicon,lexicon_word_ngrams,pm,tokens_to_lexicon_indices)
+        word_inhibition_matrix = build_word_inhibition_matrix(lexicon,
+                                                              lexicon_word_ngrams,
+                                                              pm,
+                                                              matrix_filepath,
+                                                              matrix_parameters_filepath)
 
     return word_inhibition_matrix
 

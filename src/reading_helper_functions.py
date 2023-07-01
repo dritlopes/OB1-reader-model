@@ -112,7 +112,7 @@ def is_similar_word_length(len1, len2, len_sim_constant):
 
     return is_similar
 
-def build_word_inhibition_matrix(lexicon,lexicon_word_ngrams,pm,tokens_to_lexicon_indices):
+def build_word_inhibition_matrix(lexicon,lexicon_word_ngrams,pm,matrix_filepath,matrix_parameters_filepath):
 
     lexicon_size = len(lexicon)
     word_overlap_matrix = np.zeros((lexicon_size, lexicon_size), dtype=float)
@@ -134,12 +134,11 @@ def build_word_inhibition_matrix(lexicon,lexicon_word_ngrams,pm,tokens_to_lexico
             #print("word1 ", word1, "word2 ", word2, "overlap ", n_total_overlap, "len w1 ", len(lexicon_word_ngrams[word1]))
             #print("inhib one way", word_overlap_matrix[word_1_index, word_2_index])
 
-    output_inhibition_matrix = '../data/Inhibition_matrix_previous.pkl'
-    with open(output_inhibition_matrix, "wb") as f:
-        pickle.dump(np.sum(word_overlap_matrix, axis=0)[tokens_to_lexicon_indices], f)
+    with open(matrix_filepath, "wb") as f:
+        pickle.dump(word_overlap_matrix, f)
 
-    size_of_file = os.path.getsize(output_inhibition_matrix)
-    with open('../data/Inhib_matrix_params_latest_run.pkl', "wb") as f:
+    size_of_file = os.path.getsize(matrix_filepath)
+    with open(matrix_parameters_filepath, "wb") as f:
         pickle.dump(str(lexicon_word_ngrams) + str(lexicon_size) +
                     str(pm.simil_algo) + str(pm.max_edit_dist) + str(pm.short_word_cutoff) + str(size_of_file), f)
 
