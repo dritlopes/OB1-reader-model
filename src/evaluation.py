@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import seaborn as sb
 from utils import get_pred_dict, get_word_freq, pre_process_string
 import math
+import os
 
 # ---------------- Simulation eye-movement measures ------------------
 def get_first_pass_fixations(simulation_df:pd.DataFrame):
@@ -267,17 +268,10 @@ def compute_error(measures, true, pred):
 
     return mean2error_df
 
-def plot_fixed_factor_vs_eye_movement(parameters, data):
-
-    for fixed_factor in parameters.fixed_factors:
-        for measure in parameters.evaluation_measures:
-            plot = sb.relplot(data=data, x=measure, y=fixed_factor, hue='predictor', kind='line')
-            filepath = f"../results/plot_{fixed_factor}_{measure}.png"
-            if fixed_factor == 'predictability':
-                filepath = f"../results/plot_{fixed_factor}_{parameters.prediction_flag}_{measure}.png"
-            plot.figure.savefig(filepath)
-
 def fit_mixed_effects(parameters, true, predicted, output_filepath):
+    
+    # generalized mixed effects model doc: https://www.statsmodels.org/stable/generated/statsmodels.genmod.bayes_mixed_glm.BinomialBayesMixedGLM.from_formula.html#statsmodels.genmod.bayes_mixed_glm.BinomialBayesMixedGLM.from_formula
+    # linear mixed effects doc: https://www.statsmodels.org/stable/generated/statsmodels.regression.mixed_linear_model.MixedLM.from_formula.html
 
     # linear mixed effects models to determine if the simulation data can predict the human data
     for measure in parameters.evaluation_measures:
@@ -293,15 +287,29 @@ def fit_mixed_effects(parameters, true, predicted, output_filepath):
         data_measure = data_measure.dropna()
         # in case of binary dependent variable (eye-movement measure)
         if {int(value) for value in data_measure[measure].unique()} == {1, 0}:
-            # TODO add generalized mixed effects for binomial
-            pass
+            random = {"participant_id": "0+C(participant_id)",
+                       "id": "0+C(id)"}
+            stats_model = sm.BinomialBayesMixedGLM.from_formula(f"{measure} ~ simulated_{measure}",
+                                                                vc_formulas=random,
+                                                                data=data_measure)
+            stats_result = stats_model.fit_map(method='BFGS')
+            print(stats_result.summary())
+            # stats_result.save(output_filepath.replace('simulation_', f'glm_{measure}_').replace('.csv', '.pkl'))
+            with open(output_filepath.replace('simulation_', f'glm_{measure}_').replace('.csv', '.txt'), 'w') as fh:
+                fh.write(stats_result.summary().as_text())
         else:
-            #stats_model = smf.mixedlm(f"{measure} ~ simulated_{measure}",data_measure,groups=data_measure['participant_id']) # "groups" add a random intercept for each group
+            # stats_model = smf.mixedlm(f"{measure} ~ simulated_{measure}",data_measure,groups=data_measure['participant_id'])
+            # from statsmodel doc: To include crossed random effects in a model,
+            # it is necessary to treat the entire dataset as a single group.
+            # The variance components arguments to the model can then be used to define models
+            # with various combinations of crossed and non-crossed random effects.
             data_measure["group"] = 1
+            # add independent random intercept for each vc_formula key
+            random = {"participant_id": "0+C(participant_id)",
+                       "id": "0+C(id)"}
             stats_model = sm.MixedLM.from_formula(f"{measure} ~ simulated_{measure}",
                                                   groups="group",
-                                                  vc_formula={"participant_id": "0+C(participant_id)", # add independent random coefficient for each vc_formula key
-                                                              "id": "0+C(id)"},
+                                                  vc_formula=random,
                                                   data=data_measure)
             # stats_model = sm.MixedLM.from_formula(f"{measure} ~ simulated_{measure}",
             #                                       groups='participant_id',
@@ -311,7 +319,65 @@ def fit_mixed_effects(parameters, true, predicted, output_filepath):
             #                                       data=data_measure)
             stats_result = stats_model.fit(method=["lbfgs"])
             print(stats_result.summary())
-            stats_result.save(output_filepath.replace('simulation_', f'lme_{measure}_').replace('.csv','.pkl'))
+           #  stats_result.save(output_filepath.replace('simulation_', f'lm_{measure}_').replace('.csv','.pkl'))
+            with open(output_filepath.replace('simulation_', f'lm_{measure}_').replace('.csv', '.txt'), 'w') as fh:
+                fh.write(stats_result.summary().as_text())
+
+def scale_human_durations(data_log, parameters_list):
+
+    all_measures = [measure for parameters in parameters_list for measure in parameters.evaluation_measures]
+    for data_name, data in data_log.items():
+        if 'eye_tracking' in data_name.lower():
+            for measure in all_measures:
+                if measure in ['total_reading_time', 'first_fixation_duration', 'gaze_duration']:
+                    # check how many ob1 reading cycles the duration corresponds and multiply the number of cycles with 25
+                    data[measure] = data[measure].apply(lambda x: int(x / 25) * 25 if not np.isnan(x) else x)
+    return data_log
+
+def merge_human_and_simulation_data(data_log, parameters_list):
+
+    all_data = []
+    for data_name, data in data_log.items():
+        if data_name == parameters_list[0].eye_tracking_filepath + '_mean':
+            if 'provo' in data_name.lower():
+                data["predictor"] = ['PROVO' for i in range(len(data))]
+                data['id'] = [i for i in range(len(data))]
+                all_data.append(data)
+        elif 'language model' in data_name.lower() and '_mean' in data_name.lower():
+            data["predictor"] = ['language model' for i in range(len(data))]
+            data['id'] = [i for i in range(len(data))]
+            all_data.append(data)
+        elif 'cloze' in data_name.lower() and '_mean' in data_name.lower():
+            data['predictor'] = ['cloze' for i in range(len(data))]
+            data['id'] = [i for i in range(len(data))]
+            all_data.append(data)
+    data = pd.concat(all_data, axis=0).reset_index()
+
+    return data
+
+def plot_fixed_factor_vs_eye_movement(data, fixed_factors, measures, results_filepath):
+
+    results_dir = os.path.dirname(results_filepath)
+    for fixed_factor in fixed_factors:
+        for measure in measures:
+            plot = sb.relplot(data=data, x=measure, y=fixed_factor, hue='predictor', kind='line')
+            filepath = f"{results_dir}/plot_{fixed_factor}_{measure}.png"
+            plot.figure.savefig(filepath)
+
+def plot_word_measures(data, measures, results_filepath):
+
+    results_dir = os.path.dirname(results_filepath)
+    for measure in measures:
+        # plot item level mean
+        data['id'] = data['id'].apply(lambda x: str(x))
+        plot = sb.relplot(data=data, x='id', y=measure, hue='predictor', kind='scatter')
+        filepath = f"{results_dir}/plot_item_{measure}.png"
+        plot.figure.savefig(filepath)
+        # plot experiment level mean
+        # data_mean = data[['predictor',measure]].groupby('predictor').mean().reset_index()
+        plot = sb.barplot(data=data, x="predictor", y=measure)
+        filepath = f"{results_dir}/plot_{measure}.png"
+        plot.figure.savefig(filepath)
 
 # ---------------- MAIN ------------------
 def evaluate_output (parameters_list: list):
@@ -350,14 +416,15 @@ def evaluate_output (parameters_list: list):
                 # get word factors (e.g. frequency, length, predictability)
                 true_eye_movements = get_word_factors(parameters, true_eye_movements, parameters.fixed_factors)
                 # save out pre-processed data
-                filepath = parameters.eye_tracking_filepath.replace('-Eyetracking_Data', '_eye_movements')
+                filepath = parameters.eye_tracking_filepath.replace('-Eyetracking_Data', '_eye_tracking')
                 true_eye_movements.to_csv(filepath, sep='\t')
                 data_log[parameters.eye_tracking_filepath] = true_eye_movements
                 # get word level measures from eye_tracking, averaged over participants
                 mean_true_eye_movements = true_eye_movements.groupby(['text_id', 'word_id', 'word'])\
                     [parameters.evaluation_measures].mean().reset_index()
+                mean_true_eye_movements = get_word_factors(parameters, mean_true_eye_movements, parameters.fixed_factors)
                 # save out averaged data
-                filepath = parameters.eye_tracking_filepath.replace('-Eyetracking_Data', '_eye_movements_mean')
+                filepath = parameters.eye_tracking_filepath.replace('-Eyetracking_Data', '_eye_tracking_mean')
                 mean_true_eye_movements.to_csv(filepath, sep='\t', index_label='id')
                 data_log[parameters.eye_tracking_filepath + '_mean'] = mean_true_eye_movements
 
@@ -376,6 +443,7 @@ def evaluate_output (parameters_list: list):
             # then average over simulations to get the means
             mean_predicted_eye_movements = predicted_eye_movements.groupby(['text_id', 'word_id', 'word'])\
                 [parameters.evaluation_measures].mean().reset_index()
+            mean_predicted_eye_movements = get_word_factors(parameters, mean_predicted_eye_movements, parameters.fixed_factors)
             filepath = output_filepath.replace('simulation_', f'simulation_eye_movements_mean_')
             mean_predicted_eye_movements.to_csv(filepath, sep='\t', index_label='id')
             data_log[parameters.results_filepath + '_mean'] = mean_predicted_eye_movements
@@ -388,20 +456,22 @@ def evaluate_output (parameters_list: list):
             mean2error_df.to_csv(filepath, sep='\t', index=False)
 
             # stat tests
-            fit_mixed_effects(parameters, true_eye_movements, mean_predicted_eye_movements, output_filepath)
+            # fit_mixed_effects(parameters, true_eye_movements, mean_predicted_eye_movements, output_filepath)
 
     # scale durations from eye-tracking data to be more aligned to OB1 durations which happens in cycles of 25ms
-    # for measure in parameters.evaluation_measures:
-    #     if max(true_eye_movements[measure]) > 1.0:
-    #         # check how many ob1 reading cycles the duration corresponds and multiply the number of cycles with 25
-    #         true_eye_movements[measure] = true_eye_movements[measure].apply(lambda x: int(x / 25) * 25)
-    # # merge simulation and human measures
-    # predicted_eye_movements["predictor"] = ['OB1-reader' for i in range(len(predicted_eye_movements))]
-    # true_eye_movements["predictor"] = ['PROVO' for i in range(len(true_eye_movements))]
-    # data = pd.concat([predicted_eye_movements, true_eye_movements], axis=0).reset_index()
-    # # plot fixed factor vs eye movement measure
-    # plot_fixed_factor_vs_eye_movement(parameters, data)
+    data_log = scale_human_durations(data_log, parameters_list)
 
+    # merge simulation and human measures
+    all_data = merge_human_and_simulation_data(data_log, parameters_list)
+
+    # plot results
+    plot_fixed_factor_vs_eye_movement(all_data,
+                                      ['predictability'],
+                                      parameters_list[0].evaluation_measures,
+                                      parameters_list[0].results_filepath)
+    plot_word_measures(all_data,
+                       parameters_list[0].evaluation_measures,
+                       parameters_list[0].results_filepath)
 
 
 

@@ -32,12 +32,15 @@ def simulate_reading(global_parameters):
     print("\nLANGUAGE: " + pm.language)
 
     results_id = ''
+    dir = f'../results/{dt_string}/'
     if pm.results_identifier == 'prediction_flag':
         results_id = pm.prediction_flag
+    if not os.path.exists(dir):
+        os.makedirs(dir)
     if not pm.results_filepath:
-        pm.results_filepath = f"../results/simulation_{pm.stim_name}_{pm.task_to_run}_{results_id}_{dt_string}.csv"
+        pm.results_filepath = f"{dir}simulation_{pm.stim_name}_{pm.task_to_run}_{results_id}_{dt_string}.csv"
     if not pm.parameters_filepath:
-        pm.parameters_filepath = f"../results/parameters_{pm.stim_name}_{pm.task_to_run}_{results_id}_{dt_string}.pkl"
+        pm.parameters_filepath = f"{dir}parameters_{pm.stim_name}_{pm.task_to_run}_{results_id}_{dt_string}.pkl"
 
     start_time = time.perf_counter()
     # runs experiment
@@ -124,7 +127,7 @@ def main():
             "number_of_simulations": None,
             "eye_tracking_filepath": '../data/eye_tracking/Provo_Corpus-Eyetracking_Data.csv',
             "results_identifier": 'prediction_flag',
-            "experiment_parameters_filepath": '../data/experiment_parameters.json',
+            "experiment_parameters_filepath": '../data/experiment_parameters.json', #
             "optimize": False,
             "print_stim": False,
             "plotting": False
@@ -160,7 +163,7 @@ def main():
                         parameters = pickle.load(infile)
                         all_parameters.append(SimpleNamespace(**{**parameters}))
             except FileNotFoundError:
-                print("Please give at least one filepath to the set of parameters of the results you want to analyse, by filling in the terminal argument --parameters_filepath. The file should be in pickle format.")
+                print("Parameter filepath not found. Please give at least one filepath to the set of parameters of the results you want to analyse, by filling in the terminal argument --parameters_filepath. The file should be in pickle format.")
         evaluate_output(all_parameters)
 
 
