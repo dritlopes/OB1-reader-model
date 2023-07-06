@@ -172,7 +172,7 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                 # check whether we should pre-activate and in relation to which position (n+1 or n+2)
                 position = check_predictability(recognized_word_at_position, fixation, tokens, updated_positions)
                 if position:
-                    if pm.prediction_flag in ['language model','cloze']: # TODO implement grammar and uniform baselines
+                    if pm.prediction_flag in ['language_model','cloze']: # TODO implement grammar and uniform baselines
                         # avoid error because of missing word in provo cloze data
                         if not pm.prediction_flag == 'cloze' and 'provo' in pm.stim_name.lower() and position == 50 and text_id == 17:
                             lexicon_word_activity = activate_predicted_upcoming_word(position,

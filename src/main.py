@@ -120,14 +120,14 @@ def main():
             "stimuli_filepath": "../stimuli/Provo_Corpus.csv",
             "stimuli_separator": "\t",
             "language": 'english',
-            "run_exp": False,
+            "run_exp": True,
             "analyze_results": True,
-            "results_filepath": '../results/_06_07_2023_11-27-46/simulation_Provo_Corpus_continuous_reading_cloze__06_07_2023_11-27-46.csv',
-            "parameters_filepath": '../results/_06_07_2023_11-27-46/parameters_Provo_Corpus_continuous_reading_cloze__06_07_2023_11-27-46.pkl',
+            "results_filepath": '',
+            "parameters_filepath": '',
             "number_of_simulations": None,
             "eye_tracking_filepath": '../data/eye_tracking/Provo_Corpus-Eyetracking_Data.csv',
             "results_identifier": 'prediction_flag',
-            "experiment_parameters_filepath": '', # '../data/experiment_parameters.json'
+            "experiment_parameters_filepath": '../data/experiment_parameters.json', # '../data/experiment_parameters.json'
             "optimize": False,
             "print_stim": False,
             "plotting": False

@@ -433,8 +433,8 @@ def merge_human_and_simulation_data(data_log, parameters_list):
                 data["predictor"] = ['PROVO' for i in range(len(data))]
                 data['id'] = [i for i in range(len(data))]
                 all_data.append(data)
-        elif 'language model' in data_name.lower() and '_mean' in data_name.lower():
-            data["predictor"] = ['language model' for i in range(len(data))]
+        elif 'language_model' in data_name.lower() and '_mean' in data_name.lower():
+            data["predictor"] = ['language_model' for i in range(len(data))]
             data['id'] = [i for i in range(len(data))]
             all_data.append(data)
         elif 'cloze' in data_name.lower() and '_mean' in data_name.lower():
@@ -501,8 +501,9 @@ def evaluate_output (parameters_list: list):
                 eye_tracking = pd.read_csv(parameters.eye_tracking_filepath, encoding="ISO-8859-1")
                 # pre-process eye-tracking data to the format needed
                 true_eye_movements = pre_process_eye_tracking(eye_tracking, parameters.eye_tracking_filepath, parameters.stim)
-                # only including first two texts for now
-                # true_eye_movements = true_eye_movements[true_eye_movements['text_id'] < 2]
+                # only including texts that were included in simulations
+                text_ids = [int(text_id) for text_id in simulation_output['text_id'].unique().tolist()]
+                true_eye_movements = true_eye_movements[true_eye_movements['text_id'].isin(text_ids)]
                 # get word factors (e.g. frequency, length, predictability)
                 true_eye_movements = get_word_factors(parameters, true_eye_movements, parameters.fixed_factors)
                 # save out pre-processed data
@@ -537,7 +538,7 @@ def evaluate_output (parameters_list: list):
             filepath = output_filepath.replace('simulation_', f'simulation_eye_movements_mean_')
             mean_predicted_eye_movements.to_csv(filepath, sep='\t', index_label='id')
             data_log[parameters.results_filepath + '_mean'] = mean_predicted_eye_movements
-            exit()
+
             # mean square error between each measure in simulation and eye-tracking
             mean2error_df = compute_error(parameters.evaluation_measures,
                                           mean_true_eye_movements,

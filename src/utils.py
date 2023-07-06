@@ -160,7 +160,7 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
     word_pred_values_dict = dict()
     unknown_word_pred_values_dict = dict()
 
-    if pm.prediction_flag == 'gpt2':
+    if pm.prediction_flag == 'language_model':
 
         # initialize language model and its tokenizer
         language_model = GPT2LMHeadModel.from_pretrained('gpt2')
@@ -208,9 +208,6 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
         #       str(sum([len(words.keys()) for text, info in unknown_word_pred_values_dict.items() if info for idx, words in info.items()])))
         # logger.info('Known tokens predicted by gpt2: ' +
         #       str(sum([len(words.keys()) for text, info in word_pred_values_dict.items() if info for idx, words in info.items()])))
-
-    elif pm.prediction_flag == 'llama':
-
 
     elif pm.prediction_flag == 'cloze':
 
