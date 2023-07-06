@@ -12,6 +12,8 @@ from reading_helper_functions import build_word_inhibition_matrix
 import logging
 from collections import defaultdict
 import random
+import warnings
+from string import punctuation
 
 logger = logging.getLogger(__name__)
 
@@ -29,19 +31,31 @@ def get_stimulus_text_from_file(filepath, sep='\t'):
 
     else:
         data = pd.read_csv(filepath, sep=sep, encoding="ISO-8859-1")
+
         if stim_name == 'Provo_Corpus-Predictability_Norms':
             ids, texts, words, word_ids = [], [], [], []
             for i, text_info in data.groupby('Text_ID'):
-                ids.append(int(i))
-                texts.append(text_info['Text'].tolist()[0])
+                ids.append(int(i)-1)
+                text = text_info['Text'].tolist()[0]
+                # fix error in text 36 in raw data
+                if int(i) == 36:
+                    text = text.replace(' Ñ', '')
+                texts.append(text)
+                text_words = [pre_process_string(token) for token in text.split()]
+                text_word_ids = [i for i in range(0,len(text_words))]
+                words.append(text_words)
+                word_ids.append(text_word_ids)
             data = pd.DataFrame(data={'id': ids,
-                                     'all': texts})
+                                      'all': texts,
+                                      'words': words,
+                                      'word_ids': word_ids})
     return data, stim_name
 
 def pre_process_string(string, remove_punctuation=True, all_lowercase=True, strip_spaces=True):
 
     if remove_punctuation:
         string = re.sub(r'[^\w\s]', '', string)
+        # string = string.strip(punctuation)
     if all_lowercase:
         string = string.lower()
     if strip_spaces:
@@ -66,25 +80,25 @@ def create_freq_file(language, task_words, output_file_frequency_map, freq_thres
     else:
 
         if language == 'english':
-            filepath = '../data/SUBTLEX_UK.txt'
+            filepath = '../data/frequency/SUBTLEX_UK.txt'
             columns_to_use = [0, 1, 5]
             freq_type = 'LogFreq(Zipf)'
             word_col = 'Spelling'
 
         elif language == 'french':
-            filepath = '../data/French_Lexicon_Project.txt'
+            filepath = '../data/frequency/French_Lexicon_Project.txt'
             columns_to_use = [0, 7, 8, 9, 10]
             freq_type = 'cfreqmovies'
             word_col = 'Word'
 
         elif language == 'german':
-            filepath = '../data/SUBTLEX_DE.txt'
+            filepath = '../data/frequency/SUBTLEX_DE.txt'
             columns_to_use = [0, 1, 3, 4, 5, 9]
             freq_type = 'lgSUBTLEX'
             word_col = 'Word'
 
         elif language == 'dutch':
-            filepath = '../data/SUBTLEX-NL.txt'
+            filepath = '../data/frequency/SUBTLEX-NL.txt'
             columns_to_use = [0, 7]
             freq_type = 'Zipf'
             word_col = 'Word'
@@ -146,14 +160,14 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
     word_pred_values_dict = dict()
     unknown_word_pred_values_dict = dict()
 
-    if pm.prediction_flag == 'language model':
+    if pm.prediction_flag == 'gpt2':
 
         # initialize language model and its tokenizer
         language_model = GPT2LMHeadModel.from_pretrained('gpt2')
         lm_tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
         # in case you want to reproduce predictions
         if not pm.prediction_seed:
-            seed = random.randint(0)
+            seed = random.randint(0, 1000)
             pm.prediction_seed = seed
         set_seed(pm.prediction_seed)
         # list of words, set of words, sentences or passages. Each one is equivalent to one trial in an experiment
@@ -161,15 +175,17 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
             sequence = [token for token in sequence.split(' ') if token != '']
             pred_dict = dict()
             unknown_tokens = dict()
-            pred_info = semantic_processing(sequence, lm_tokenizer, language_model, pm.topk)
+            pred_info = semantic_processing(sequence, lm_tokenizer, language_model, pm.topk, pm.pred_threshold)
             for pos in range(1, len(sequence)):
-                pred_dict[str(pos)] = dict()
-                unknown_tokens[str(pos)] = dict()
+                pred_dict[str(pos)] = {'target': sequence[pos],
+                                        'predictions': dict()}
+                unknown_tokens[str(pos)] = {'target': sequence[pos],
+                                            'predictions': dict()}
                 for token, pred in zip(pred_info[pos][0], pred_info[pos][1]):
                     token_processed = pre_process_string(token)
-                    pred_dict[str(pos)][token_processed] = pred
+                    pred_dict[str(pos)]['predictions'][token_processed] = pred
                     if token_processed not in lexicon:
-                        unknown_tokens[str(pos)][token] = pred
+                        unknown_tokens[str(pos)]['predictions'][token] = pred
                     # else: # in case token is a sub-word, try to concatenate token with next predicted token
                     #     concat_string = ' '.join(sequence[:i]) + ' ' + token
                     #     input = lm_tokenizer(concat_string, return_tensors='pt')
@@ -193,6 +209,9 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
         # logger.info('Known tokens predicted by gpt2: ' +
         #       str(sum([len(words.keys()) for text, info in word_pred_values_dict.items() if info for idx, words in info.items()])))
 
+    elif pm.prediction_flag == 'llama':
+
+
     elif pm.prediction_flag == 'cloze':
 
         if 'psc' in pm.stim_name.lower():
@@ -202,31 +221,60 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
             word_pred_values_dict = np.array(my_data['pred'].tolist())
 
         elif 'provo' in pm.stim_name.lower():
-            filepath = "../data/predictability/Provo_Corpus-Predictability_Norms.csv"
-            my_data = pd.read_csv(filepath, delimiter=",",
-                                  encoding=chardet.detect(open(filepath, "rb").read())['encoding'])
 
-            for text_id, info in my_data.groupby(['Text_ID']):
-                text_id = str(int(text_id) - 1)
+            # encoding = chardet.detect(open(filepath, "rb").read())['encoding']
+            filepath = "../data/predictability/Provo_Corpus-Predictability_Norms.csv"
+            my_data = pd.read_csv(filepath, encoding="ISO-8859-1")
+            # align indexing with ob1 stimuli (which starts at 0, not at 1)
+            my_data['Text_ID'] = my_data['Text_ID'].apply(lambda x : str(int(x)-1))
+            my_data['Word_Number'] = my_data['Word_Number'].apply(lambda x : str(int(x)-1))
+            # fix misplaced row in raw data
+            my_data.loc[(my_data['Word_Number'] == '2') & (my_data['Word'] == 'probably') & (my_data['Text_ID'] == '17'), 'Text_ID'] = '54'
+
+            for text_id, info in my_data.groupby('Text_ID'):
+
                 word_pred_values_dict[text_id] = dict()
                 unknown_word_pred_values_dict[text_id] = dict()
-                for text_position, responses in info.groupby(['Word_Number']):
+
+                for text_position, responses in info.groupby('Word_Number'):
+
+                    # fix error in provo cloze data indexing
+                    for row in [(2,44),(12,18)]:
+                        if int(text_id) == row[0] and int(text_position) in range(row[1]+1, len(info['Word_Number'].unique())+2):
+                            text_position = str(int(text_position) - 1)
+
+                    word_pred_values_dict[text_id][text_position] = {'target': responses['Word'].tolist()[0],
+                                                                     'predictions': dict()}
+                    unknown_word_pred_values_dict[text_id][text_position] = {'target': responses['Word'].tolist()[0],
+                                                                             'predictions': dict()}
                     responses = responses.to_dict('records')
-                    word_pred_values_dict[text_id][str(int(text_position) - 1)] = dict()
-                    unknown_word_pred_values_dict[text_id][str(int(text_position) - 1)] = dict()
                     for response in responses:
                         if response['Response'] and type(response['Response']) == str:
                             word = pre_process_string(response['Response'])
-                            word_pred_values_dict[text_id][str(int(text_position) - 1)][word] = float(response['Response_Proportion'])
+                            word_pred_values_dict[text_id][text_position]['predictions'][word] = float(response['Response_Proportion'])
                             if word not in lexicon:
-                                unknown_word_pred_values_dict[text_id][str(int(text_position) - 1)][word] = float(response['Response_Proportion'])
+                                unknown_word_pred_values_dict[text_id][text_position]['predictions'][word] = float(response['Response_Proportion'])
 
-            logger.info('Unknown tokens predicted in cloze task: ' +
-                        str(sum([len(words.keys()) for text, info in unknown_word_pred_values_dict.items() if info for
-                             idx, words in info.items()])))
-            logger.info('Known tokens predicted in cloze task: ' +
-                        str(sum([len(words.keys()) for text, info in word_pred_values_dict.items() if info for
-                             idx, words in info.items()])))
+            # check alignment between cloze target words and model stimuli words
+            for i, text in pm.stim.iterrows():
+                cloze_text = word_pred_values_dict[str(i)]
+                text_words = text['words'].replace('[','').replace(']','').replace(',','').replace("'", "").split()
+                text_word_ids = text['word_ids'].replace('[','').replace(']','').replace(',','').replace("'", "").split()
+                for word, word_id in zip(text_words[1:], text_word_ids[1:]):
+                    if (i, word_id) != (17, '50'): # word 50 in text 17 (last word of text 17) is missing from cloze data
+                        try:
+                            cloze_word = cloze_text[word_id]['target']
+                            if word != cloze_word:
+                                warnings.warn(f'Target word in cloze task "{cloze_word}" not the same as target word in model stimuli "{word}" in text {i}, position {word_id}')
+                        except KeyError:
+                            print(f'Position {word_id}, "{word}", in text {i} not found in cloze task')
+
+            # logger.info('Unknown tokens predicted in cloze task: ' +
+            #             str(sum([len(words.keys()) for text, info in unknown_word_pred_values_dict.items() if info for
+            #                  idx, words in info.items()])))
+            # logger.info('Known tokens predicted in cloze task: ' +
+            #             str(sum([len(words.keys()) for text, info in word_pred_values_dict.items() if info for
+            #                  idx, words in info.items()])))
 
     elif pm.prediction_flag == 'grammar':
         pass

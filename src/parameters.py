@@ -44,7 +44,7 @@ def return_attributes(task_to_run, language, stimuli_filepath, file_separator):
 
     stim_data, stim_name = get_stimulus_text_from_file(stimuli_filepath, file_separator)
 
-    if task_to_run == 'continuous reading':
+    if task_to_run == 'continuous_reading':
         stim_data['all'] = [text.encode("utf-8").decode("utf-8") for text in stim_data['all']]
         return TaskAttributes(
             task_to_run,
@@ -192,8 +192,8 @@ def return_task_params(task_attributes):
     # pre-activation based on predictability
     prediction_flag = 'cloze' # cloze # uniform # grammar # language model
     prediction_seed = None # in case of a language model providing predictions
-    topk = 20 # in case of language model providing predictions, save only the k highest predictions
-    pred_threshold = 0.001 # in case of language model providing predictions, save only the predictions above certain threshold
+    topk = 'all' # in case of language model providing predictions, save only the k highest predictions
+    pred_threshold = 0.01 # in case of language model providing predictions, save only the predictions above certain threshold
     pred_p = 0.05 # scaling parameters in pre-activation formula
 
     # attention
@@ -250,9 +250,13 @@ def return_task_params(task_attributes):
     # evaluation
     evaluation_measures = ['skip',
                             'single_fix',
+                            'single_fix_duration',
                             'first_fix_duration',
                             'gaze_duration',
-                            'total_reading_time']
+                            'total_reading_time',
+                            'regression_in',
+                            'regression_out',
+                            'regression_out_first_pass']
     fixed_factors = ['predictability','length','frequency']
 
     task_params = dict(locals())

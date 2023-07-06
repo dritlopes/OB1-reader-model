@@ -85,7 +85,7 @@ def main():
         parser = argparse.ArgumentParser()
         parser.add_argument('stimuli_filepath')
         parser.add_argument('--stimuli_separator', default='\t')
-        parser.add_argument('--task_to_run', default='continuous reading')
+        parser.add_argument('--task_to_run', default='continuous_reading')
         parser.add_argument('--language', default='english')
         parser.add_argument('--run_exp', default='True',help='Should the experiment simulation run?', choices=['True', 'False']),
         parser.add_argument('--number_of_simulations', default=1, help='How many times should I run a simulation?')
@@ -116,18 +116,18 @@ def main():
         }
     else:
         global_parameters = {
-            "task_to_run" : 'continuous reading',
+            "task_to_run" : 'continuous_reading',
             "stimuli_filepath": "../stimuli/Provo_Corpus.csv",
             "stimuli_separator": "\t",
             "language": 'english',
-            "run_exp": True,
+            "run_exp": False,
             "analyze_results": True,
-            "results_filepath": '',
-            "parameters_filepath": '',
+            "results_filepath": '../results/_06_07_2023_11-27-46/simulation_Provo_Corpus_continuous_reading_cloze__06_07_2023_11-27-46.csv',
+            "parameters_filepath": '../results/_06_07_2023_11-27-46/parameters_Provo_Corpus_continuous_reading_cloze__06_07_2023_11-27-46.pkl',
             "number_of_simulations": None,
             "eye_tracking_filepath": '../data/eye_tracking/Provo_Corpus-Eyetracking_Data.csv',
             "results_identifier": 'prediction_flag',
-            "experiment_parameters_filepath": '../data/experiment_parameters.json', #
+            "experiment_parameters_filepath": '', # '../data/experiment_parameters.json'
             "optimize": False,
             "print_stim": False,
             "plotting": False

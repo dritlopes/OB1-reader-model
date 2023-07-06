@@ -8,8 +8,91 @@ import seaborn as sb
 from utils import get_pred_dict, get_word_freq, pre_process_string
 import math
 import os
+import warnings
 
 # ---------------- Simulation eye-movement measures ------------------
+def pre_process_eye_tracking(eye_tracking: pd.DataFrame, eye_tracking_filepath: str, stimuli):
+
+    if 'provo' in eye_tracking_filepath.lower():
+
+        # make sure all columns of interest are named as code expects
+        eye_tracking = eye_tracking.rename(columns={'Word_Unique_ID': 'id',
+                                                     'Text_ID': 'text_id',
+                                                     'Word_Number': 'word_id',
+                                                     'Participant_ID': 'participant_id',
+                                                     'Word': 'word',
+                                                     'IA_SKIP': 'skip',
+                                                     'IA_FIRST_FIXATION_DURATION': 'first_fix_duration',
+                                                     'IA_FIRST_RUN_DWELL_TIME': 'gaze_duration',
+                                                     'IA_DWELL_TIME': 'total_reading_time',
+                                                     'IA_REGRESSION_IN': 'regression_in',
+                                                     'IA_REGRESSION_OUT': 'regression_out'})
+
+        # remove rows where Word_Number is nan value, to be able to convert floats to ints
+        eye_tracking = eye_tracking.dropna(subset=['word_id'])
+
+        # - 1 to be compatible with index used in simulation (starting from 0, instead of 1)
+        eye_tracking['word_id'] = eye_tracking['word_id'].astype(int).apply(lambda x: x - 1)
+        eye_tracking['text_id'] = eye_tracking['text_id'].apply(lambda x: x - 1)
+
+        # fix some errors in provo eye_tracking data
+        eye_tracking.loc[(eye_tracking['word_id'] == 2) & (eye_tracking['word'] == 'evolution') & (eye_tracking['text_id'] == 17), 'word_id'] = 50
+        for row in [{'text': 2, 'start': 45, 'end': 59},
+                    {'text': 12, 'start': 19, 'end': 54}]:
+            for i in range(row['start'], row['end']+1):
+                eye_tracking.loc[(eye_tracking['word_id'] == i) & (eye_tracking['text_id'] == row['text']), 'word_id'] = i - 1
+
+        # check alignment between model stimuli and eye-tracking words
+        for text, fixations in eye_tracking.groupby('text_id'):
+            stimuli_text = stimuli.iloc[int(text)]
+            text_words = stimuli_text['words'].replace('[', '').replace(']', '').replace(',', '').replace("'", "").split()
+            text_word_ids = str(stimuli_text['word_ids']).replace('[', '').replace(']', '').replace(',', '').replace("'", "").split()
+            for participant, hist in fixations.groupby('participant_id'):
+                eye_tracking_word_dict = dict()
+                for et_word, et_word_id in zip(hist['word'].tolist(), hist['word_id'].tolist()):
+                    eye_tracking_word_dict[et_word_id] = et_word
+                for word, word_id in zip(text_words[1:], text_word_ids[1:]):
+                    # a few exceptions we know are completely missing in eye-tracking
+                    if (int(text), word, int(word_id)) not in [(54, 'a', 9), (54, 'profession', 60), (54, 'writing', 61)]:
+                        if int(word_id) in eye_tracking_word_dict.keys():
+                            eye_tracking_word = eye_tracking_word_dict[int(word_id)]
+                            if word != pre_process_string(eye_tracking_word) and word not in ['90','doesnÃµt','womenÃµs','bondsÃµ']:
+                                warnings.warn(
+                                    f'Word in eye tracking "{eye_tracking_word}" from participant {participant} not the same as word in model stimuli "{word}" in text {text}, position {word_id}')
+                        else:
+                            warnings.warn(f'Position {word_id}, "{word}", in text {text} not found in eye tracking data from participant {participant}')
+
+        # add single fix
+        single_fix, single_fix_dur = [],[]
+        # determine which words were fixated only once by each participant
+        for word, hist in eye_tracking.groupby(['participant_id', 'text_id', 'word_id']):
+            # single fix is defined as: if gaze duration equals first fixation duration,
+            # then word was fixated only once in first pass
+            assert len(hist) == 1, print(word, hist)
+            if hist['gaze_duration'].tolist()[0] == hist['first_fix_duration'].tolist()[0]:
+                single_fix.append(1)
+                single_fix_dur.append(hist['first_fix_duration'].tolist()[0])
+            else:
+                single_fix.append(0)
+                single_fix_dur.append(None)
+        # add binary single fix column
+        eye_tracking['single_fix'] = single_fix
+        eye_tracking['single_fix_duration'] = single_fix_dur
+
+        # add item level id (word id per participant)
+        item_id = []
+        for participant, hist in eye_tracking.groupby('participant_id'):
+            item_counter = 0
+            for info, rows in hist.groupby(['text_id', 'word_id']):
+                item_id.append(item_counter)
+                item_counter += 1
+        eye_tracking['id'] = item_id
+
+    # make sure words look like words in simulation (lowercased, without punctuation, etc)
+    eye_tracking['word'] = [pre_process_string(word) for word in eye_tracking['word']]
+
+    return eye_tracking
+
 def get_first_pass_fixations(simulation_df:pd.DataFrame):
 
     """
@@ -86,12 +169,54 @@ def get_single_fix_words(first_pass):
         single_fix['word_id'].append(word_info[2])
         if len(hist) == 1:
             single_fix['single_fix'].append(1)
+            single_fix['single_fix_duration'].append(hist['fixation duration'].tolist()[0])
         else:
             single_fix['single_fix'].append(0)
+            single_fix['single_fix_duration'].append(None)
 
     single_fix = pd.DataFrame.from_dict(single_fix)
 
     return single_fix
+
+def get_regressions_in(simulation_output):
+
+    regressions = defaultdict(list)
+
+    for word_info, hist in simulation_output.groupby(['simulation_id', 'text_id', 'word_id']):
+        regressions['simulation_id'].append(word_info[0])
+        regressions['text_id'].append(word_info[1])
+        regressions['word_id'].append(word_info[2])
+        if 'regression' in hist['saccade type'].tolist():
+            regressions['regression_in'].append(1)
+        else:
+            regressions['regression_in'].append(0)
+
+    regressions_in = pd.DataFrame.from_dict(regressions)
+
+    return regressions_in
+
+def get_regressions_out(simulation_output):
+    # TODO get it to work
+    regressions = defaultdict(list)
+    regressions_out = defaultdict(dict)
+    counter = 0
+
+    for word_info, hist in simulation_output.groupby(['simulation_id', 'text_id', 'word_id']):
+        regressions['simulation_id'].append(word_info[0])
+        regressions['text_id'].append(word_info[1])
+        regressions['word_id'].append(word_info[2])
+        if counter in regressions_out.keys():
+            regressions_out[counter] = 0
+        else:
+            if 'regression' in hist['saccade type'].tolist():
+                regressions_out[counter+1] = 1
+            else:
+                regressions_out[counter] = 0
+        counter += 1
+
+    regressions_out = pd.DataFrame.from_dict(regressions)
+
+    return regressions_out
 
 def aggregate_fixations_per_word(simulation_output, first_pass, stimuli, measures):
 
@@ -113,7 +238,10 @@ def aggregate_fixations_per_word(simulation_output, first_pass, stimuli, measure
             results_per_word['skip'] = get_skipped_words(first_pass, get_text_words(stimuli))
 
         elif measure == 'single_fix':
-            results_per_word['single_fix'] = get_single_fix_words(first_pass)
+            results_per_word['single_fix'] = get_single_fix_words(first_pass)[['simulation_id', 'text_id', 'word_id', 'single_fix']]
+
+        elif measure == 'single_fix_duration':
+            results_per_word['single_fix_duration'] = get_single_fix_words(first_pass)[['simulation_id', 'text_id', 'word_id', 'single_fix_duration']]
 
         elif measure == 'first_fix_duration':
             results_per_word['first_fix_duration'] = first_pass.loc[first_pass.groupby(
@@ -127,6 +255,21 @@ def aggregate_fixations_per_word(simulation_output, first_pass, stimuli, measure
         elif measure == 'total_reading_time':
             results_per_word['total_reading_time'] = simulation_output.groupby(['simulation_id', 'text_id', 'word_id'])[
                 ['fixation duration']].sum().reset_index().rename(columns={'fixation duration': 'total_reading_time'})
+
+        elif measure == 'regression_in':
+            results_per_word['regression_in'] = get_regressions_in(simulation_output)
+
+        elif measure == 'regression_out':
+            pass
+            results_per_word['regression_out'] = get_regressions_out(simulation_output)
+
+        elif measure == 'regression_out_first_pass':
+            pass
+            results_per_word['regression_out_first_pass'] = get_regressions_out(first_pass)
+
+        elif measure == 'refixation':
+            pass
+            # refixation = first_pass.groupby(['word_id']).filter(lambda x:len(x)>1)
 
     # merge all
     result_columns = defaultdict(list)
@@ -146,59 +289,6 @@ def aggregate_fixations_per_word(simulation_output, first_pass, stimuli, measure
     results = pd.DataFrame(result_columns)
 
     return results
-
-def pre_process_eye_tracking(eye_tracking: pd.DataFrame, eye_tracking_filepath: str):
-
-    if 'provo' in eye_tracking_filepath.lower():
-        # make sure all columns of interest are named as code expects
-
-        eye_tracking = eye_tracking.rename(columns={'Word_Unique_ID': 'id',
-                                                     'Text_ID': 'text_id',
-                                                     'Word_Number': 'word_id',
-                                                     'Participant_ID': 'participant_id',
-                                                     'Word': 'word',
-                                                     'IA_SKIP': 'skip',
-                                                     'IA_FIRST_FIXATION_DURATION': 'first_fix_duration',
-                                                     'IA_FIRST_RUN_DWELL_TIME': 'gaze_duration',
-                                                     'IA_DWELL_TIME': 'total_reading_time'})
-
-        # remove rows where Word_Number is nan value, to be able to convert floats to ints
-        eye_tracking = eye_tracking.dropna(subset=['word_id'])
-
-        # - 1 to be compatible with index used in simulation (starting from 0, instead of 1)
-        eye_tracking['word_id'] = eye_tracking['word_id'].astype(int).apply(lambda x: x - 1)
-        eye_tracking['text_id'] = eye_tracking['text_id'].apply(lambda x: x - 1)
-
-        # fix some errors in provo eye_tracking data
-        eye_tracking.loc[(eye_tracking['word_id'] == 2) & (eye_tracking['word'] == 'evolution') & (eye_tracking['text_id'] == 17), 'word_id'] = 51
-
-        # add single fix
-        single_fix = []
-        # determine which words were fixated only once by each participant
-        for word, hist in eye_tracking.groupby(['participant_id', 'text_id', 'word_id']):
-            # single fix is defined as: if gaze duration equals first fixation duration,
-            # then word was fixated only once in first pass
-            assert len(hist) == 1, print(word, hist)
-            if hist['gaze_duration'].tolist()[0] == hist['first_fix_duration'].tolist()[0]:
-                single_fix.append(1)
-            else:
-                single_fix.append(0)
-        # add binary single fix column
-        eye_tracking['single_fix'] = single_fix
-
-        # add item level id (word id per participant)
-        item_id = []
-        for participant, hist in eye_tracking.groupby('participant_id'):
-            item_counter = 0
-            for info, rows in hist.groupby(['text_id', 'word_id']):
-                item_id.append(item_counter)
-                item_counter += 1
-        eye_tracking['id'] = item_id
-
-    # make sure words look like words in simulation (lowercased, without punctuation, etc)
-    eye_tracking['word'] = [pre_process_string(word) for word in eye_tracking['word']]
-
-    return eye_tracking
 
 def get_word_factors(pm, eye_movements_df, factors):
 
@@ -390,7 +480,7 @@ def evaluate_output (parameters_list: list):
     # makes sure more than one experiment can be evaluated at once
     for parameters in parameters_list:
 
-        if parameters.task_to_run == 'continuous reading':
+        if parameters.task_to_run == 'continuous_reading':
 
             output_filepath = parameters.results_filepath
             simulation_output = pd.read_csv(output_filepath, sep='\t')
@@ -410,9 +500,9 @@ def evaluate_output (parameters_list: list):
                 # encoding = chardet.detect(open(parameters.eye_tracking_filepath, "rb").read())['encoding']
                 eye_tracking = pd.read_csv(parameters.eye_tracking_filepath, encoding="ISO-8859-1")
                 # pre-process eye-tracking data to the format needed
-                true_eye_movements = pre_process_eye_tracking(eye_tracking, parameters.eye_tracking_filepath)
+                true_eye_movements = pre_process_eye_tracking(eye_tracking, parameters.eye_tracking_filepath, parameters.stim)
                 # only including first two texts for now
-                true_eye_movements = true_eye_movements[true_eye_movements['text_id'] < 2]
+                # true_eye_movements = true_eye_movements[true_eye_movements['text_id'] < 2]
                 # get word factors (e.g. frequency, length, predictability)
                 true_eye_movements = get_word_factors(parameters, true_eye_movements, parameters.fixed_factors)
                 # save out pre-processed data
@@ -447,7 +537,7 @@ def evaluate_output (parameters_list: list):
             filepath = output_filepath.replace('simulation_', f'simulation_eye_movements_mean_')
             mean_predicted_eye_movements.to_csv(filepath, sep='\t', index_label='id')
             data_log[parameters.results_filepath + '_mean'] = mean_predicted_eye_movements
-
+            exit()
             # mean square error between each measure in simulation and eye-tracking
             mean2error_df = compute_error(parameters.evaluation_measures,
                                           mean_true_eye_movements,
@@ -456,22 +546,23 @@ def evaluate_output (parameters_list: list):
             mean2error_df.to_csv(filepath, sep='\t', index=False)
 
             # stat tests
-            # fit_mixed_effects(parameters, true_eye_movements, mean_predicted_eye_movements, output_filepath)
+            fit_mixed_effects(parameters, true_eye_movements, mean_predicted_eye_movements, output_filepath)
 
-    # scale durations from eye-tracking data to be more aligned to OB1 durations which happens in cycles of 25ms
-    data_log = scale_human_durations(data_log, parameters_list)
+    if data_log:
+        # scale durations from eye-tracking data to be more aligned to OB1 durations which happens in cycles of 25ms
+        data_log = scale_human_durations(data_log, parameters_list)
 
-    # merge simulation and human measures
-    all_data = merge_human_and_simulation_data(data_log, parameters_list)
+        # merge simulation and human measures
+        all_data = merge_human_and_simulation_data(data_log, parameters_list)
 
-    # plot results
-    plot_fixed_factor_vs_eye_movement(all_data,
-                                      ['predictability'],
-                                      parameters_list[0].evaluation_measures,
-                                      parameters_list[0].results_filepath)
-    plot_word_measures(all_data,
-                       parameters_list[0].evaluation_measures,
-                       parameters_list[0].results_filepath)
+        # plot results
+        plot_fixed_factor_vs_eye_movement(all_data,
+                                          ['predictability'],
+                                          parameters_list[0].evaluation_measures,
+                                          parameters_list[0].results_filepath)
+        plot_word_measures(all_data,
+                           parameters_list[0].evaluation_measures,
+                           parameters_list[0].results_filepath)
 
 
 

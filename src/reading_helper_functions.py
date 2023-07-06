@@ -317,7 +317,8 @@ def calc_saccade_error(saccade_distance, optimal_distance, saccErr_scaler, saccE
 
 def check_previous_refixations_at_position(all_data, fixation, fixation_counter, max_n_refix):
 
-    # AL: mechanism to prevent infinite refixations in words that do get sufficient activation to get recognized
+    # AL: mechanism to prevent infinite refixations in words that do not get sufficient activation to get recognized
+    # or are long and have higher atetntional input than surrounding words
     refixate = False
     # AL: if first fixation on text, no previous fixation to check, so refixation is allowed
     if fixation_counter == 0: refixate = True

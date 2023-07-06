@@ -13,7 +13,7 @@ from reading_helper_functions import get_threshold, string_to_open_ngrams, \
 
 logger = logging.getLogger(__name__)
 
-def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index,lexicon_thresholds,lexicon,pred_dict,freq_values):
+def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index,lexicon_thresholds,lexicon,pred_dict,freq_values):
 
     all_data = {}
     # set to true when end of text is reached
@@ -108,7 +108,7 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
 
         # ---------------------- Start processing of stimulus ---------------------
         #print('Entering cycle loops to define word activity...')
-        # print("fix on: " + tokens[fixation] + '  attent. width: ' + str(attend_width) + ' fixwrd thresh.' + str(round(lexicon_thresholds[tokens_to_lexicon_indices[fixation]],3)))
+        print("fix on: " + tokens[fixation] + '  attent. width: ' + str(attend_width) + ' fixwrd thresh.' + str(round(lexicon_thresholds[tokens_to_lexicon_indices[fixation]],3)))
         shift = False
         n_cycles = 0
         n_cycles_since_attent_shift = 0
@@ -121,7 +121,7 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
         n_ngrams, total_ngram_activity, all_ngrams, word_input = compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_position, attend_width, pm)
         fixation_data['n ngrams'] = n_ngrams
         fixation_data['total ngram activity'] = total_ngram_activity
-        # print("  input to fixwrd at first cycle: " + str(round(word_input[tokens_to_lexicon_indices[fixation]], 3)))
+        print("  input to fixwrd at first cycle: " + str(round(word_input[tokens_to_lexicon_indices[fixation]], 3)))
 
         # Counter n_cycles_since_attent_shift is 0 until attention shift (saccade program initiation),
         # then starts counting to 5 (because a saccade program takes 5 cycles, or 125ms.)
@@ -141,7 +141,7 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
             total_activity = sum(lexicon_word_activity)
             fixation_data['lexicon activity per cycle'].append(total_activity)
 
-            # print('CYCLE ', str(n_cycles), '   activ @fix ', str(round(foveal_word_activity,3)), ' inhib  #@fix', str(round(lexicon_word_inhibition[foveal_word_index],3)))
+            print('CYCLE ', str(n_cycles), '   activ @fix ', str(round(foveal_word_activity,3)), ' inhib  #@fix', str(round(lexicon_word_inhibition[foveal_word_index],3)))
 
             # ---------------------- Match words in lexicon to slots in input ---------------------
             # word recognition, by checking matching active wrds to slots
@@ -173,10 +173,13 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
                 position = check_predictability(recognized_word_at_position, fixation, tokens, updated_positions)
                 if position:
                     if pm.prediction_flag in ['language model','cloze']: # TODO implement grammar and uniform baselines
-                        lexicon_word_activity = activate_predicted_upcoming_word(position,
-                                                                                  lexicon_word_activity,
-                                                                                  lexicon,
-                                                                                  pred_dict)
+                        # avoid error because of missing word in provo cloze data
+                        if not pm.prediction_flag == 'cloze' and 'provo' in pm.stim_name.lower() and position == 50 and text_id == 17:
+                            lexicon_word_activity = activate_predicted_upcoming_word(position,
+                                                                                     tokens[position],
+                                                                                      lexicon_word_activity,
+                                                                                      lexicon,
+                                                                                      pred_dict)
                         updated_positions.append(position)
 
             # ---------------------- Make saccade decisions ---------------------
@@ -225,7 +228,7 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
                                                                                                     attention_position,
                                                                                                     attend_width, pm)
                         attention_position = np.round(attention_position)
-                    # print("  input after attentshift: " + str(round(word_input[tokens_to_lexicon_indices[fixation]], 3)))
+                    print("  input after attentshift: " + str(round(word_input[tokens_to_lexicon_indices[fixation]], 3)))
 
             if shift:
                 n_cycles_since_attent_shift += 1 # ...count cycles since attention shift
@@ -244,6 +247,7 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
 
         # add fixation dict to list of dicts
         all_data[fixation_counter] = fixation_data
+        print(fixation_data)
 
         print("Fixation duration: ", fixation_data['fixation duration'], " ms.")
         if recognized_word_at_position[fixation]:
@@ -483,16 +487,17 @@ def simulate_experiment(pm):
 
     for sim_number in range(pm.number_of_simulations):
 
-        if pm.task_to_run == 'continuous reading':
+        if pm.task_to_run == 'continuous_reading':
 
             texts_simulations = defaultdict()
             word_predictions = get_pred_dict(pm, lexicon)
 
-            for i, text in enumerate(pm.stim_all[:2]):
+            for i, text in enumerate(pm.stim_all):
 
                 text_tokens = [pre_process_string(token) for token in text.split()]
                 text_data = reading(pm,
                                     text_tokens,
+                                    i,
                                     word_inhibition_matrix,
                                     lexicon_word_ngrams,
                                     lexicon_word_index,

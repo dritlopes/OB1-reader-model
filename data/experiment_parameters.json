@@ -2,11 +2,11 @@
   "parameters" : [
     {
       "prediction_flag": "cloze",
-      "number_of_simulations": 2
+      "number_of_simulations": 1
     },
     {
       "prediction_flag": "language model",
-      "number_of_simulations": 2
+      "number_of_simulations": 1
     }
   ]
 }

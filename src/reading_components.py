@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 from torch import nn
+import warnings
 from reading_helper_functions import string_to_open_ngrams, cal_ngram_exc_input, is_similar_word_length, \
     get_midword_position_for_surrounding_word, calc_word_attention_right, calc_saccade_error,\
     check_previous_refixations_at_position
@@ -176,7 +177,7 @@ def match_active_words_to_input_slots(order_match_check, stimulus, recognized_wo
 
     return recognized_word_at_position, lexicon_word_activity
 
-def semantic_processing(text, tokenizer, language_model, top_k):
+def semantic_processing(text, tokenizer, language_model, top_k = 10, threshold = None):
 
     pred_info = dict()
     #print(text, len(text))
@@ -206,23 +207,36 @@ def semantic_processing(text, tokenizer, language_model, top_k):
                 pred_info[i] = (top_tokens, top_probabilities)
                 #print(pred_info[i])
         else:
-            if top_k == 'all': top_k = len(logits[0])
-            top_tokens = [tokenizer.decode(id.item()) for id in torch.topk(logits, k=top_k)[1][0]]
-            top_probabilities = [float(pred) for pred in torch.topk(probabilities, k=top_k)[0][0]]
+            k = top_k
+            if top_k == 'all':
+                # top k is the number of probabilities above threshold
+                if threshold:
+                    above_threshold = torch.where(probabilities > threshold, True, False)
+                    only_above_thrs = torch.masked_select(probabilities, above_threshold)
+                    k = len(only_above_thrs)
+                else:
+                    k = len(probabilities[0])
+            top_tokens = [tokenizer.decode(id.item()) for id in torch.topk(probabilities, k=k)[1][0]]
+            top_probabilities = [float(pred) for pred in torch.topk(probabilities, k=k)[0][0]]
             pred_info[i] = (top_tokens, top_probabilities)
 
     return pred_info
 
-def activate_predicted_upcoming_word(position, lexicon_word_activity, lexicon, pred_dict):
+def activate_predicted_upcoming_word(position, target_word, lexicon_word_activity, lexicon, pred_dict):
 
-    predicted = pred_dict[str(position)]
-    for token, pred in predicted.items():
-        if token in lexicon:
-            #print(f'PREDICTED: {token}, {pred}')
-            i = lexicon.index(token)
-            #print(f'act before: {lexicon_word_activity[i]}')
-            lexicon_word_activity[i] += pred * 0.05
-            #print(f'act after: {lexicon_word_activity[i]}')
+    try:
+        predicted = pred_dict[str(position)]
+        if predicted['target'] != target_word:
+            warnings.warn(f'Target word in cloze task "{predicted["target"]}" not the same as target word in model stimuli "{target_word}", position {position}')
+        for token, pred in predicted['predictions'].items():
+            if token in lexicon:
+                # print(f'PREDICTED: {token}, {pred}')
+                i = lexicon.index(token)
+                # print(f'act before: {lexicon_word_activity[i]}')
+                lexicon_word_activity[i] += pred * 0.05
+                # print(f'act after: {lexicon_word_activity[i]}')
+    except KeyError:
+        print(f'Position {position} not found in predictability map')
 
     return lexicon_word_activity
 
@@ -273,12 +287,16 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
 
     # AL: Calculate next attention position based on next fixation estimate = 0: refixate, 1: forward, 2: wordskip, -1: regression
     if next_fixation == 0:
-        # MM: if we're refixating same word because it has highest attentwgt AL: or not being recognized whilst processed
-        # ...use first refixation middle of remaining half as refixation stepsize
-        fixation_first_position_right_to_eye = eye_position + 1 if eye_position + 1 < len(tokens) else eye_position
-        attention_position = fixation_first_position_right_to_eye + refix_size
-    else:
-        assert (next_fixation in [-1, 1, 2])
+        # makes sure longer words with higher attentional input do not keep being refixated forever
+        if check_previous_refixations_at_position(all_data, fixation, fixation_counter, max_n_refix=3):
+            # MM: if we're refixating same word because it has highest attentwgt AL: or not being recognized whilst processed
+            # ...use first refixation middle of remaining half as refixation stepsize
+            fixation_first_position_right_to_eye = eye_position + 1 if eye_position + 1 < len(tokens) else eye_position
+            attention_position = fixation_first_position_right_to_eye + refix_size
+        # if more consecutive refixations than threshold at position, move on to the next word
+        else:
+            next_fixation = 1
+    if next_fixation in [-1, 1, 2]:
         attention_position = get_midword_position_for_surrounding_word(next_fixation, word_edges, fixated_position_in_stimulus)
 
     # AL: Update saccade info
@@ -302,7 +320,7 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
     # AL: saccade distance is next attention position minus the current eye position
     if attention_position:
         saccade_info['saccade distance'] = attention_position - eye_position
-
+    #print(attention_position, saccade_info)
     return attention_position, saccade_info
 
 def compute_next_eye_position(pm, saccade_info, eye_position, stimulus, fixation, total_n_words, word_edges, fixated_position_in_stimulus, verbose=True):
