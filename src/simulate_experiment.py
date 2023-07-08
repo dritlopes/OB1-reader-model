@@ -430,14 +430,9 @@ def simulate_experiment(pm):
     lexicon = [pre_process_string(word) for word in lexicon]
 
     # write out lexicon for consulting purposes
-    lexicon_filename = '../data/lexicon.pkl'
+    lexicon_filename = '../data/processed/lexicon.pkl'
     with open(lexicon_filename, "wb") as f:
         pickle.dump(lexicon, f)
-
-    # write out pre-processed stimulus for consulting purposes
-    preprocessed_stimulus_filename = '../data/pre-processed_stimuli.pkl'
-    with open(preprocessed_stimulus_filename, "wb") as f:
-        pickle.dump(tokens, f)
 
     print('Setting word recognition thresholds...')
     # define word recognition thresholds

@@ -7,6 +7,7 @@ import chardet
 import json
 import re
 from transformers import GPT2LMHeadModel, GPT2Tokenizer, set_seed
+from transformers import LlamaForCausalLM, LlamaTokenizer
 from reading_components import semantic_processing
 from reading_helper_functions import build_word_inhibition_matrix
 import logging
@@ -66,7 +67,7 @@ def create_freq_file(language, task_words, output_file_frequency_map, freq_thres
 
     # TODO AL: this was needed to reproduce results on PSCall because the overlap between the words and SUBTLEX-DE was low (less than half). Need to fix this later
     if task == 'continuous reading' and language == 'german':
-        filepath = "../data/frequency/PSCall_freq_pred.txt"
+        filepath = "../data/raw/PSCall_freq_pred.txt"
         my_data = pd.read_csv(filepath, delimiter="\t",
                               encoding=chardet.detect(open(filepath, "rb").read())['encoding'])
         my_data['word'] = my_data['word'].astype('unicode')
@@ -80,25 +81,25 @@ def create_freq_file(language, task_words, output_file_frequency_map, freq_thres
     else:
 
         if language == 'english':
-            filepath = '../data/frequency/SUBTLEX_UK.txt'
+            filepath = '../data/raw/SUBTLEX_UK.txt'
             columns_to_use = [0, 1, 5]
             freq_type = 'LogFreq(Zipf)'
             word_col = 'Spelling'
 
         elif language == 'french':
-            filepath = '../data/frequency/French_Lexicon_Project.txt'
+            filepath = '../data/raw/French_Lexicon_Project.txt'
             columns_to_use = [0, 7, 8, 9, 10]
             freq_type = 'cfreqmovies'
             word_col = 'Word'
 
         elif language == 'german':
-            filepath = '../data/frequency/SUBTLEX_DE.txt'
+            filepath = '../data/raw/SUBTLEX_DE.txt'
             columns_to_use = [0, 1, 3, 4, 5, 9]
             freq_type = 'lgSUBTLEX'
             word_col = 'Word'
 
         elif language == 'dutch':
-            filepath = '../data/frequency/SUBTLEX-NL.txt'
+            filepath = '../data/raw/SUBTLEX-NL.txt'
             columns_to_use = [0, 7]
             freq_type = 'Zipf'
             word_col = 'Word'
@@ -143,7 +144,7 @@ def create_freq_file(language, task_words, output_file_frequency_map, freq_thres
 
 def get_word_freq(pm, unique_words, n_high_freq_words = 500, freq_threshold = 0.15, verbose=True):
 
-    output_word_frequency_map = f"../data/frequency/frequency_map_{pm.stim_name}_{pm.task_to_run}_{pm.language}.json"
+    output_word_frequency_map = f"../data/processed/frequency_map_{pm.stim_name}_{pm.task_to_run}_{pm.language}.json"
 
     # AL: in case freq file needs to be created from original files
     if not os.path.exists(output_word_frequency_map):
@@ -160,16 +161,26 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
     word_pred_values_dict = dict()
     unknown_word_pred_values_dict = dict()
 
+    # if pm.prediction_flag in ['gpt-2', 'llama']:
+    #
+    #     # initialize language model and its tokenizer
+    #     if pm.prediction_flag == 'gpt-2':
+    #         language_model = GPT2LMHeadModel.from_pretrained('gpt2')
+    #         lm_tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+        # elif pm.prediction_flag == 'llama':
+        #     language_model = LlamaForCausalLM.from_pretrained("decapoda-research/llama-7b-hf")
+        #     lm_tokenizer = LlamaTokenizer.from_pretrained("decapoda-research/llama-7b-hf")
+
     if pm.prediction_flag == 'language_model':
 
-        # initialize language model and its tokenizer
         language_model = GPT2LMHeadModel.from_pretrained('gpt2')
         lm_tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
         # in case you want to reproduce predictions
         if not pm.prediction_seed:
-            seed = random.randint(0, 1000)
+            seed = random.randint(0, 1000)    
             pm.prediction_seed = seed
         set_seed(pm.prediction_seed)
+
         # list of words, set of words, sentences or passages. Each one is equivalent to one trial in an experiment
         for i, sequence in enumerate(pm.stim_all):
             sequence = [token for token in sequence.split(' ') if token != '']
@@ -212,7 +223,7 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
     elif pm.prediction_flag == 'cloze':
 
         if 'psc' in pm.stim_name.lower():
-            filepath = "../data/predictability/PSCall_freq_pred.txt"
+            filepath = "../data/raw/PSCall_freq_pred.txt"
             my_data = pd.read_csv(filepath, delimiter="\t",
                                   encoding=chardet.detect(open(filepath, "rb").read())['encoding'])
             word_pred_values_dict = np.array(my_data['pred'].tolist())
@@ -220,7 +231,7 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
         elif 'provo' in pm.stim_name.lower():
 
             # encoding = chardet.detect(open(filepath, "rb").read())['encoding']
-            filepath = "../data/predictability/Provo_Corpus-Predictability_Norms.csv"
+            filepath = "../data/raw/Provo_Corpus-Predictability_Norms.csv"
             my_data = pd.read_csv(filepath, encoding="ISO-8859-1")
             # align indexing with ob1 stimuli (which starts at 0, not at 1)
             my_data['Text_ID'] = my_data['Text_ID'].apply(lambda x : str(int(x)-1))
@@ -305,8 +316,8 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
 
 def get_pred_dict(pm, lexicon):
 
-    output_word_pred_map = f"../data/predictability/prediction_map_{pm.stim_name}_{pm.prediction_flag}_{pm.task_to_run}_{pm.language}.json"
-    if pm.prediction_flag == 'language model':
+    output_word_pred_map = f"../data/processed/prediction_map_{pm.stim_name}_{pm.prediction_flag}_{pm.task_to_run}_{pm.language}.json"
+    if pm.prediction_flag == 'language_model':
         output_word_pred_map = output_word_pred_map.replace('.json',f'_topk{pm.topk}.json')
 
     # AL: in case pred file needs to be created from original files
@@ -345,8 +356,8 @@ def check_previous_inhibition_matrix(pm,lexicon,lexicon_word_bigrams,inhib_matri
 
 def set_up_inhibition_matrix(pm, lexicon, lexicon_word_ngrams):
 
-    matrix_filepath = '../data/inhibition_matrix_previous.pkl'
-    matrix_parameters_filepath = '../data/inhibition_matrix_parameters_previous.pkl'
+    matrix_filepath = '../data/processed/inhibition_matrix_previous.pkl'
+    matrix_parameters_filepath = '../data/processed/inhibition_matrix_parameters_previous.pkl'
 
     previous_matrix_usable = check_previous_inhibition_matrix(pm, lexicon,
                                                               lexicon_word_ngrams,

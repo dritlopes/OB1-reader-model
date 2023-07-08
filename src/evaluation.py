@@ -385,7 +385,7 @@ def fit_mixed_effects(parameters, true, predicted, output_filepath):
             stats_result = stats_model.fit_map(method='BFGS')
             print(stats_result.summary())
             # stats_result.save(output_filepath.replace('simulation_', f'glm_{measure}_').replace('.csv', '.pkl'))
-            with open(output_filepath.replace('simulation_', f'glm_{measure}_').replace('.csv', '.txt'), 'w') as fh:
+            with open(output_filepath.replace('simulation_', f'glm_{measure}_').replace('.csv', '.txt').replace('model_output','analysed'), 'w') as fh:
                 fh.write(stats_result.summary().as_text())
         else:
             # stats_model = smf.mixedlm(f"{measure} ~ simulated_{measure}",data_measure,groups=data_measure['participant_id'])
@@ -410,7 +410,7 @@ def fit_mixed_effects(parameters, true, predicted, output_filepath):
             stats_result = stats_model.fit(method=["lbfgs"])
             print(stats_result.summary())
            #  stats_result.save(output_filepath.replace('simulation_', f'lm_{measure}_').replace('.csv','.pkl'))
-            with open(output_filepath.replace('simulation_', f'lm_{measure}_').replace('.csv', '.txt'), 'w') as fh:
+            with open(output_filepath.replace('simulation_', f'lm_{measure}_').replace('.csv', '.txt').replace('model_output','analysed'), 'w') as fh:
                 fh.write(stats_result.summary().as_text())
 
 def scale_human_durations(data_log, parameters_list):
@@ -507,7 +507,7 @@ def evaluate_output (parameters_list: list):
                 # get word factors (e.g. frequency, length, predictability)
                 true_eye_movements = get_word_factors(parameters, true_eye_movements, parameters.fixed_factors)
                 # save out pre-processed data
-                filepath = parameters.eye_tracking_filepath.replace('-Eyetracking_Data', '_eye_tracking')
+                filepath = parameters.eye_tracking_filepath.replace('-Eyetracking_Data', '_eye_tracking').replace('raw','processed')
                 true_eye_movements.to_csv(filepath, sep='\t')
                 data_log[parameters.eye_tracking_filepath] = true_eye_movements
                 # get word level measures from eye_tracking, averaged over participants
@@ -515,7 +515,7 @@ def evaluate_output (parameters_list: list):
                     [parameters.evaluation_measures].mean().reset_index()
                 mean_true_eye_movements = get_word_factors(parameters, mean_true_eye_movements, parameters.fixed_factors)
                 # save out averaged data
-                filepath = parameters.eye_tracking_filepath.replace('-Eyetracking_Data', '_eye_tracking_mean')
+                filepath = parameters.eye_tracking_filepath.replace('-Eyetracking_Data', '_eye_tracking_mean').replace('raw','processed')
                 mean_true_eye_movements.to_csv(filepath, sep='\t', index_label='id')
                 data_log[parameters.eye_tracking_filepath + '_mean'] = mean_true_eye_movements
 
@@ -528,6 +528,11 @@ def evaluate_output (parameters_list: list):
                                                                    parameters.evaluation_measures)
             # get word factors (e.g. frequency, length, predictability)
             predicted_eye_movements = get_word_factors(parameters, predicted_eye_movements, parameters.fixed_factors)
+            # save it
+            output_filepath = output_filepath.replace('model_output','analysed')
+            dir = os.path.dirname(output_filepath)
+            if not os.path.exists(dir):
+                os.makedirs(dir)
             filepath = output_filepath.replace('simulation_', f'simulation_eye_movements_')
             predicted_eye_movements.to_csv(filepath, sep='\t', index_label='id')
             data_log[parameters.results_filepath] = predicted_eye_movements
@@ -535,6 +540,7 @@ def evaluate_output (parameters_list: list):
             mean_predicted_eye_movements = predicted_eye_movements.groupby(['text_id', 'word_id', 'word'])\
                 [parameters.evaluation_measures].mean().reset_index()
             mean_predicted_eye_movements = get_word_factors(parameters, mean_predicted_eye_movements, parameters.fixed_factors)
+            # save it
             filepath = output_filepath.replace('simulation_', f'simulation_eye_movements_mean_')
             mean_predicted_eye_movements.to_csv(filepath, sep='\t', index_label='id')
             data_log[parameters.results_filepath + '_mean'] = mean_predicted_eye_movements

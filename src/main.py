@@ -32,11 +32,11 @@ def simulate_reading(global_parameters):
     print("\nLANGUAGE: " + pm.language)
 
     results_id = ''
-    dir = f'../results/{dt_string}/'
-    if pm.results_identifier == 'prediction_flag':
-        results_id = pm.prediction_flag
+    dir = f'../data/model_output/{dt_string}/'
     if not os.path.exists(dir):
         os.makedirs(dir)
+    if pm.results_identifier == 'prediction_flag':
+        results_id = pm.prediction_flag
     if not pm.results_filepath:
         pm.results_filepath = f"{dir}simulation_{pm.stim_name}_{pm.task_to_run}_{results_id}_{dt_string}.csv"
     if not pm.parameters_filepath:
@@ -117,17 +117,19 @@ def main():
     else:
         global_parameters = {
             "task_to_run" : 'continuous_reading',
-            "stimuli_filepath": "../stimuli/Provo_Corpus.csv",
+            "stimuli_filepath": "../data/processed/Provo_Corpus.csv",
             "stimuli_separator": "\t",
             "language": 'english',
-            "run_exp": True,
+            "run_exp": False,
             "analyze_results": True,
-            "results_filepath": '',
-            "parameters_filepath": '',
+            "results_filepath": ['../data/model_output/_08_07_2023_11-49-01/simulation_Provo_Corpus_continuous_reading_cloze__08_07_2023_11-49-01.csv',
+                                 '../data/model_output/_08_07_2023_11-49-01/simulation_Provo_Corpus_continuous_reading_language_model__08_07_2023_11-49-01.csv'],
+            "parameters_filepath": ['../data/model_output/_08_07_2023_11-49-01/parameters_Provo_Corpus_continuous_reading_cloze__08_07_2023_11-49-01.pkl',
+                                    '../data/model_output/_08_07_2023_11-49-01/parameters_Provo_Corpus_continuous_reading_language_model__08_07_2023_11-49-01.pkl'],
             "number_of_simulations": None,
-            "eye_tracking_filepath": '../data/eye_tracking/Provo_Corpus-Eyetracking_Data.csv',
+            "eye_tracking_filepath": '../data/raw/Provo_Corpus-Eyetracking_Data.csv',
             "results_identifier": 'prediction_flag',
-            "experiment_parameters_filepath": '../data/experiment_parameters.json', # '../data/experiment_parameters.json'
+            "experiment_parameters_filepath": '../src/experiment_parameters.json', # '../data/experiment_parameters.json'
             "optimize": False,
             "print_stim": False,
             "plotting": False
