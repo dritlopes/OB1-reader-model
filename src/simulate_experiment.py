@@ -3,6 +3,7 @@ import numpy as np
 import pickle
 from collections import defaultdict
 import math
+import random
 from utils import get_word_freq, get_pred_dict, set_up_inhibition_matrix, pre_process_string
 from reading_components import compute_stimulus, compute_eye_position, compute_words_input, update_word_activity, \
     match_active_words_to_input_slots, compute_next_attention_position, compute_next_eye_position, \
@@ -480,12 +481,29 @@ def simulate_experiment(pm):
     # read text/trials
     all_data = defaultdict()
 
+    # create new seed in every 5 simulations if language model
+    generated_seeds = dict()
+    if pm.prediction_flag == 'language_model':
+        for sim_number in range(pm.number_of_simulations):
+            if not pm.prediction_seed:
+                if sim_number % 5 == 0:
+                    seed = random.randint(0, 1000)
+            else:
+                seed = pm.prediction_seed
+            generated_seeds[sim_number] = seed
+
     for sim_number in range(pm.number_of_simulations):
 
         if pm.task_to_run == 'continuous_reading':
 
             texts_simulations = defaultdict()
-            word_predictions = get_pred_dict(pm, lexicon)
+
+
+            seed = pm.prediction_seed
+            # AL: if language model, generate new predictions with a new seed for every x simulations
+            if generated_seeds:
+                seed = generated_seeds[sim_number]
+            word_predictions = get_pred_dict(pm, lexicon, seed)
 
             for i, text in enumerate(pm.stim_all):
 
@@ -514,6 +532,10 @@ def simulate_experiment(pm):
                                         word_frequencies)
 
         print(f'END of SIMULATION {sim_number}\n')
+
+    if pm.prediction_flag == 'language_model':
+        pm.prediction_seed = generated_seeds
+
     print(f'THE END')
 
     return all_data

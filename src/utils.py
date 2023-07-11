@@ -12,7 +12,6 @@ from reading_components import semantic_processing
 from reading_helper_functions import build_word_inhibition_matrix
 import logging
 from collections import defaultdict
-import random
 import warnings
 from string import punctuation
 
@@ -156,7 +155,7 @@ def get_word_freq(pm, unique_words, n_high_freq_words = 500, freq_threshold = 0.
     return word_freq_dict
 
 
-def create_pred_file(pm, output_file_pred_map, lexicon):
+def create_pred_file(pm, output_file_pred_map, lexicon, seed):
 
     word_pred_values_dict = dict()
     unknown_word_pred_values_dict = dict()
@@ -175,11 +174,9 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
 
         language_model = GPT2LMHeadModel.from_pretrained('gpt2')
         lm_tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
-        # in case you want to reproduce predictions
-        if not pm.prediction_seed:
-            seed = random.randint(0, 1000)    
-            pm.prediction_seed = seed
-        set_seed(pm.prediction_seed)
+        # to reproduce predictions
+        if seed:
+            set_seed(seed)
 
         # list of words, set of words, sentences or passages. Each one is equivalent to one trial in an experiment
         for i, sequence in enumerate(pm.stim_all):
@@ -314,15 +311,15 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
         with open(output_file, "w") as f:
             json.dump(unknown_word_pred_values_dict, f, ensure_ascii=False)
 
-def get_pred_dict(pm, lexicon):
+def get_pred_dict(pm, lexicon, seed = None):
 
     output_word_pred_map = f"../data/processed/prediction_map_{pm.stim_name}_{pm.prediction_flag}_{pm.task_to_run}_{pm.language}.json"
     if pm.prediction_flag == 'language_model':
-        output_word_pred_map = output_word_pred_map.replace('.json',f'_topk{pm.topk}.json')
+        output_word_pred_map = output_word_pred_map.replace('.json', f'_topk{pm.topk}_seed{seed}.json')
 
     # AL: in case pred file needs to be created from original files
     if not os.path.exists(output_word_pred_map):
-        create_pred_file(pm, output_word_pred_map, lexicon)
+        create_pred_file(pm, output_word_pred_map, lexicon, seed)
 
     with open(output_word_pred_map, "r") as f:
         word_pred_dict = json.load(f)

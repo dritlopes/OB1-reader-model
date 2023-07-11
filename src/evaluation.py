@@ -293,10 +293,20 @@ def aggregate_fixations_per_word(simulation_output, first_pass, stimuli, measure
 def get_word_factors(pm, eye_movements_df, factors):
 
     if 'predictability' in factors:
-        pred_map = get_pred_dict(pm,None)
+
+        if pm.prediction_flag == 'language_model':
+            pred_maps = dict()
+            assert type(pm.prediction_seed) == dict
+            for simulation_id, seed in pm.prediction_seed.items():
+                pred_maps[simulation_id] = get_pred_dict(pm,None,seed)
+        else:
+            pred_map = get_pred_dict(pm,None)
+
         pred_column = []
         for i, item in eye_movements_df.iterrows():
             pred_value = 0.0
+            if pm.prediction_flag == 'language_model':
+                pred_map = pred_maps[int(item['simulation_id'])]
             if str(item['text_id']) in pred_map.keys():
                 if str(item['word_id']) in pred_map[str(item['text_id'])].keys():
                     word = item['word'].strip()
@@ -363,18 +373,41 @@ def fit_mixed_effects(parameters, true, predicted, output_filepath):
     # generalized mixed effects model doc: https://www.statsmodels.org/stable/generated/statsmodels.genmod.bayes_mixed_glm.BinomialBayesMixedGLM.from_formula.html#statsmodels.genmod.bayes_mixed_glm.BinomialBayesMixedGLM.from_formula
     # linear mixed effects doc: https://www.statsmodels.org/stable/generated/statsmodels.regression.mixed_linear_model.MixedLM.from_formula.html
 
+    predicted_dict = defaultdict(dict)
+    for text, hist in predicted.groupby(['text_id','word_id']):
+        predicted_dict[text[0]][text[1]] = dict()
+        for measure in parameters.evaluation_measures:
+            predicted_dict[text[0]][text[1]][measure] = hist[measure].tolist()[0]
+
+    simulated_measures = defaultdict(list)
+    for item, hist in true.groupby(['participant_id', 'text_id', 'word_id']):
+        for measure in parameters.evaluation_measures:
+            pred_value = predicted_dict[item[1]][item[2]][measure]
+            simulated_measures[measure].append(pred_value)
+
     # linear mixed effects models to determine if the simulation data can predict the human data
     for measure in parameters.evaluation_measures:
-        # merge pred and true
-        # makes sure predicted means are repeated for each participant in human data
-        predicted_measure = []
-        for item, hist in true.groupby(['participant_id','text_id','word_id']):
-            pred_value = predicted.query(f"text_id=={item[1]} & word_id=={item[2]}")[measure]
-            predicted_measure.append(pred_value.item())
-        true[f'simulated_{measure}'] = predicted_measure
+        # # merge pred and true
+        # # makes sure predicted means are repeated for each participant in human data
+        # predicted_measure = []
+        print(measure)
+        # print('start merging')
+        # for item, hist in true.groupby(['participant_id', 'text_id', 'word_id']):
+        #     pred_value = predicted.query(f"text_id=={item[1]} & word_id=={item[2]}")[measure]
+        #     predicted_measure.append(pred_value.item())
+        true[f'simulated_{measure}'] = simulated_measures[measure]
+        # print('end merging')
         data_measure = true[['participant_id', 'id', 'text_id', 'word_id', measure, f'simulated_{measure}']]
         # drop nan values as statsmodels cannot handle nan values and throws error in case there is any
         data_measure = data_measure.dropna()
+        # round decimals to whole numbers
+        data_measure[measure].astype(int)
+        data_measure[f'simulated_{measure}'].astype(int)
+        print(len(data_measure[measure].tolist()))
+        # for now, td floats to whole numberso save time, delete later
+        if parameters.prediction_flag == 'cloze' and measure in ['single_fix_duration', 'skip', 'single_fix', 'first_fix_duration', 'gaze_duration ']:
+            continue
+        print('start stats model')
         # in case of binary dependent variable (eye-movement measure)
         if {int(value) for value in data_measure[measure].unique()} == {1, 0}:
             random = {"participant_id": "0+C(participant_id)",
@@ -412,6 +445,7 @@ def fit_mixed_effects(parameters, true, predicted, output_filepath):
            #  stats_result.save(output_filepath.replace('simulation_', f'lm_{measure}_').replace('.csv','.pkl'))
             with open(output_filepath.replace('simulation_', f'lm_{measure}_').replace('.csv', '.txt').replace('model_output','analysed'), 'w') as fh:
                 fh.write(stats_result.summary().as_text())
+        print('end stats model')
 
 def scale_human_durations(data_log, parameters_list):
 
@@ -447,7 +481,7 @@ def merge_human_and_simulation_data(data_log, parameters_list):
 
 def plot_fixed_factor_vs_eye_movement(data, fixed_factors, measures, results_filepath):
 
-    results_dir = os.path.dirname(results_filepath)
+    results_dir = os.path.dirname(results_filepath).replace('model_output', 'analysed')
     for fixed_factor in fixed_factors:
         for measure in measures:
             plot = sb.relplot(data=data, x=measure, y=fixed_factor, hue='predictor', kind='line')
@@ -456,10 +490,11 @@ def plot_fixed_factor_vs_eye_movement(data, fixed_factors, measures, results_fil
 
 def plot_word_measures(data, measures, results_filepath):
 
-    results_dir = os.path.dirname(results_filepath)
+    results_dir = os.path.dirname(results_filepath).replace('model_output', 'analysed')
     for measure in measures:
         # plot item level mean
         data['id'] = data['id'].apply(lambda x: str(x))
+        sb.set(rc={'figure.figsize': (30, 25)})
         plot = sb.relplot(data=data, x='id', y=measure, hue='predictor', kind='scatter')
         filepath = f"{results_dir}/plot_item_{measure}.png"
         plot.figure.savefig(filepath)
@@ -492,9 +527,18 @@ def evaluate_output (parameters_list: list):
                 simulation_output = simulation_output[simulation_output['word_id'] != 0]
 
             # get word-level eye-movement measures in human data
+            processed_eye_tracking_path = parameters.eye_tracking_filepath.replace('-Eyetracking_Data', '_eye_tracking').replace('raw','processed')
+            processed_mean_eye_tracking_path = parameters.eye_tracking_filepath.replace('-Eyetracking_Data', '_eye_tracking_mean').replace('raw','processed')
+
             if parameters.eye_tracking_filepath in data_log.keys():
                 true_eye_movements = data_log[parameters.eye_tracking_filepath]
                 mean_true_eye_movements = data_log[parameters.eye_tracking_filepath + '_mean']
+
+            elif os.path.exists(processed_eye_tracking_path) and os.path.exists(processed_mean_eye_tracking_path):
+                true_eye_movements = pd.read_csv(processed_eye_tracking_path, sep='\t')
+                mean_true_eye_movements = pd.read_csv(processed_mean_eye_tracking_path, sep='\t')
+                data_log[parameters.eye_tracking_filepath] = true_eye_movements
+                data_log[parameters.eye_tracking_filepath + '_mean'] = mean_true_eye_movements
             else:
                 # read in eye_tracking data for comparing simulation with observed measures
                 # encoding = chardet.detect(open(parameters.eye_tracking_filepath, "rb").read())['encoding']
@@ -504,56 +548,57 @@ def evaluate_output (parameters_list: list):
                 # only including texts that were included in simulations
                 text_ids = [int(text_id) for text_id in simulation_output['text_id'].unique().tolist()]
                 true_eye_movements = true_eye_movements[true_eye_movements['text_id'].isin(text_ids)]
-                # get word factors (e.g. frequency, length, predictability)
-                true_eye_movements = get_word_factors(parameters, true_eye_movements, parameters.fixed_factors)
                 # save out pre-processed data
-                filepath = parameters.eye_tracking_filepath.replace('-Eyetracking_Data', '_eye_tracking').replace('raw','processed')
-                true_eye_movements.to_csv(filepath, sep='\t')
+                true_eye_movements.to_csv(processed_eye_tracking_path, sep='\t')
                 data_log[parameters.eye_tracking_filepath] = true_eye_movements
                 # get word level measures from eye_tracking, averaged over participants
                 mean_true_eye_movements = true_eye_movements.groupby(['text_id', 'word_id', 'word'])\
                     [parameters.evaluation_measures].mean().reset_index()
-                mean_true_eye_movements = get_word_factors(parameters, mean_true_eye_movements, parameters.fixed_factors)
                 # save out averaged data
-                filepath = parameters.eye_tracking_filepath.replace('-Eyetracking_Data', '_eye_tracking_mean').replace('raw','processed')
-                mean_true_eye_movements.to_csv(filepath, sep='\t', index_label='id')
+                mean_true_eye_movements.to_csv(processed_mean_eye_tracking_path, sep='\t', index_label='id')
                 data_log[parameters.eye_tracking_filepath + '_mean'] = mean_true_eye_movements
 
             # get word-level eye-movement measures in simulation data
-            stimuli = mean_true_eye_movements[['text_id', 'word_id', 'word']]
-            # first aggregate fixations per word, keeping simulation level
-            predicted_eye_movements = aggregate_fixations_per_word(simulation_output,
-                                                                   get_first_pass_fixations(simulation_output),
-                                                                   stimuli,
-                                                                   parameters.evaluation_measures)
-            # get word factors (e.g. frequency, length, predictability)
-            predicted_eye_movements = get_word_factors(parameters, predicted_eye_movements, parameters.fixed_factors)
-            # save it
-            output_filepath = output_filepath.replace('model_output','analysed')
-            dir = os.path.dirname(output_filepath)
-            if not os.path.exists(dir):
-                os.makedirs(dir)
-            filepath = output_filepath.replace('simulation_', f'simulation_eye_movements_')
-            predicted_eye_movements.to_csv(filepath, sep='\t', index_label='id')
-            data_log[parameters.results_filepath] = predicted_eye_movements
-            # then average over simulations to get the means
-            mean_predicted_eye_movements = predicted_eye_movements.groupby(['text_id', 'word_id', 'word'])\
-                [parameters.evaluation_measures].mean().reset_index()
-            mean_predicted_eye_movements = get_word_factors(parameters, mean_predicted_eye_movements, parameters.fixed_factors)
-            # save it
-            filepath = output_filepath.replace('simulation_', f'simulation_eye_movements_mean_')
-            mean_predicted_eye_movements.to_csv(filepath, sep='\t', index_label='id')
-            data_log[parameters.results_filepath + '_mean'] = mean_predicted_eye_movements
+            analysed_simulation_output_path = output_filepath.replace('model_output', 'analysed').replace('simulation_', f'simulation_eye_movements_')
+            analysed_mean_simulation_output_path = output_filepath.replace('model_output', 'analysed').replace('simulation_',
+                                                                                                                f'simulation_eye_movements_mean_')
+            if os.path.exists(analysed_simulation_output_path) and os.path.exists(analysed_mean_simulation_output_path):
+                predicted_eye_movements = pd.read_csv(analysed_simulation_output_path, sep='\t')
+                mean_predicted_eye_movements = pd.read_csv(analysed_mean_simulation_output_path, sep='\t')
+                data_log[parameters.results_filepath] = predicted_eye_movements
+                data_log[parameters.results_filepath + '_mean'] = mean_predicted_eye_movements
+            else:
+                stimuli = mean_true_eye_movements[['text_id', 'word_id', 'word']]
+                # first aggregate fixations per word, keeping simulation level
+                predicted_eye_movements = aggregate_fixations_per_word(simulation_output,
+                                                                       get_first_pass_fixations(simulation_output),
+                                                                       stimuli,
+                                                                       parameters.evaluation_measures)
+                # get word factors (e.g. frequency, length, predictability)
+                # predicted_eye_movements = get_word_factors(parameters, predicted_eye_movements, parameters.fixed_factors)
+                # save it
+                dir = os.path.dirname(analysed_simulation_output_path)
+                if not os.path.exists(dir): os.makedirs(dir)
+                predicted_eye_movements.to_csv(analysed_simulation_output_path, sep='\t', index_label='id')
+                data_log[parameters.results_filepath] = predicted_eye_movements
+                # then average over simulations to get the means
+                # variables = parameters.evaluation_measures.extend(parameters.fixed_factors)
+                variables = parameters.evaluation_measures
+                mean_predicted_eye_movements = predicted_eye_movements.groupby(['text_id', 'word_id', 'word'])\
+                    [variables].mean().reset_index()
+                # save it
+                mean_predicted_eye_movements.to_csv(analysed_mean_simulation_output_path, sep='\t', index_label='id')
+                data_log[parameters.results_filepath + '_mean'] = mean_predicted_eye_movements
 
             # mean square error between each measure in simulation and eye-tracking
-            mean2error_df = compute_error(parameters.evaluation_measures,
-                                          mean_true_eye_movements,
-                                          mean_predicted_eye_movements)
-            filepath = output_filepath.replace('simulation_', f'RM2E_eye_movements_')
-            mean2error_df.to_csv(filepath, sep='\t', index=False)
+            # mean2error_df = compute_error(parameters.evaluation_measures,
+            #                               mean_true_eye_movements,
+            #                               mean_predicted_eye_movements)
+            # filepath = output_filepath.replace('model_output', 'analysed').replace('simulation_', f'RM2E_eye_movements_')
+            #mean2error_df.to_csv(filepath, sep='\t', index=False)
 
             # stat tests
-            fit_mixed_effects(parameters, true_eye_movements, mean_predicted_eye_movements, output_filepath)
+            # fit_mixed_effects(parameters, true_eye_movements, mean_predicted_eye_movements, output_filepath)
 
     if data_log:
         # scale durations from eye-tracking data to be more aligned to OB1 durations which happens in cycles of 25ms
@@ -562,11 +607,12 @@ def evaluate_output (parameters_list: list):
         # merge simulation and human measures
         all_data = merge_human_and_simulation_data(data_log, parameters_list)
 
-        # plot results
-        plot_fixed_factor_vs_eye_movement(all_data,
-                                          ['predictability'],
-                                          parameters_list[0].evaluation_measures,
-                                          parameters_list[0].results_filepath)
+        # # plot results
+        # TODO add fixed factors to human data when more than one version of fixed factor (e.g. predictability cloze vs lm)
+        # plot_fixed_factor_vs_eye_movement(all_data,
+        #                                   ['predictability'],
+        #                                   parameters_list[0].evaluation_measures,
+        #                                   parameters_list[0].results_filepath)
         plot_word_measures(all_data,
                            parameters_list[0].evaluation_measures,
                            parameters_list[0].results_filepath)
