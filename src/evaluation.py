@@ -494,7 +494,6 @@ def plot_word_measures(data, measures, results_filepath):
     for measure in measures:
         # plot item level mean
         data['id'] = data['id'].apply(lambda x: str(x))
-        sb.set(rc={'figure.figsize': (30, 25)})
         plot = sb.relplot(data=data, x='id', y=measure, hue='predictor', kind='scatter')
         filepath = f"{results_dir}/plot_item_{measure}.png"
         plot.figure.savefig(filepath)
