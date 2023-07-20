@@ -1,7 +1,7 @@
 {
   "parameters" : [
     {
-      "prediction_flag": "cloze",
+      "prediction_flag": "gpt2",
       "number_of_simulations": 1
     }
   ]

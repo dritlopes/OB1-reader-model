@@ -1,4 +1,4 @@
-name: OB1-reader-updated
+name: venv
 channels:
   - defaults
 dependencies:
@@ -85,7 +85,6 @@ dependencies:
   - libev=4.33
   - libevent=2.1.12
   - libffi=3.4.4
-  - libgfortran=5.0.0
   - libgfortran5=11.3.0
   - libiconv=1.16
   - libnghttp2=1.52.0

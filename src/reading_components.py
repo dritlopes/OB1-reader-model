@@ -207,15 +207,14 @@ def semantic_processing(text, tokenizer, language_model, top_k = 10, threshold =
 
         if top_k == 'target_word':
             target_word = ' ' + text[i]
-            #print(target_word)
             target_token = tokenizer.encode(target_word, return_tensors='pt')
-            #print(target_token, [tokenizer.decode(token) for token in target_token[0]])
+            # print(target_token, [tokenizer.decode(token) for token in target_token[0]])
+            # print(target_token.size())
             if target_token.size(dim=1) > 0:
                 top_tokens = [target_word]
                 target_id = target_token[0][0]
                 top_probabilities = [float(probabilities[0,target_id])]
                 pred_info[i] = (top_tokens, top_probabilities)
-                #print(pred_info[i])
         else:
             k = top_k
             if top_k == 'all':

@@ -294,19 +294,10 @@ def get_word_factors(pm, eye_movements_df, factors):
 
     if 'predictability' in factors:
 
-        if pm.prediction_flag == 'language_model':
-            pred_maps = dict()
-            assert type(pm.prediction_seed) == dict
-            for simulation_id, seed in pm.prediction_seed.items():
-                pred_maps[simulation_id] = get_pred_dict(pm,None,seed)
-        else:
-            pred_map = get_pred_dict(pm,None)
-
+        pred_map = get_pred_dict(pm,None)
         pred_column = []
         for i, item in eye_movements_df.iterrows():
             pred_value = 0.0
-            if pm.prediction_flag == 'language_model':
-                pred_map = pred_maps[int(item['simulation_id'])]
             if str(item['text_id']) in pred_map.keys():
                 if str(item['word_id']) in pred_map[str(item['text_id'])].keys():
                     word = item['word'].strip()

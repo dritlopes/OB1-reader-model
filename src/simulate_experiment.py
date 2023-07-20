@@ -501,30 +501,16 @@ def simulate_experiment(pm):
     # read text/trials
     all_data = defaultdict()
 
-    # create new seed in every 5 simulations if language model
-    generated_seeds = dict()
-    if pm.prediction_flag == 'language_model':
-        for sim_number in range(pm.number_of_simulations):
-            if not pm.prediction_seed:
-                if sim_number % 5 == 0:
-                    seed = random.randint(0, 1000)
-            else:
-                seed = pm.prediction_seed
-            generated_seeds[sim_number] = seed
-
     for sim_number in range(pm.number_of_simulations):
 
         if pm.task_to_run == 'continuous_reading':
 
             texts_simulations = defaultdict()
 
-            seed = pm.prediction_seed
             # AL: if language model, generate new predictions with a new seed for every x simulations
-            if generated_seeds:
-                seed = generated_seeds[sim_number]
-            word_predictions = get_pred_dict(pm, lexicon, seed)
+            word_predictions = get_pred_dict(pm, lexicon)
 
-            for i, text in enumerate(pm.stim_all[18:19]):
+            for i, text in enumerate(pm.stim_all):
 
                 text_tokens = [pre_process_string(token) for token in text.split()]
                 text_data = reading(pm,

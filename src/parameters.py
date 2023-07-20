@@ -192,7 +192,6 @@ def return_task_params(task_attributes):
 
     # pre-activation based on predictability
     prediction_flag = 'cloze' # cloze # uniform # grammar # language_model
-    prediction_seed = None # in case of a language model providing predictions
     topk = 'all' # in case of language model providing predictions, save only the k highest predictions
     pred_threshold = 0.01 # in case of language model providing predictions, save only the predictions above certain threshold
     pred_p = 0.05 # scaling parameters in pre-activation formula

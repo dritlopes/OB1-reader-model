@@ -156,30 +156,28 @@ def get_word_freq(pm, unique_words, n_high_freq_words = 500, freq_threshold = 0.
     return word_freq_dict
 
 
-def create_pred_file(pm, output_file_pred_map, lexicon, seed):
+def create_pred_file(pm, output_file_pred_map, lexicon):
 
     word_pred_values_dict = dict()
     unknown_word_pred_values_dict = dict()
 
-    # if pm.prediction_flag in ['gpt-2', 'llama']:
-    #     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    #     # initialize language model and its tokenizer
-    #     if pm.prediction_flag == 'gpt-2':
-    #         language_model = GPT2LMHeadModel.from_pretrained('gpt2').to(device)
-    #         lm_tokenizer = GPT2Tokenizer.from_pretrained('gpt2').to(device)
-    #     elif pm.prediction_flag == 'llama':
-    #         language_model = LlamaForCausalLM.from_pretrained("decapoda-research/llama-7b-hf", load_in_4bit=True, torch_dtype=torch.float16).to(device)
-    #         lm_tokenizer = LlamaTokenizer.from_pretrained("decapoda-research/llama-7b-hf", load_in_4bit=True, torch_dtype=torch.float16).to(device)
-    if pm.prediction_flag == 'language_model':
-
-        language_model = GPT2LMHeadModel.from_pretrained('gpt2')
-        lm_tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
-        # to reproduce predictions
-        if seed:
-            set_seed(seed)
+    if pm.prediction_flag in ['gpt2', 'llama']:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print('Using device ', device)
+        # load language model and its tokenizer
+        if pm.prediction_flag == 'gpt2':
+            language_model = GPT2LMHeadModel.from_pretrained('gpt2').to(device)
+            lm_tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+        elif pm.prediction_flag == 'llama':
+            language_model = LlamaForCausalLM.from_pretrained("decapoda-research/llama-7b-hf", load_in_4bit=True, torch_dtype=torch.float16).to(device)
+            lm_tokenizer = LlamaTokenizer.from_pretrained("decapoda-research/llama-7b-hf")
+    # if pm.prediction_flag == 'language_model':
+    #
+    #     language_model = GPT2LMHeadModel.from_pretrained('gpt2')
+    #     lm_tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
 
         # list of words, set of words, sentences or passages. Each one is equivalent to one trial in an experiment
-        for i, sequence in enumerate(pm.stim_all[:1]):
+        for i, sequence in enumerate(pm.stim_all):
             sequence = [token for token in sequence.split(' ') if token != '']
             pred_dict = dict()
             unknown_tokens = dict()
@@ -210,7 +208,7 @@ def create_pred_file(pm, output_file_pred_map, lexicon, seed):
 
             word_pred_values_dict[str(i)] = pred_dict
             unknown_word_pred_values_dict[str(i)] = unknown_tokens
-
+            exit()
         # logger.info('Predicting 1 subtoken')
         # logger.info('Unknown tokens predicted by gpt2: ' +
         #       str(sum([len(words.keys()) for text, info in unknown_word_pred_values_dict.items() if info for idx, words in info.items()])))
@@ -311,15 +309,15 @@ def create_pred_file(pm, output_file_pred_map, lexicon, seed):
         with open(output_file, "w") as f:
             json.dump(unknown_word_pred_values_dict, f, ensure_ascii=False)
 
-def get_pred_dict(pm, lexicon, seed = None):
+def get_pred_dict(pm, lexicon):
 
     output_word_pred_map = f"../data/processed/prediction_map_{pm.stim_name}_{pm.prediction_flag}_{pm.task_to_run}_{pm.language}.json"
     if pm.prediction_flag == 'language_model':
-        output_word_pred_map = output_word_pred_map.replace('.json', f'_topk{pm.topk}_seed{seed}.json')
+        output_word_pred_map = output_word_pred_map.replace('.json', f'_topk{pm.topk}.json')
 
     # AL: in case pred file needs to be created from original files
     if not os.path.exists(output_word_pred_map):
-        create_pred_file(pm, output_word_pred_map, lexicon, seed)
+        create_pred_file(pm, output_word_pred_map, lexicon)
 
     with open(output_word_pred_map, "r") as f:
         word_pred_dict = json.load(f)
