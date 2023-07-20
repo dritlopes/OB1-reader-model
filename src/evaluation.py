@@ -404,7 +404,7 @@ def fit_mixed_effects(parameters, true, predicted, output_filepath):
         data_measure[measure].astype(int)
         data_measure[f'simulated_{measure}'].astype(int)
         print(len(data_measure[measure].tolist()))
-        # for now, td floats to whole numberso save time, delete later
+        # for now, td floats to whole number so save time, delete later
         if parameters.prediction_flag == 'cloze' and measure in ['single_fix_duration', 'skip', 'single_fix', 'first_fix_duration', 'gaze_duration ']:
             continue
         print('start stats model')

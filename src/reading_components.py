@@ -25,18 +25,28 @@ def compute_stimulus(fixation, tokens):
 
     return stimulus, stimulus_position, fixated_position_stimulus
 
-def compute_eye_position(stimulus, fixated_position_stimulus, offset_from_word_center):
+def compute_eye_position(stimulus, fixated_position_stimulus, offset_from_word_center, eye_pos_in_fix_word=None):
 
     """
     Given the stimulus during a fixation, find where the eye is positioned in relation to the stimulus.
     :return: the index of the character the eyes are fixating at in the stimulus (in number of characters).
     """
 
-    stimulus = stimulus.split(' ')
-    center_of_fixation = round(len(stimulus[fixated_position_stimulus]) * 0.5)
-    # find length of stimulus (in characters) up until fixated word
-    len_till_fix = sum([len(token)+1 for token in stimulus[:fixated_position_stimulus]])
-    eye_position = len_till_fix + center_of_fixation + offset_from_word_center
+    if not eye_pos_in_fix_word:
+        stimulus = stimulus.split(' ')
+        center_of_fixation = round(len(stimulus[fixated_position_stimulus]) * 0.5)
+        # find length of stimulus (in characters) up until fixated word
+        len_till_fix = sum([len(token)+1 for token in stimulus[:fixated_position_stimulus]])
+        eye_position = len_till_fix + center_of_fixation + offset_from_word_center
+    else:
+        stim_indices, word_indices = [],[]
+        for i, char in enumerate(stimulus + ' '):
+            if char == ' ':
+                stim_indices.append(word_indices)
+                word_indices = []
+            else:
+                word_indices.append(i)
+        eye_position = stim_indices[fixated_position_stimulus][eye_pos_in_fix_word]
 
     return int(np.round(eye_position))
 
@@ -222,7 +232,7 @@ def semantic_processing(text, tokenizer, language_model, top_k = 10, threshold =
 
     return pred_info
 
-def activate_predicted_upcoming_word(position, target_word, lexicon_word_activity, lexicon, pred_dict):
+def activate_predicted_upcoming_word(position, target_word, lexicon_word_activity, lexicon, pred_dict, pred_weight):
 
     try:
         predicted = pred_dict[str(position)]
@@ -233,14 +243,14 @@ def activate_predicted_upcoming_word(position, target_word, lexicon_word_activit
                 # print(f'PREDICTED: {token}, {pred}')
                 i = lexicon.index(token)
                 # print(f'act before: {lexicon_word_activity[i]}')
-                lexicon_word_activity[i] += pred * 0.05
+                lexicon_word_activity[i] += pred * pred_weight
                 # print(f'act after: {lexicon_word_activity[i]}')
     except KeyError:
         print(f'Position {position} not found in predictability map')
 
     return lexicon_word_activity
 
-def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_position_in_stimulus,regression_flag,recognized_word_at_position,lexicon_word_activity,eye_position,fixation_counter,attention_position,attend_width,fix_lexicon_index,pm,saccade_info):
+def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_position_in_stimulus,regression_flag,recognized_word_at_position,lexicon_word_activity,eye_position,fixation_counter,attention_position,attend_width,fix_lexicon_index,pm):
 
     """
     Define where attention should be moved to next based on recognition of words in current stimulus and the visual
@@ -287,43 +297,16 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
 
     # AL: Calculate next attention position based on next fixation estimate = 0: refixate, 1: forward, 2: wordskip, -1: regression
     if next_fixation == 0:
-        # makes sure longer words with higher attentional input do not keep being refixated forever
-        if check_previous_refixations_at_position(all_data, fixation, fixation_counter, max_n_refix=3):
-            # MM: if we're refixating same word because it has highest attentwgt AL: or not being recognized whilst processed
-            # ...use first refixation middle of remaining half as refixation stepsize
-            fixation_first_position_right_to_eye = eye_position + 1 if eye_position + 1 < len(tokens) else eye_position
-            attention_position = fixation_first_position_right_to_eye + refix_size
-        # if more consecutive refixations than threshold at position, move on to the next word
-        else:
-            next_fixation = 1
-    if next_fixation in [-1, 1, 2]:
+        # MM: if we're refixating same word because it has highest attentwgt AL: or not being recognized whilst processed
+        # ...use first refixation middle of remaining half as refixation stepsize
+        fixation_first_position_right_to_eye = eye_position + 1 if eye_position + 1 < len(tokens) else eye_position
+        attention_position = fixation_first_position_right_to_eye + refix_size
+    elif next_fixation in [-1, 1, 2]:
         attention_position = get_midword_position_for_surrounding_word(next_fixation, word_edges, fixated_position_in_stimulus)
 
-    # AL: Update saccade info
-    if next_fixation == 1: # AL: next fixation n + 1
-        saccade_info['saccade type'] = 'forward'
-    elif next_fixation == 2: # AL: next fixation n + 2
-        saccade_info['saccade type'] = 'wordskip'
-        if regression_flag[fixation]:
-            saccade_info['saccade cause'] = 2 # AL: bcs n resulted from regression and n + 1 has been recognized
-        else:
-            saccade_info['saccade cause'] = 1 # AL: bcs n + 2 has highest attwght (letter excitation)
-    elif next_fixation == -1:
-        saccade_info['saccade type'] = 'regression'
-    elif next_fixation == 0:
-        saccade_info['saccade type'] = 'refixation'
-        if not recognized_word_at_position[fixation]:
-            saccade_info['saccade cause'] = 1 # AL: bcs fixated word has not been recognized
-        else:
-            saccade_info['saccade_cause'] = 2 # AL: bcs right of fixated word has highest attwght (letter excitation)
+    return attention_position
 
-    # AL: saccade distance is next attention position minus the current eye position
-    if attention_position:
-        saccade_info['saccade distance'] = attention_position - eye_position
-    #print(attention_position, saccade_info)
-    return attention_position, saccade_info
-
-def compute_next_eye_position(pm, saccade_info, eye_position, stimulus, fixation, total_n_words, word_edges, fixated_position_in_stimulus, verbose=True):
+def compute_next_eye_position(pm, attention_position, eye_position, fixation, fixated_position_in_stimulus, word_edges, saccade_info):
 
     """
     This function computes next eye position and next offset from word center using saccade distance
@@ -332,8 +315,8 @@ def compute_next_eye_position(pm, saccade_info, eye_position, stimulus, fixation
     :return: the next fixation, the next eye position and the updated saccade info
     """
 
-    saccade_distance = saccade_info['saccade distance']
-    offset_from_word_center = saccade_info['offset from word center']
+    # saccade distance is next attention position minus the current eye position
+    saccade_distance = attention_position - eye_position
 
     # normal random error based on difference with optimal saccade distance
     saccade_error = calc_saccade_error(saccade_distance,
@@ -344,87 +327,102 @@ def compute_next_eye_position(pm, saccade_info, eye_position, stimulus, fixation
                                        pm.use_saccade_error)
 
     saccade_distance = saccade_distance + saccade_error
-    offset_from_word_center = offset_from_word_center + saccade_error
-
-    # compute the position of next fixation
-    next_eye_position = int(np.round(eye_position + saccade_distance))
-    if next_eye_position >= len(stimulus) - 1:
-        next_eye_position = len(stimulus) - 2
-
-    # Calculating the actual saccade type
-    # Regression
-    if next_eye_position < word_edges[fixated_position_in_stimulus][0]:
-        # AL: if eye at space right to word n - 1, offset corrects eye to word n - 1
-        if next_eye_position > word_edges[fixated_position_in_stimulus-1][1]:
-            offset_from_word_center -= 1
-        # AL: if eye at space left to word n - 1, offset corrects eye to word n - 1
-        if next_eye_position < word_edges[fixated_position_in_stimulus-1][0]:
-            center_position = get_midword_position_for_surrounding_word(-1,word_edges,fixated_position_in_stimulus)
-            offset_from_word_center = center_position - word_edges[fixated_position_in_stimulus-1][0]
-        fixation -= 1
-        saccade_info['saccade type'] = 'regression'
-
-    # Forward (include space between n and n+2)
-    # AL: next eye position is too long (between space after last letter of fixated word and last letter of word n + 1)
-    elif ((fixation < total_n_words - 1)
-          and (next_eye_position > word_edges[fixated_position_in_stimulus][1])
-          and (next_eye_position <= (word_edges[fixated_position_in_stimulus+1][1]))):
-        # When saccade too short due to saccade error recalculate offset for n+1 (old offset is for N or N+2)
-        if saccade_info['saccade type'] in ['wordskip','refixation']:
-            center_position = get_midword_position_for_surrounding_word(1,word_edges,fixated_position_in_stimulus)
-            offset_from_word_center = next_eye_position - center_position
-            # AL: forward due to saccade error
-            saccade_info['saccade type by error'] = True
-        # Eye at (n+0 <-> n+1) space position
-        if next_eye_position < word_edges[fixated_position_in_stimulus+1][0]:
-            offset_from_word_center += 1
-        fixation += 1
-        saccade_info['saccade type'] = 'forward'
-
-    # Wordskip
-    # AL: next eye position after last letter of word n+1 and before 3 chars after last letter of word n+2
-    elif ((fixation < total_n_words - 2)
-          and (next_eye_position > word_edges[fixated_position_in_stimulus+1][1])
-          and (next_eye_position <= word_edges[fixated_position_in_stimulus+2][1] + 2)):
-        # AL: When saccade is too short, recalculate offset to correct eye position to n+2 (old offset is for n or n+1)
-        if saccade_info['saccade type'] in ['forward','refixation']:
-            # recalculate offset for n+2, todo check for errors
-            center_position = get_midword_position_for_surrounding_word(2,word_edges,fixated_position_in_stimulus)
-            offset_from_word_center = next_eye_position - center_position
-            # AL: wordskip due to saccade error
-            saccade_info['saccade type by error'] = True
-        # Eye at (n+1 <-> n+2) space position
-        if next_eye_position < word_edges[fixated_position_in_stimulus+2][0]:
-            offset_from_word_center += 1
-        # Eye at (> n+2) space position
-        elif next_eye_position > word_edges[fixated_position_in_stimulus+2][1]:
-            offset_from_word_center -= (next_eye_position - word_edges[fixated_position_in_stimulus+2][1])
-        fixation += 2
-        saccade_info['saccade type'] = 'wordskip'
-
-    # Refixation due to saccade error
-    # AL: weird to me, isn't this converting all saccades which were not refixation not due by error to refixation due by error?
-    elif saccade_info['saccade type'] != 'refixation':
-        # TODO find out if not regression is necessary
-        center_position = np.round(word_edges[fixated_position_in_stimulus][0] +
-                                  ((word_edges[fixated_position_in_stimulus][1] - word_edges[fixated_position_in_stimulus][0]) / 2.))
-        offset_from_word_center = next_eye_position - center_position
-        saccade_info['saccade type by error'] = True
-        saccade_info['saccade type'] = 'refixation'
-
-    # update saccade info
-    saccade_info['offset from word center'] = float(offset_from_word_center)
+    # offset_from_word_center = saccade_info['offset from word center'] + saccade_error
     saccade_info['saccade distance'] = float(saccade_distance)
     saccade_info['saccade error'] = float(saccade_error)
 
-    if verbose:
-        if saccade_info['saccade type'] == 'forward':
-            print(">->->->->->->->->->->->-")
-        elif saccade_info['saccade type'] == 'wordskip':
-            print(">>>>>>>>>>>>>>>>>>>>>>>>")
-        elif saccade_info['saccade type'] == 'refixation':
-            print("------------------------")
-        elif saccade_info['saccade type'] == 'regression':
-            print("<-<-<-<-<-<-<-<-<-<-<-<-")
+    # compute the position of next fixation
+    eye_position = int(np.round(eye_position + saccade_distance))
 
-    return fixation, next_eye_position, saccade_info
+    # if next_eye_position >= len(stimulus) - 1:
+    #     next_eye_position = len(stimulus) - 2
+
+    # # Regression
+    # if next_eye_position < word_edges[fixated_position_in_stimulus][0]:
+    #     # AL: if eye at space right to word n - 1, offset corrects eye to word n - 1
+    #     if next_eye_position > word_edges[fixated_position_in_stimulus-1][1]:
+    #         offset_from_word_center -= 1
+    #     # AL: if eye at space left to word n - 1, offset corrects eye to word n - 1
+    #     if next_eye_position < word_edges[fixated_position_in_stimulus-1][0]:
+    #         center_position = get_midword_position_for_surrounding_word(-1,word_edges,fixated_position_in_stimulus)
+    #         offset_from_word_center = center_position - word_edges[fixated_position_in_stimulus-1][0]
+    #     fixation -= 1
+    #     saccade_info['saccade type'] = 'regression'
+    # 
+    # # Forward (include space between n and n+2)
+    # # AL: next eye position is too long (between space after last letter of fixated word and last letter of word n + 1)
+    # elif ((fixation < total_n_words - 1)
+    #       and (next_eye_position > word_edges[fixated_position_in_stimulus][1])
+    #       and (next_eye_position <= (word_edges[fixated_position_in_stimulus+1][1]))):
+    #     # When saccade too short due to saccade error recalculate offset for n+1 (old offset is for N or N+2)
+    #     if saccade_info['saccade type'] in ['wordskip', 'refixation']:
+    #         center_position = get_midword_position_for_surrounding_word(1,word_edges,fixated_position_in_stimulus)
+    #         offset_from_word_center = next_eye_position - center_position
+    #         # AL: forward due to saccade error
+    #         saccade_info['saccade type by error'] = True
+    #     # Eye at (n+0 <-> n+1) space position
+    #     if next_eye_position < word_edges[fixated_position_in_stimulus+1][0]:
+    #         offset_from_word_center += 1
+    #     fixation += 1
+    #     saccade_info['saccade type'] = 'forward'
+    # 
+    # # Wordskip
+    # # AL: next eye position after last letter of word n+1 and before 3 chars after last letter of word n+2
+    # elif ((fixation < total_n_words - 2)
+    #       and (next_eye_position > word_edges[fixated_position_in_stimulus+1][1])
+    #       and (next_eye_position <= word_edges[fixated_position_in_stimulus+2][1] + 2)):
+    #     # AL: When saccade is too short, recalculate offset to correct eye position to n+2 (old offset is for n or n+1)
+    #     if saccade_info['saccade type'] in ['forward', 'refixation']:
+    #         # recalculate offset for n+2, todo check for errors
+    #         center_position = get_midword_position_for_surrounding_word(2,word_edges,fixated_position_in_stimulus)
+    #         offset_from_word_center = next_eye_position - center_position
+    #         # AL: wordskip due to saccade error
+    #         saccade_info['saccade type by error'] = True
+    #     # Eye at (n+1 <-> n+2) space position
+    #     if next_eye_position < word_edges[fixated_position_in_stimulus+2][0]:
+    #         offset_from_word_center += 1
+    #     # Eye at (> n+2) space position
+    #     elif next_eye_position > word_edges[fixated_position_in_stimulus+2][1]:
+    #         offset_from_word_center -= (next_eye_position - word_edges[fixated_position_in_stimulus+2][1])
+    #     fixation += 2
+    #     saccade_info['saccade type'] = 'wordskip'
+    # 
+    # # Refixation due to saccade error
+    # # AL: weird to me, isn't this converting all saccades which were not refixation not due by error to refixation due by error?
+    # elif saccade_info['saccade type'] != 'refixation':
+    #     # TODO find out if not regression is necessary
+    #     center_position = np.round(word_edges[fixated_position_in_stimulus][0] +
+    #                               ((word_edges[fixated_position_in_stimulus][1] - word_edges[fixated_position_in_stimulus][0]) / 2.))
+    #     offset_from_word_center = next_eye_position - center_position
+    #     saccade_info['saccade type by error'] = True
+    #     saccade_info['saccade type'] = 'refixation'
+    # 
+    # update saccade info
+    # saccade_info['offset from word center'] = float(offset_from_word_center)
+
+    # determine next fixation depending on next eye position
+    fixation_saccade_map = {0: 'refixation',
+                            -1: 'regression',
+                            1: 'forward',
+                            2: 'wordskip'}
+    eye_pos_in_fix_word = None
+    word_letter_indices = [i for edges in word_edges.values() for i in range(edges[0], edges[1]+1)]
+    # if eye position is on a space, correct eye position to the closest letter to the left.
+    if eye_position not in word_letter_indices:
+        edges_indices = [edges[i] for edges in word_edges.values() for i in range(len(edges))]
+        eye_position = min(edges_indices, key=lambda x: abs(x - eye_position))
+    # find the next fixated word based on new eye position and determine saccade type based on that
+    for word_i, edges in word_edges.items():
+        if not eye_pos_in_fix_word:
+            for letter_index, letter_index_in_stim in enumerate(range(edges[0], edges[1]+1)):
+                if eye_position == letter_index_in_stim:
+                    move = word_i - fixated_position_in_stimulus
+                    fixation += move
+                    # index of letter within fixated word to find eye position in relation to stimulus in the next fixation
+                    eye_pos_in_fix_word = letter_index
+                    if move > 2: move = 2
+                    elif move < -1: move = -1
+                    saccade_info['saccade type'] = fixation_saccade_map[move]
+                    break
+
+    return fixation, eye_pos_in_fix_word, saccade_info

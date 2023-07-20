@@ -8,6 +8,7 @@ import json
 import re
 from transformers import GPT2LMHeadModel, GPT2Tokenizer, set_seed
 from transformers import LlamaForCausalLM, LlamaTokenizer
+import torch
 from reading_components import semantic_processing
 from reading_helper_functions import build_word_inhibition_matrix
 import logging
@@ -161,15 +162,14 @@ def create_pred_file(pm, output_file_pred_map, lexicon, seed):
     unknown_word_pred_values_dict = dict()
 
     # if pm.prediction_flag in ['gpt-2', 'llama']:
-    #
+    #     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     #     # initialize language model and its tokenizer
     #     if pm.prediction_flag == 'gpt-2':
-    #         language_model = GPT2LMHeadModel.from_pretrained('gpt2')
-    #         lm_tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
-        # elif pm.prediction_flag == 'llama':
-        #     language_model = LlamaForCausalLM.from_pretrained("decapoda-research/llama-7b-hf")
-        #     lm_tokenizer = LlamaTokenizer.from_pretrained("decapoda-research/llama-7b-hf")
-
+    #         language_model = GPT2LMHeadModel.from_pretrained('gpt2').to(device)
+    #         lm_tokenizer = GPT2Tokenizer.from_pretrained('gpt2').to(device)
+    #     elif pm.prediction_flag == 'llama':
+    #         language_model = LlamaForCausalLM.from_pretrained("decapoda-research/llama-7b-hf", load_in_4bit=True, torch_dtype=torch.float16).to(device)
+    #         lm_tokenizer = LlamaTokenizer.from_pretrained("decapoda-research/llama-7b-hf", load_in_4bit=True, torch_dtype=torch.float16).to(device)
     if pm.prediction_flag == 'language_model':
 
         language_model = GPT2LMHeadModel.from_pretrained('gpt2')
@@ -179,7 +179,7 @@ def create_pred_file(pm, output_file_pred_map, lexicon, seed):
             set_seed(seed)
 
         # list of words, set of words, sentences or passages. Each one is equivalent to one trial in an experiment
-        for i, sequence in enumerate(pm.stim_all):
+        for i, sequence in enumerate(pm.stim_all[:1]):
             sequence = [token for token in sequence.split(' ') if token != '']
             pred_dict = dict()
             unknown_tokens = dict()

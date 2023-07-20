@@ -285,7 +285,7 @@ def calc_word_attention_right(word_edges, eye_position, attention_position, atte
 
         # if n or n + x (but not n - x), so only fixated word or words to the right
         if i >= fixated_position_in_stimulus:
-            # print(i,edges)
+            # print(i, edges)
             word_start_edge = edges[0]
             word_end_edge = edges[1]
 
@@ -301,7 +301,7 @@ def calc_word_attention_right(word_edges, eye_position, attention_position, atte
                 crt_word_monogram_attention_sum = calc_monogram_attention_sum(word_start_edge, word_end_edge, eye_position, attention_position, attend_width, attention_skew, let_per_deg, foveal_word)
             # print('word position and visual salience: ',i,crt_word_monogram_attention_sum)
             word_attention_right.append(crt_word_monogram_attention_sum)
-            #print(f'visual salience of {i} to the right of fixation: {crt_word_monogram_attention_sum}')
+            # print(f'visual salience of {i} to the right of fixation: {crt_word_monogram_attention_sum}')
     return word_attention_right
 
 def calc_saccade_error(saccade_distance, optimal_distance, saccErr_scaler, saccErr_sigma, saccErr_sigma_scaler,use_saccade_error):
