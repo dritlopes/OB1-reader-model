@@ -1,7 +1,7 @@
 {
   "parameters" : [
     {
-      "prediction_flag": "gpt2",
+      "prediction_flag": "llama",
       "number_of_simulations": 1
     }
   ]

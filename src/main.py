@@ -80,7 +80,7 @@ def simulate_reading(global_parameters):
 
 def main():
 
-    useparser=False
+    useparser=True
     if useparser:
         parser = argparse.ArgumentParser()
         parser.add_argument('stimuli_filepath')
@@ -88,9 +88,10 @@ def main():
         parser.add_argument('--task_to_run', default='continuous_reading')
         parser.add_argument('--language', default='english')
         parser.add_argument('--run_exp', default='True',help='Should the experiment simulation run?', choices=['True', 'False']),
-        parser.add_argument('--number_of_simulations', default=1, help='How many times should I run a simulation?')
+        parser.add_argument('--number_of_simulations', default=None, help='How many times should I run a simulation?')
         parser.add_argument('--analyze_results', default="False", help='Should the results be analyzed?', choices=["True", "False"])
         parser.add_argument('--results_filepath', default=None, help='Path to file with results to be analysed if analyse_results=True and run_exp=False')
+        parser.add_argument('--results_identifier', default=None, help='Which parameter/variable differ conditions')
         parser.add_argument('--parameters_filepath', default=None, help='Path to file with parameters of the results to be analysed if analyse_results=True and run_exp=False')
         parser.add_argument('--eye_tracking_filepath', default=None, help='If analyzing results, where are the observed values which the model output should be compared with?')
         parser.add_argument('--experiment_parameters_filepath', default=None, help='If you want to run different model setups at once, provide set of parameters for each model/experiment condition')
@@ -102,11 +103,13 @@ def main():
         global_parameters = {
             "task_to_run" : args.task_to_run,
             "stimuli_filepath": args.stimuli_filepath,
+            "stimuli_separator": args.stimuli_separator,
             "language": args.language,
             "run_exp": eval(args.run_exp),
             "number_of_simulations": eval(args.number_of_simulations),
             "analyze_results": eval(args.analyze_results),
             "results_filepath": args.results_filepath,
+            "results_identifier": args.results_identifier,
             "parameters_filepath": args.parameters_filepath,
             "eye_tracking_filepath": args.eye_tracking_filepath,
             "experiment_parameters_filepath": args.experiment_parameters_filepath,
