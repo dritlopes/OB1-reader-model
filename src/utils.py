@@ -185,10 +185,10 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
                 print(torch.cuda.get_device_name(0))
                 print('Memory Usage:')
                 print('Allocated:', round(torch.cuda.memory_allocated(0) / 1024 ** 3, 1), 'GB')
-                print('Cached:   ', round(torch.cuda.memory_cached(0) / 1024 ** 3, 1), 'GB')
+                print('Cached:   ', round(torch.cuda.memory_reserved(0) / 1024 ** 3, 1), 'GB')
 
         # list of words, set of words, sentences or passages. Each one is equivalent to one trial in an experiment
-        for i, sequence in enumerate(pm.stim_all):
+        for i, sequence in enumerate(pm.stim_all[:1]):
             sequence = [token for token in sequence.split(' ') if token != '']
             pred_dict = dict()
             unknown_tokens = dict()
@@ -200,7 +200,9 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
                                             'predictions': dict()}
                 for token, pred in zip(pred_info[pos][0], pred_info[pos][1]):
                     token_processed = pre_process_string(token)
-                    pred_dict[str(pos)]['predictions'][token_processed] = pred
+                    # language models may use uppercase, while our lexicon only has lowercase, so take the higher pred
+                    if token_processed not in pred_dict[str(pos)]['predictions'].keys():
+                        pred_dict[str(pos)]['predictions'][token_processed] = pred
                     if token_processed not in lexicon:
                         unknown_tokens[str(pos)]['predictions'][token] = pred
                     # else: # in case token is a sub-word, try to concatenate token with next predicted token
@@ -219,7 +221,8 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
 
             word_pred_values_dict[str(i)] = pred_dict
             unknown_word_pred_values_dict[str(i)] = unknown_tokens
-
+        print(word_pred_values_dict)
+        exit()
         # logger.info('Predicting 1 subtoken')
         # logger.info('Unknown tokens predicted by gpt2: ' +
         #       str(sum([len(words.keys()) for text, info in unknown_word_pred_values_dict.items() if info for idx, words in info.items()])))

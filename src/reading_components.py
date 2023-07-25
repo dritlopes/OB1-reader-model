@@ -230,8 +230,7 @@ def semantic_processing(text, tokenizer, language_model, top_k = 10, threshold =
             top_tokens = [tokenizer.decode(id.item()) for id in torch.topk(probabilities, k=k)[1][0]]
             top_probabilities = [float(pred) for pred in torch.topk(probabilities, k=k)[0][0]]
             pred_info[i] = (top_tokens, top_probabilities)
-        print(sequence, pred_info[i])
-        exit()
+
     return pred_info
 
 def activate_predicted_upcoming_word(position, target_word, lexicon_word_activity, lexicon, pred_dict, pred_weight):

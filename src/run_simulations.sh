@@ -24,4 +24,4 @@ module load PyTorch/1.12.1-foss-2021a-CUDA-11.3.1
 cd $HOME/OB1-reader-model/src
 
 # Run program
-python $HOME/OB1-reader-model/scr/main.py $HOME/OB1-reader-model/data/processed/Provo_Corpus.csv --eye_tracking_filepath $HOME/OB1-reader-model/data/raw/Provo_Corpus-Eyetracking_Data.csv --results_identifier prediction_flag --experiment_parameters_filepath $HOME/OB1-reader-model/scr/experiment_parameters.json
+python main.py ../data/processed/Provo_Corpus.csv --eye_tracking_filepath ../data/raw/Provo_Corpus-Eyetracking_Data.csv --results_identifier prediction_flag --experiment_parameters_filepath experiment_parameters.json
