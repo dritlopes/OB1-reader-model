@@ -187,7 +187,7 @@ def match_active_words_to_input_slots(order_match_check, stimulus, recognized_wo
 
     return recognized_word_at_position, lexicon_word_activity
 
-def semantic_processing(text, tokenizer, language_model, top_k = 10, threshold = None):
+def semantic_processing(text, tokenizer, language_model, top_k = 10, threshold = None, device = None):
 
     pred_info = dict()
     #print(text, len(text))
@@ -196,6 +196,8 @@ def semantic_processing(text, tokenizer, language_model, top_k = 10, threshold =
         sequence = ' '.join(text[:i])
         # pre-process text
         encoded_input = tokenizer(sequence, return_tensors='pt')
+        if device:
+            encoded_input.to(device)
         # output contains at minimum the prediction scores of the language modelling head,
         # i.e. scores for each vocab token given by a feed-forward neural network
         output = language_model(**encoded_input)

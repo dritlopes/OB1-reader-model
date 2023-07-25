@@ -17,7 +17,8 @@ module load PyTorch/1.12.1-foss-2021a-CUDA-11.3.1
 #pip install statsmodels
 #pip install matplotlib
 #pip install seaborn
-#pip install bitsandbytes
+#pip install sentencepiece
+
 
 # cd to directory with program
 cd $HOME/OB1-reader-model/src

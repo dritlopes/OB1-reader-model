@@ -172,8 +172,13 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
             lm_tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
 
         elif pm.prediction_flag == 'llama':
-            # language_model = LlamaForCausalLM.from_pretrained("decapoda-research/llama-7b-hf", load_in_4bit=True, torch_dtype=torch.float16).to(device)
+            # torch_dtype=torch.float16 is important to load model directly on gpu and to decrease the needed ram
+            # https://huggingface.co/decapoda-research/llama-7b-hf/discussions/2
+            # https://discuss.huggingface.co/t/llama-7b-gpu-memory-requirement/34323
             language_model = LlamaForCausalLM.from_pretrained("decapoda-research/llama-7b-hf", torch_dtype=torch.float16).to(device)
+            # !!! after downloading the tokenizer, please go to where downloaded model is located
+            # ($HOME/<username>/.cache/huggingface/<...>) and change tokenizer config file as done here:
+            # https://huggingface.co/decapoda-research/llama-7b-hf/discussions/103/files
             lm_tokenizer = LlamaTokenizer.from_pretrained("decapoda-research/llama-7b-hf")
             # Additional info when using cuda
             if device.type == 'cuda':
