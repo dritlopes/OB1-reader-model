@@ -12,6 +12,11 @@
 # Environment modules
 module load shared 2022
 module load PyTorch/1.12.1-foss-2021a-CUDA-11.3.1
+# install extra packages
+pip install transformers
+pip install statsmodels
+pip install matplotlib
+pip install seaborn
 
 # cd to directory with program
 cd $HOME/OB1-reader-model/src
