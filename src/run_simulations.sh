@@ -5,7 +5,7 @@
 #SBATCH -N 1
 #SBATCH -p defq
 #SBATCH --gpus=1
-#SBATCH -t 2:00:00
+#SBATCH -t 1:00:00
 #SBATCH --mail-type=BEGIN,END
 #SBATCH --mail-user=a.t.lopesrego@vu.nl
 

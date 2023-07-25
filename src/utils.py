@@ -179,7 +179,9 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
             # !!! after downloading the tokenizer, please go to where downloaded model is located
             # ($HOME/<username>/.cache/huggingface/<...>) and change tokenizer config file as done here:
             # https://huggingface.co/decapoda-research/llama-7b-hf/discussions/103/files
-            lm_tokenizer = LlamaTokenizer.from_pretrained("decapoda-research/llama-7b-hf")
+            # legacy=false makes sure fix in handling of tokens read after a special token is used,
+            # see https://github.com/huggingface/transformers/pull/24565 for more details
+            lm_tokenizer = LlamaTokenizer.from_pretrained("decapoda-research/llama-7b-hf", legacy=False)
             # Additional info when using cuda
             if device.type == 'cuda':
                 print(torch.cuda.get_device_name(0))
@@ -188,7 +190,7 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
                 print('Cached:   ', round(torch.cuda.memory_reserved(0) / 1024 ** 3, 1), 'GB')
 
         # list of words, set of words, sentences or passages. Each one is equivalent to one trial in an experiment
-        for i, sequence in enumerate(pm.stim_all[:1]):
+        for i, sequence in enumerate(pm.stim_all):
             sequence = [token for token in sequence.split(' ') if token != '']
             pred_dict = dict()
             unknown_tokens = dict()
@@ -221,8 +223,7 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
 
             word_pred_values_dict[str(i)] = pred_dict
             unknown_word_pred_values_dict[str(i)] = unknown_tokens
-        print(word_pred_values_dict)
-        exit()
+
         # logger.info('Predicting 1 subtoken')
         # logger.info('Unknown tokens predicted by gpt2: ' +
         #       str(sum([len(words.keys()) for text, info in unknown_word_pred_values_dict.items() if info for idx, words in info.items()])))

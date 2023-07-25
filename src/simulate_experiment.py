@@ -510,7 +510,7 @@ def simulate_experiment(pm):
             # AL: if language model, generate new predictions with a new seed for every x simulations
             word_predictions = get_pred_dict(pm, lexicon)
 
-            for i, text in enumerate(pm.stim_all):
+            for i, text in enumerate(pm.stim_all[:1]):
 
                 text_tokens = [pre_process_string(token) for token in text.split()]
                 text_data = reading(pm,
@@ -537,9 +537,6 @@ def simulate_experiment(pm):
                                         word_frequencies)
 
         print(f'END of SIMULATION {sim_number}\n')
-
-    if pm.prediction_flag == 'language_model':
-        pm.prediction_seed = generated_seeds
 
     print(f'THE END')
 

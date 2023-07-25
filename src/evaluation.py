@@ -581,14 +581,14 @@ def evaluate_output (parameters_list: list):
                 data_log[parameters.results_filepath + '_mean'] = mean_predicted_eye_movements
 
             # mean square error between each measure in simulation and eye-tracking
-            # mean2error_df = compute_error(parameters.evaluation_measures,
-            #                               mean_true_eye_movements,
-            #                               mean_predicted_eye_movements)
-            # filepath = output_filepath.replace('model_output', 'analysed').replace('simulation_', f'RM2E_eye_movements_')
-            #mean2error_df.to_csv(filepath, sep='\t', index=False)
+            mean2error_df = compute_error(parameters.evaluation_measures,
+                                          mean_true_eye_movements,
+                                          mean_predicted_eye_movements)
+            filepath = output_filepath.replace('model_output', 'analysed').replace('simulation_', f'RM2E_eye_movements_')
+            mean2error_df.to_csv(filepath, sep='\t', index=False)
 
             # stat tests
-            # fit_mixed_effects(parameters, true_eye_movements, mean_predicted_eye_movements, output_filepath)
+            fit_mixed_effects(parameters, true_eye_movements, mean_predicted_eye_movements, output_filepath)
 
     if data_log:
         # scale durations from eye-tracking data to be more aligned to OB1 durations which happens in cycles of 25ms
