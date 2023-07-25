@@ -173,7 +173,7 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
 
         elif pm.prediction_flag == 'llama':
             # language_model = LlamaForCausalLM.from_pretrained("decapoda-research/llama-7b-hf", load_in_4bit=True, torch_dtype=torch.float16).to(device)
-            language_model = LlamaForCausalLM.from_pretrained("decapoda-research/llama-7b-hf").to(device)
+            language_model = LlamaForCausalLM.from_pretrained("decapoda-research/llama-7b-hf", torch_dtype=torch.float16).to(device)
             lm_tokenizer = LlamaTokenizer.from_pretrained("decapoda-research/llama-7b-hf")
             # Additional info when using cuda
             if device.type == 'cuda':
