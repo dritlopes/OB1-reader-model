@@ -165,12 +165,6 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
 
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print('Using device ', device)
-        # Additional info when using cuda
-        if device.type == 'cuda':
-            print(torch.cuda.get_device_name(0))
-            print('Memory Usage:')
-            print('Allocated:', round(torch.cuda.memory_allocated(0) / 1024 ** 3, 1), 'GB')
-            print('Cached:   ', round(torch.cuda.memory_cached(0) / 1024 ** 3, 1), 'GB')
 
         # load language model and its tokenizer
         if pm.prediction_flag == 'gpt2':
@@ -181,6 +175,12 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
             # language_model = LlamaForCausalLM.from_pretrained("decapoda-research/llama-7b-hf", load_in_4bit=True, torch_dtype=torch.float16).to(device)
             language_model = LlamaForCausalLM.from_pretrained("decapoda-research/llama-7b-hf").to(device)
             lm_tokenizer = LlamaTokenizer.from_pretrained("decapoda-research/llama-7b-hf")
+            # Additional info when using cuda
+            if device.type == 'cuda':
+                print(torch.cuda.get_device_name(0))
+                print('Memory Usage:')
+                print('Allocated:', round(torch.cuda.memory_allocated(0) / 1024 ** 3, 1), 'GB')
+                print('Cached:   ', round(torch.cuda.memory_cached(0) / 1024 ** 3, 1), 'GB')
 
         # list of words, set of words, sentences or passages. Each one is equivalent to one trial in an experiment
         for i, sequence in enumerate(pm.stim_all):
