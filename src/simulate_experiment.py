@@ -177,17 +177,16 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
             if recognized_word_at_position.any() and fixation < total_n_words-1:
                 # check whether we should pre-activate and in relation to which position (n+1 or n+2)
                 position = check_predictability(recognized_word_at_position, fixation, tokens, updated_positions)
-                if position:
-                    if pm.prediction_flag in ['language_model', 'cloze']: # TODO implement grammar and uniform baselines
-                        # avoid error because of missing word in provo cloze data
-                        if not pm.prediction_flag == 'cloze' and 'provo' in pm.stim_name.lower() and position == 50 and text_id == 17:
-                            lexicon_word_activity = activate_predicted_upcoming_word(position,
-                                                                                     tokens[position],
-                                                                                      lexicon_word_activity,
-                                                                                      lexicon,
-                                                                                      pred_dict,
-                                                                                      pm.pred_weight)
-                        updated_positions.append(position)
+                if position and pm.prediction_flag:
+                    # avoid error because of missing word in provo cloze data
+                    if not (pm.prediction_flag == 'cloze' and 'provo' in pm.stim_name.lower() and position == 50 and text_id == 17):
+                        lexicon_word_activity = activate_predicted_upcoming_word(position,
+                                                                                 tokens[position],
+                                                                                  lexicon_word_activity,
+                                                                                  lexicon,
+                                                                                  pred_dict,
+                                                                                  pm.pred_weight)
+                    updated_positions.append(position)
 
             # ---------------------- Make saccade decisions ---------------------
             # word selection and attention shift
@@ -285,7 +284,9 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
         # Check if end of text is reached AL: if fixation on last word and next saccade not refixation nor regression
         if fixation_data['foveal word index'] == total_n_words - 1 and saccade_info['saccade type'] not in ['refixation', 'regression']:
             end_of_text = True
-            # print(recognized_word_at_position)
+            continue
+        elif not attention_position:
+            end_of_text = True
             continue
         else:
             print(saccade_symbols[saccade_info['saccade type']])

@@ -80,7 +80,7 @@ def simulate_reading(global_parameters):
 
 def main():
 
-    useparser=True
+    useparser=False
     if useparser:
         parser = argparse.ArgumentParser()
         parser.add_argument('stimuli_filepath')
@@ -119,7 +119,7 @@ def main():
         }
     else:
         global_parameters = {
-            "task_to_run" : 'continuous_reading',
+            "task_to_run": 'continuous_reading',
             "stimuli_filepath": "../data/processed/Provo_Corpus.csv",
             "stimuli_separator": "\t",
             "language": 'english',

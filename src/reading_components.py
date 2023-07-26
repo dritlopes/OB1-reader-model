@@ -237,8 +237,10 @@ def activate_predicted_upcoming_word(position, target_word, lexicon_word_activit
 
     try:
         predicted = pred_dict[str(position)]
+
         if predicted['target'] != target_word:
             warnings.warn(f'Target word in cloze task "{predicted["target"]}" not the same as target word in model stimuli "{target_word}", position {position}')
+
         for token, pred in predicted['predictions'].items():
             if token in lexicon:
                 # print(f'PREDICTED: {token}, {pred}')
@@ -246,6 +248,7 @@ def activate_predicted_upcoming_word(position, target_word, lexicon_word_activit
                 # print(f'act before: {lexicon_word_activity[i]}')
                 lexicon_word_activity[i] += pred * pred_weight
                 # print(f'act after: {lexicon_word_activity[i]}')
+
     except KeyError:
         print(f'Position {position} not found in predictability map')
 
