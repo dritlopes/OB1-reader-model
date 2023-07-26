@@ -113,7 +113,7 @@ def get_first_pass_fixations(simulation_df:pd.DataFrame):
                     # check each fixation on the word
                     for i, fix in fix_hist.iterrows():
                         # if fixation was not the result of a regression
-                        if fix['saccade type'] != 'regression':
+                        if fix['saccade_type'] != 'regression':
                             # add to first-pass if first fixation on word
                             if fix['fixation_counter'] == fix_hist['fixation_counter'].tolist()[0]:
                                 first_pass_indices.append(i)
@@ -169,7 +169,7 @@ def get_single_fix_words(first_pass):
         single_fix['word_id'].append(word_info[2])
         if len(hist) == 1:
             single_fix['single_fix'].append(1)
-            single_fix['single_fix_duration'].append(hist['fixation duration'].tolist()[0])
+            single_fix['single_fix_duration'].append(hist['fixation_duration'].tolist()[0])
         else:
             single_fix['single_fix'].append(0)
             single_fix['single_fix_duration'].append(None)
@@ -186,7 +186,7 @@ def get_regressions_in(simulation_output):
         regressions['simulation_id'].append(word_info[0])
         regressions['text_id'].append(word_info[1])
         regressions['word_id'].append(word_info[2])
-        if 'regression' in hist['saccade type'].tolist():
+        if 'regression' in hist['saccade_type'].tolist():
             regressions['regression_in'].append(1)
         else:
             regressions['regression_in'].append(0)
@@ -246,15 +246,15 @@ def aggregate_fixations_per_word(simulation_output, first_pass, stimuli, measure
         elif measure == 'first_fix_duration':
             results_per_word['first_fix_duration'] = first_pass.loc[first_pass.groupby(
                 ['simulation_id', 'text_id', 'word_id']).apply(lambda x: x.index[0]).values, :].reset_index().rename(
-                columns={'fixation duration': 'first_fix_duration'})
+                columns={'fixation_duration': 'first_fix_duration'})
 
         elif measure == 'gaze_duration':
             results_per_word['gaze_duration'] = first_pass.groupby(['simulation_id', 'text_id', 'word_id'])[
-                ['fixation duration']].sum().reset_index().rename(columns={'fixation duration': 'gaze_duration'})
+                ['fixation_duration']].sum().reset_index().rename(columns={'fixation_duration': 'gaze_duration'})
 
         elif measure == 'total_reading_time':
             results_per_word['total_reading_time'] = simulation_output.groupby(['simulation_id', 'text_id', 'word_id'])[
-                ['fixation duration']].sum().reset_index().rename(columns={'fixation duration': 'total_reading_time'})
+                ['fixation_duration']].sum().reset_index().rename(columns={'fixation_duration': 'total_reading_time'})
 
         elif measure == 'regression_in':
             results_per_word['regression_in'] = get_regressions_in(simulation_output)
@@ -359,6 +359,13 @@ def compute_error(measures, true, pred):
 
     return mean2error_df
 
+def word_recognition_acc(model_recognized, text_words):
+
+    acc = [1 if text_word == model_recognized[i] else 0 for i, text_word in enumerate(text_words)]
+    acc_score = sum(acc)/len(acc)
+
+    return acc_score
+
 def fit_mixed_effects(parameters, true, predicted, output_filepath):
     
     # generalized mixed effects model doc: https://www.statsmodels.org/stable/generated/statsmodels.genmod.bayes_mixed_glm.BinomialBayesMixedGLM.from_formula.html#statsmodels.genmod.bayes_mixed_glm.BinomialBayesMixedGLM.from_formula
@@ -381,7 +388,6 @@ def fit_mixed_effects(parameters, true, predicted, output_filepath):
         # # merge pred and true
         # # makes sure predicted means are repeated for each participant in human data
         # predicted_measure = []
-        print(measure)
         # print('start merging')
         # for item, hist in true.groupby(['participant_id', 'text_id', 'word_id']):
         #     pred_value = predicted.query(f"text_id=={item[1]} & word_id=={item[2]}")[measure]
@@ -394,7 +400,6 @@ def fit_mixed_effects(parameters, true, predicted, output_filepath):
         # round decimals to whole numbers
         data_measure[measure].astype(int)
         data_measure[f'simulated_{measure}'].astype(int)
-        print(len(data_measure[measure].tolist()))
         # for now, td floats to whole number so save time, delete later
         if parameters.prediction_flag == 'cloze' and measure in ['single_fix_duration', 'skip', 'single_fix', 'first_fix_duration', 'gaze_duration ']:
             continue
@@ -509,8 +514,8 @@ def evaluate_output (parameters_list: list):
 
             output_filepath = parameters.results_filepath
             simulation_output = pd.read_csv(output_filepath, sep='\t')
-            simulation_output = simulation_output.rename(columns={'foveal word index': 'word_id',
-                                                                  'foveal word': 'word'})
+            simulation_output = simulation_output.rename(columns={'foveal_word_index': 'word_id',
+                                                                  'foveal_word': 'word'})
 
             if 'provo' in parameters.eye_tracking_filepath.lower():
                 # exclude first word of every passage (not in eye tracking -PROVO- data either)
@@ -586,6 +591,20 @@ def evaluate_output (parameters_list: list):
                                           mean_predicted_eye_movements)
             filepath = output_filepath.replace('model_output', 'analysed').replace('simulation_', f'RM2E_eye_movements_')
             mean2error_df.to_csv(filepath, sep='\t', index=False)
+
+            # word recognition accuracy
+            all_acc, sim_ids = [], []
+            for sim_id, fixations in simulation_output.groupby('simulation_id'):
+                recognized_words = fixations['recognized_word_at_foveal_position'].tolist()
+                stimulus_words = fixations['word'].tolist()
+                acc_score = word_recognition_acc(recognized_words,stimulus_words)
+                all_acc.append(round(acc_score,3))
+                sim_ids.append(sim_id)
+            all_acc.append(round(sum(all_acc)/len(all_acc),3))
+            sim_ids.append('MEAN')
+            recog_acc_df = pd.DataFrame({'simulation_id': sim_ids,'word_recognition_accuracy': all_acc})
+            filepath = output_filepath.replace('model_output', 'analysed').replace('simulation_', f'word_recognition_acc_')
+            recog_acc_df.to_csv(filepath, sep='\t', index=False)
 
             # stat tests
             fit_mixed_effects(parameters, true_eye_movements, mean_predicted_eye_movements, output_filepath)

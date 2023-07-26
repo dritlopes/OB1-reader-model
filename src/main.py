@@ -124,7 +124,7 @@ def main():
             "stimuli_separator": "\t",
             "language": 'english',
             "run_exp": True,
-            "analyze_results": False,
+            "analyze_results": True,
             "results_filepath": '',
             "parameters_filepath": '',
             "number_of_simulations": None,

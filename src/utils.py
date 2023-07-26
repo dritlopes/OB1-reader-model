@@ -196,9 +196,10 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
             unknown_tokens = dict()
             pred_info = semantic_processing(sequence, lm_tokenizer, language_model, pm.topk, pm.pred_threshold, device)
             for pos in range(1, len(sequence)):
-                pred_dict[str(pos)] = {'target': sequence[pos],
+                target = pre_process_string(sequence[pos])
+                pred_dict[str(pos)] = {'target': target,
                                         'predictions': dict()}
-                unknown_tokens[str(pos)] = {'target': sequence[pos],
+                unknown_tokens[str(pos)] = {'target': target,
                                             'predictions': dict()}
                 for token, pred in zip(pred_info[pos][0], pred_info[pos][1]):
                     token_processed = pre_process_string(token)
@@ -258,12 +259,14 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
 
                     # fix error in provo cloze data indexing
                     for row in [(2,44),(12,18)]:
-                        if int(text_id) == row[0] and int(text_position) in range(row[1]+1, len(info['Word_Number'].unique())+2):
+                        if int(text_id) == row[0] \
+                                and int(text_position) in range(row[1]+1, len(info['Word_Number'].unique())+2):
                             text_position = str(int(text_position) - 1)
 
-                    word_pred_values_dict[text_id][text_position] = {'target': responses['Word'].tolist()[0],
+                    target = pre_process_string(responses['Word'].tolist()[0])
+                    word_pred_values_dict[text_id][text_position] = {'target': target,
                                                                      'predictions': dict()}
-                    unknown_word_pred_values_dict[text_id][text_position] = {'target': responses['Word'].tolist()[0],
+                    unknown_word_pred_values_dict[text_id][text_position] = {'target': target,
                                                                              'predictions': dict()}
                     responses = responses.to_dict('records')
                     for response in responses:
@@ -386,25 +389,18 @@ def set_up_inhibition_matrix(pm, lexicon, lexicon_word_ngrams):
 
     return word_inhibition_matrix
 
-def write_out_simulation_data(simulation_data,outfile_sim_data, type='fixated'):
+def write_out_simulation_data(simulation_data, outfile_sim_data):
 
     simulation_results = defaultdict(list)
 
     for sim_index, texts_simulations in simulation_data.items():
         for text_index, text in texts_simulations.items():
-            if type == 'fixated':
-                for fix_counter, fix_info in text.items():
-                    simulation_results['fixation_counter'].append(fix_counter)
-                    simulation_results['text_id'].append(text_index)
-                    simulation_results['simulation_id'].append(sim_index)
-                    for info_name, info_value in fix_info.items():
-                        simulation_results[info_name].append(info_value)
-            elif type == 'skipped':
-                for skipped in text:
-                    simulation_results['text_id'].append(text_index)
-                    simulation_results['simulation_id'].append(sim_index)
-                    for info_name, info_value in skipped.items():
-                        simulation_results[info_name].append(info_value)
+            for fix_counter, fix_info in text.items():
+                simulation_results['fixation_counter'].append(fix_counter)
+                simulation_results['text_id'].append(text_index)
+                simulation_results['simulation_id'].append(sim_index)
+                for info_name, info_value in fix_info.items():
+                    simulation_results[info_name].append(info_value)
 
     simulation_results_df = pd.DataFrame.from_dict(simulation_results)
     simulation_results_df.to_csv(outfile_sim_data, sep='\t', index=False)

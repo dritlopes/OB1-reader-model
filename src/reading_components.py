@@ -25,7 +25,7 @@ def compute_stimulus(fixation, tokens):
 
     return stimulus, stimulus_position, fixated_position_stimulus
 
-def compute_eye_position(stimulus, fixated_position_stimulus, offset_from_word_center, eye_pos_in_fix_word=None):
+def compute_eye_position(stimulus, fixated_position_stimulus, eye_pos_in_fix_word=None):
 
     """
     Given the stimulus during a fixation, find where the eye is positioned in relation to the stimulus.
@@ -37,7 +37,7 @@ def compute_eye_position(stimulus, fixated_position_stimulus, offset_from_word_c
         center_of_fixation = round(len(stimulus[fixated_position_stimulus]) * 0.5)
         # find length of stimulus (in characters) up until fixated word
         len_till_fix = sum([len(token)+1 for token in stimulus[:fixated_position_stimulus]])
-        eye_position = len_till_fix + center_of_fixation + offset_from_word_center
+        eye_position = len_till_fix + center_of_fixation # + offset_from_word_center
     else:
         stim_indices, word_indices = [],[]
         for i, char in enumerate(stimulus + ' '):
@@ -239,7 +239,7 @@ def activate_predicted_upcoming_word(position, target_word, lexicon_word_activit
         predicted = pred_dict[str(position)]
 
         if predicted['target'] != target_word:
-            warnings.warn(f'Target word in cloze task "{predicted["target"]}" not the same as target word in model stimuli "{target_word}", position {position}')
+            warnings.warn(f'Target word in predictability map "{predicted["target"]}" not the same as target word in model stimuli "{target_word}", position {position}')
 
         for token, pred in predicted['predictions'].items():
             if token in lexicon:
@@ -284,7 +284,7 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
             if word_reminder_length > 0:
                 next_fixation = 0
                 if fixation_counter - 1 in all_data.keys():
-                    if not all_data[fixation_counter - 1]['saccade type'] == 'refixation':
+                    if not all_data[fixation_counter - 1]['saccade_type'] == 'refixation':
                         refix_size = np.round(word_reminder_length * refix_size)
 
     # forward saccade: perform normal forward saccade (unless at the last position in the text)
@@ -332,8 +332,8 @@ def compute_next_eye_position(pm, attention_position, eye_position, fixation, fi
 
     saccade_distance = saccade_distance + saccade_error
     # offset_from_word_center = saccade_info['offset from word center'] + saccade_error
-    saccade_info['saccade distance'] = float(saccade_distance)
-    saccade_info['saccade error'] = float(saccade_error)
+    saccade_info['saccade_distance'] = float(saccade_distance)
+    saccade_info['saccade_error'] = float(saccade_error)
 
     # compute the position of next fixation
     eye_position = int(np.round(eye_position + saccade_distance))
@@ -426,7 +426,7 @@ def compute_next_eye_position(pm, attention_position, eye_position, fixation, fi
                     eye_pos_in_fix_word = letter_index
                     if move > 2: move = 2
                     elif move < -1: move = -1
-                    saccade_info['saccade type'] = fixation_saccade_map[move]
+                    saccade_info['saccade_type'] = fixation_saccade_map[move]
                     break
 
     return fixation, eye_pos_in_fix_word, saccade_info
