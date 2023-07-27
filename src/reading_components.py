@@ -212,8 +212,6 @@ def semantic_processing(text, tokenizer, language_model, prediction_flag, top_k 
         if prediction_flag == 'gpt2':
             target_word = ' ' + text[i]
         target_token = tokenizer.encode(target_word, return_tensors='pt')
-        if prediction_flag == 'llama':
-            target_token = target_token['input_ids']
 
         if top_k == 'target_word':
             if target_token.size(dim=1) > 0:
