@@ -7,6 +7,10 @@
     {
       "prediction_flag": "llama",
       "number_of_simulations": 1
+    },
+    {
+      "prediction_flag": "gpt2",
+      "number_of_simulations": 1
     }
   ]
 }

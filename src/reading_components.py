@@ -187,7 +187,7 @@ def match_active_words_to_input_slots(order_match_check, stimulus, recognized_wo
 
     return recognized_word_at_position, lexicon_word_activity
 
-def semantic_processing(text, tokenizer, language_model, top_k = 10, threshold = None, device = None):
+def semantic_processing(text, tokenizer, language_model, prediction_flag, top_k = 10, threshold = None, device = None):
 
     pred_info = dict()
     #print(text, len(text))
@@ -207,14 +207,23 @@ def semantic_processing(text, tokenizer, language_model, top_k = 10, threshold =
         # convert raw scores into probabilities (between 0 and 1)
         probabilities = nn.functional.softmax(logits, dim=1)
 
-        if top_k == 'target_word':
+        # # add target word, also if subtoken
+        target_word = text[i]
+        if prediction_flag == 'gpt2':
             target_word = ' ' + text[i]
-            target_token = tokenizer.encode(target_word, return_tensors='pt')
-            # print(target_token, [tokenizer.decode(token) for token in target_token[0]])
-            # print(target_token.size())
+        target_token = tokenizer.encode(target_word, return_tensors='pt')
+        if prediction_flag == 'llama':
+            target_token = target_token['input_ids']
+
+        if top_k == 'target_word':
             if target_token.size(dim=1) > 0:
                 top_tokens = [target_word]
                 target_id = target_token[0][0]
+                # deals with quirk from llama of having <unk> as first token
+                if prediction_flag == 'llama':
+                    decoded_token = [tokenizer.decode(token) for token in target_token[0]]
+                    if decoded_token[0] == '<unk>':
+                        target_id = target_token[0][1]
                 top_probabilities = [float(probabilities[0,target_id])]
                 pred_info[i] = (top_tokens, top_probabilities)
         else:
@@ -229,6 +238,12 @@ def semantic_processing(text, tokenizer, language_model, top_k = 10, threshold =
                     k = len(probabilities[0])
             top_tokens = [tokenizer.decode(id.item()) for id in torch.topk(probabilities, k=k)[1][0]]
             top_probabilities = [float(pred) for pred in torch.topk(probabilities, k=k)[0][0]]
+            # add target word if among top pred, also if subtoken
+            target_tokens = [tokenizer.decode(token) for token in target_token[0]]
+            target_tokens = [token for token in target_tokens if token != '<unk>']
+            if target_tokens[0] in top_tokens:
+                loc = top_tokens.index(target_tokens[0])
+                top_tokens[loc] = target_word
             pred_info[i] = (top_tokens, top_probabilities)
 
     return pred_info

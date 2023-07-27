@@ -607,7 +607,7 @@ def evaluate_output (parameters_list: list):
             recog_acc_df.to_csv(filepath, sep='\t', index=False)
 
             # stat tests
-            fit_mixed_effects(parameters, true_eye_movements, mean_predicted_eye_movements, output_filepath)
+            # fit_mixed_effects(parameters, true_eye_movements, mean_predicted_eye_movements, output_filepath)
 
     if data_log:
         # scale durations from eye-tracking data to be more aligned to OB1 durations which happens in cycles of 25ms

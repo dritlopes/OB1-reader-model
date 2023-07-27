@@ -80,14 +80,14 @@ def simulate_reading(global_parameters):
 
 def main():
 
-    useparser=True
+    useparser=False
     if useparser:
         parser = argparse.ArgumentParser()
         parser.add_argument('stimuli_filepath')
         parser.add_argument('--stimuli_separator', default='\t')
         parser.add_argument('--task_to_run', default='continuous_reading')
         parser.add_argument('--language', default='english')
-        parser.add_argument('--run_exp', default='True',help='Should the experiment simulation run?', choices=['True', 'False']),
+        parser.add_argument('--run_exp', default='True', help='Should the experiment simulation run?', choices=['True', 'False']),
         parser.add_argument('--number_of_simulations', default=None, help='How many times should I run a simulation?')
         parser.add_argument('--analyze_results', default="False", help='Should the results be analyzed?', choices=["True", "False"])
         parser.add_argument('--results_filepath', default=None, help='Path to file with results to be analysed if analyse_results=True and run_exp=False')

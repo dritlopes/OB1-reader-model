@@ -4,7 +4,7 @@
 #SBATCH -J run_OB1_simulations
 #SBATCH -N 1
 #SBATCH -p defq
-#SBATCH --gpus=1
+#SBATCH --gpus=A30:1
 #SBATCH -t 1:00:00
 #SBATCH --mail-type=BEGIN,END
 #SBATCH --mail-user=a.t.lopesrego@vu.nl

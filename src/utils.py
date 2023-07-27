@@ -6,7 +6,7 @@ import numpy as np
 import chardet
 import json
 import re
-from transformers import GPT2LMHeadModel, GPT2Tokenizer, set_seed
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
 from transformers import LlamaForCausalLM, LlamaTokenizer
 import torch
 from reading_components import semantic_processing
@@ -66,7 +66,7 @@ def pre_process_string(string, remove_punctuation=True, all_lowercase=True, stri
 def create_freq_file(language, task_words, output_file_frequency_map, freq_threshold, n_high_freq_words, task, verbose):
 
     # TODO AL: this was needed to reproduce results on PSCall because the overlap between the words and SUBTLEX-DE was low (less than half). Need to fix this later
-    if task == 'continuous reading' and language == 'german':
+    if task == 'continuous_reading' and language == 'german':
         filepath = "../data/raw/PSCall_freq_pred.txt"
         my_data = pd.read_csv(filepath, delimiter="\t",
                               encoding=chardet.detect(open(filepath, "rb").read())['encoding'])
@@ -131,8 +131,9 @@ def create_freq_file(language, task_words, output_file_frequency_map, freq_thres
             file_freq_dict[word] = frequency_words_dict[word]
 
         # add top n words from frequency resource
-        for line_number in range(n_high_freq_words):
-            file_freq_dict[(freq_words.iloc[line_number][0])] = freq_words.iloc[line_number][1]
+        for word, freq in zip(freq_words[word_col].tolist()[:n_high_freq_words], freq_words[freq_type].tolist()[:n_high_freq_words]):
+            # file_freq_dict[(freq_words.iloc[line_number][0])] = freq_words.iloc[line_number][1]
+            file_freq_dict[word] = freq
 
         if verbose:
             print("amount of words in task:", len(task_words))
@@ -207,7 +208,8 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
                     if token_processed not in pred_dict[str(pos)]['predictions'].keys():
                         pred_dict[str(pos)]['predictions'][token_processed] = pred
                     if token_processed not in lexicon:
-                        unknown_tokens[str(pos)]['predictions'][token] = pred
+                        unknown_tokens[str(pos)]['predictions'][token] = {'token_processed': token_processed,
+                                                                          'pred': pred}
                     # else: # in case token is a sub-word, try to concatenate token with next predicted token
                     #     concat_string = ' '.join(sequence[:i]) + ' ' + token
                     #     input = lm_tokenizer(concat_string, return_tensors='pt')
@@ -274,7 +276,8 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
                             word = pre_process_string(response['Response'])
                             word_pred_values_dict[text_id][text_position]['predictions'][word] = float(response['Response_Proportion'])
                             if word not in lexicon:
-                                unknown_word_pred_values_dict[text_id][text_position]['predictions'][word] = float(response['Response_Proportion'])
+                                unknown_word_pred_values_dict[text_id][text_position]['predictions'][response['Response']] = {'token_processed': word,
+                                                                                                                            'pred': float(response['Response_Proportion'])}
 
             # check alignment between cloze target words and model stimuli words
             for i, text in pm.stim.iterrows():

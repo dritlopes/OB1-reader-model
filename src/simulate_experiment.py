@@ -447,7 +447,7 @@ def simulate_experiment(pm):
     tokens = [pre_process_string(token) for token in tokens]
     # remove empty strings which were once punctuations
     tokens = [token for token in tokens if token != '']
-    word_frequencies = get_word_freq(pm, set([token.lower() for token in tokens]))
+    word_frequencies = get_word_freq(pm, set(tokens))
     max_frequency = max(word_frequencies.values())
     lexicon = list(set(tokens) | set(word_frequencies.keys()))
     lexicon = [pre_process_string(word) for word in lexicon]
