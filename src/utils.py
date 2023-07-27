@@ -195,7 +195,7 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
             sequence = [token for token in sequence.split(' ') if token != '']
             pred_dict = dict()
             unknown_tokens = dict()
-            pred_info = semantic_processing(sequence, lm_tokenizer, language_model, pm.topk, pm.pred_threshold, device)
+            pred_info = semantic_processing(sequence, lm_tokenizer, language_model, pm.prediction_flag, pm.topk, pm.pred_threshold, device)
             for pos in range(1, len(sequence)):
                 target = pre_process_string(sequence[pos])
                 pred_dict[str(pos)] = {'target': target,

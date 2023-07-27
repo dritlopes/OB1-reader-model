@@ -1,10 +1,6 @@
 {
   "parameters" : [
     {
-      "prediction_flag": "cloze",
-      "number_of_simulations": 1
-    },
-    {
       "prediction_flag": "llama",
       "number_of_simulations": 1
     },
