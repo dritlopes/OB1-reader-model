@@ -121,6 +121,9 @@ def create_freq_file(language, task_words, output_file_frequency_map, freq_thres
         # preprocess words for correct matching with tokens in stimulus
         freq_words[word_col] = freq_words[word_col].apply(lambda x : pre_process_string(x))
         # only keep words whose frequencies are higher than threshold
+        # frequencies = freq_words[freq_type].tolist()
+        # print(f'Max frequency value: {max(frequencies)}, word "{freq_words[word_col].tolist()[frequencies.index(max(frequencies))]}"')
+        # print(f'Min frequency value: {min(frequencies)}, word "{freq_words[word_col].tolist()[frequencies.index(min(frequencies))]}"')
         freq_words = freq_words[freq_words[freq_type] > freq_threshold]
         frequency_words_dict = dict(zip(freq_words[freq_words.columns[0]], freq_words[freq_words.columns[1]]))
 
@@ -143,7 +146,7 @@ def create_freq_file(language, task_words, output_file_frequency_map, freq_thres
         with open(output_file_frequency_map, "w") as f:
             json.dump(file_freq_dict, f, ensure_ascii=False)
 
-def get_word_freq(pm, unique_words, n_high_freq_words = 500, freq_threshold = 0.15, verbose=True):
+def get_word_freq(pm, unique_words, n_high_freq_words = 500, freq_threshold = 1, verbose=True):
 
     output_word_frequency_map = f"../data/processed/frequency_map_{pm.stim_name}_{pm.task_to_run}_{pm.language}.json"
 

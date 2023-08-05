@@ -14,7 +14,7 @@ from reading_helper_functions import get_threshold, string_to_open_ngrams, \
 
 logger = logging.getLogger(__name__)
 
-def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index,lexicon_thresholds,lexicon,pred_dict,freq_values):
+def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index,lexicon_thresholds,lexicon,pred_dict,freq_values,verbose=True):
 
     all_data = {}
     # set to true when end of text is reached
@@ -63,7 +63,7 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
     # ---------------------- Start looping through fixations ---------------------
     while not end_of_text:
 
-        print(f'---Fixation {fixation_counter} at position {fixation}---')
+        if verbose: print(f'---Fixation {fixation_counter} at position {fixation}---')
 
         fixation_data = defaultdict(list)
 
@@ -75,7 +75,7 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
         fixation_data['foveal_word_index'] = fixation
         fixation_data['attentional_width'] = attend_width
         fixation_data['foveal_word_frequency'] = freq_values[tokens[fixation]] if tokens[fixation] in freq_values.keys() else 0
-        fixation_data['foveal_word_predictability'] = pred_dict[str(fixation)][tokens[fixation]] if str(fixation) in pred_dict.keys() and tokens[fixation] in pred_dict[str(fixation)].keys() else 0
+        fixation_data['foveal_word_predictability'] = pred_dict[str(fixation)][tokens[fixation]] if pred_dict and str(fixation) in pred_dict.keys() and tokens[fixation] in pred_dict[str(fixation)].keys() else 0
         fixation_data['foveal_word_length'] = len(tokens[fixation])
         fixation_data['foveal_word_threshold'] = lexicon_thresholds[tokens_to_lexicon_indices[fixation]]
 
@@ -91,7 +91,7 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
         eye_position = compute_eye_position(stimulus, fixated_position_in_stimulus, eye_position)
         fixation_data['stimulus'] = stimulus
         fixation_data['eye_position'] = eye_position
-        print(f"Stimulus: {stimulus}\nEye position: {eye_position}")
+        if verbose: print(f"Stimulus: {stimulus}\nEye position: {eye_position}")
 
         # ---------------------- Update attention width ---------------------
         # update attention width according to whether there was a regression in the last fixation,
@@ -114,7 +114,7 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
 
         # ---------------------- Start processing of stimulus ---------------------
         #print('Entering cycle loops to define word activity...')
-        print("fix on: " + tokens[fixation] + '  attent. width: ' + str(attend_width) + ' fixwrd thresh.' + str(round(lexicon_thresholds[tokens_to_lexicon_indices[fixation]],3)))
+        if verbose: print("fix on: " + tokens[fixation] + '  attent. width: ' + str(attend_width) + ' fixwrd thresh.' + str(round(lexicon_thresholds[tokens_to_lexicon_indices[fixation]],3)))
         shift = False
         n_cycles = 0
         n_cycles_since_attent_shift = 0
@@ -127,7 +127,7 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
         n_ngrams, total_ngram_activity, all_ngrams, word_input = compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_position, attend_width, pm)
         fixation_data['n_ngrams'] = n_ngrams
         fixation_data['total_ngram_activity'] = total_ngram_activity
-        print("  input to fixwrd at first cycle: " + str(round(word_input[tokens_to_lexicon_indices[fixation]], 3)))
+        if verbose: print("  input to fixwrd at first cycle: " + str(round(word_input[tokens_to_lexicon_indices[fixation]], 3)))
 
         # Counter n_cycles_since_attent_shift is 0 until attention shift (saccade program initiation),
         # then starts counting to 5 (because a saccade program takes 5 cycles, or 125ms.)
@@ -135,19 +135,20 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
 
             # ---------------------- Update word activity per cycle ---------------------
             # Update word act with word inhibition (input remains same, so does not have to be updated)
-            lexicon_word_activity, lexicon_word_inhibition = update_word_activity(lexicon_word_activity, word_overlap_matrix, pm, word_input, all_ngrams, len(lexicon))
+            lexicon_word_activity, lexicon_word_inhibition = update_word_activity(lexicon_word_activity, word_overlap_matrix, pm, word_input, len(lexicon))
 
             # update cycle info
             foveal_word_index = lexicon_word_index[tokens[fixation]]
             foveal_word_activity = lexicon_word_activity[foveal_word_index]
             fixation_data['foveal_word_activity_per_cycle'].append(foveal_word_activity)
-            fixation_data['foveal_word_inhibition_per_cycle'].append(abs(lexicon_word_inhibition[foveal_word_index]))
+            # fixation_data['foveal_word_inhibition_per_cycle'].append(abs(lexicon_word_inhibition[foveal_word_index]))
             stim_activity = sum([lexicon_word_activity[lexicon_word_index[word]] for word in stimulus.split() if word in lexicon_word_index.keys()])
             fixation_data['stimulus_activity_per_cycle'].append(stim_activity)
             total_activity = sum(lexicon_word_activity)
             fixation_data['lexicon_activity_per_cycle'].append(total_activity)
 
-            print('CYCLE ', str(n_cycles), '   activ @fix ', str(round(foveal_word_activity,3)), ' inhib  #@fix', str(round(lexicon_word_inhibition[foveal_word_index],6)))
+            if verbose: print('CYCLE ', str(n_cycles), '   activ @fix ', str(round(foveal_word_activity,3)))
+            # ' inhib  #@fix', str(round(lexicon_word_inhibition[foveal_word_index],6))
 
             # ---------------------- Match words in lexicon to slots in input ---------------------
             # word recognition, by checking matching active wrds to slots
@@ -162,22 +163,23 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                                                   stimulus_position,
                                                   pm.word_length_similarity_constant)
 
-            # # update threshold of n+1 or n+2 with pred value
-            # if pm.prediction_flag and fixation < total_n_words-1:
-            #     updated_thresh_positions, lexicon_thresholds = update_lexicon_threshold(recognized_word_at_position,
+            # update threshold of n+1 or n+2 with pred value
+            # if recognized_word_at_position.any() and pm.prediction_flag and fixation < total_n_words-1:
+            #     updated_positions, lexicon_thresholds = update_lexicon_threshold(recognized_word_at_position,
             #                                                                             fixation,
             #                                                                             tokens,
             #                                                                             updated_positions,
             #                                                                             lexicon_thresholds,
             #                                                                             pm.wordpred_p,
-            #                                                                             pred_values,
-            #                                                                             tokens_to_lexicon_indices)
+            #                                                                             pred_dict,
+            #                                                                             tokens_to_lexicon_indices,
+            #                                                                             lexicon)
 
             # after recognition, prediction-based activation of recognized word + 1
-            if recognized_word_at_position.any() and fixation < total_n_words-1:
+            if recognized_word_at_position.any() and fixation < total_n_words-1 and pm.prediction_flag:
                 # check whether we should pre-activate and in relation to which position (n+1 or n+2)
                 position = check_predictability(recognized_word_at_position, fixation, tokens, updated_positions)
-                if position and pm.prediction_flag:
+                if position:
                     # avoid error because of missing word in provo cloze data
                     if not (pm.prediction_flag == 'cloze' and 'provo' in pm.stim_name.lower() and position == 50 and text_id == 17):
                         lexicon_word_activity = activate_predicted_upcoming_word(position,
@@ -185,7 +187,7 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                                                                                   lexicon_word_activity,
                                                                                   lexicon,
                                                                                   pred_dict,
-                                                                                  pm.pred_weight)
+                                                                                  pm.wordpred_p)
                     updated_positions.append(position)
 
             # ---------------------- Make saccade decisions ---------------------
@@ -221,7 +223,7 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                                                                         foveal_word_index,
                                                                         pm)
                     fixation_data['foveal_word_activity_at_shift'] = fixation_data['foveal_word_activity_per_cycle'][-1]
-                    print('attentpos ', attention_position)
+                    if verbose: print('attentpos ', attention_position)
                     # AL: attention position is None if at the end of the text and saccade is not refixation nor regression, so do not compute new words input
                     if attention_position:
                         # AL: recompute word input, using ngram excitation and inhibition, because attentshift changes bigram input
@@ -231,7 +233,7 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                                                                                                     attention_position,
                                                                                                     attend_width, pm)
                         attention_position = np.round(attention_position)
-                    print("  input after attentshift: " + str(round(word_input[tokens_to_lexicon_indices[fixation]], 3)))
+                    if verbose: print("  input after attentshift: " + str(round(word_input[tokens_to_lexicon_indices[fixation]], 3)))
 
             if shift:
                 n_cycles_since_attent_shift += 1 # ...count cycles since attention shift
@@ -248,21 +250,24 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
         fixation_data['fixation_duration'] = fixation_duration
         fixation_data['recognized_words'] = recognized_word_at_position
 
-        print("Fixation duration: ", fixation_data['fixation duration'], " ms.")
+        if verbose: print("Fixation duration: ", fixation_duration, " ms.")
 
         if recognized_word_at_position[fixation]:
             fixation_data['recognized_word_at_foveal_position'] = recognized_word_at_position[fixation]
-            if recognized_word_at_position[fixation] == tokens[fixation]:
-                print("Correct word recognized at fixation!")
-            else:
-                print(f"Wrong word recognized at fixation! (Recognized: {recognized_word_at_position[fixation]})")
+            if verbose:
+                if recognized_word_at_position[fixation] == tokens[fixation]:
+                    print("Correct word recognized at fixation!")
+                else:
+                    print(f"Wrong word recognized at fixation! (Recognized: {recognized_word_at_position[fixation]})")
         else:
             fixation_data['recognized_word_at_foveal_position'] = ""
-            print("No word was recognized at fixation position")
+            if verbose:
+                print("No word was recognized at fixation position")
+                print(f"Word with highest activation: {lexicon[np.argmax(lexicon_word_activity)]}")
 
         # add fixation dict to list of dicts
         all_data[fixation_counter] = fixation_data
-        # print(fixation_data)
+        if verbose: print(fixation_data)
 
         fixation_counter += 1
 
@@ -276,6 +281,7 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                     saccade_info['saccade_cause'] = 2  # AL: bcs n resulted from regression and n + 1 has been recognized
                 else:
                     saccade_info['saccade_cause'] = 1  # AL: bcs n + 2 has highest attwght (letter excitation)
+
             elif saccade_info['saccade_type'] == 'refixation':
                 if not recognized_word_at_position[fixation]:
                     saccade_info['saccade_cause'] = 1  # AL: bcs fixated word has not been recognized
@@ -290,7 +296,9 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
             end_of_text = True
             continue
         else:
-            print(saccade_symbols[saccade_info['saccade_type']])
+            if verbose:
+                if saccade_info['saccade_type']:
+                    print(saccade_symbols[saccade_info['saccade_type']])
 
     return all_data
 
@@ -383,7 +391,6 @@ def word_recognition(pm,word_inhibition_matrix,lexicon_word_ngrams,lexicon_word_
                                                                                   word_inhibition_matrix,
                                                                                   pm,
                                                                                   word_input,
-                                                                                  all_ngrams,
                                                                                   len(lexicon))
             trial_data['target act per cycle'].append(lexicon_word_activity[lexicon_word_index[target]])
             trial_data['lexicon act per cycle'].append(sum(lexicon_word_activity))
@@ -447,7 +454,7 @@ def simulate_experiment(pm):
     tokens = [pre_process_string(token) for token in tokens]
     # remove empty strings which were once punctuations
     tokens = [token for token in tokens if token != '']
-    word_frequencies = get_word_freq(pm, set(tokens))
+    word_frequencies = get_word_freq(pm, set(tokens), n_high_freq_words=500)
     max_frequency = max(word_frequencies.values())
     lexicon = list(set(tokens) | set(word_frequencies.keys()))
     lexicon = [pre_process_string(word) for word in lexicon]
@@ -488,6 +495,7 @@ def simulate_experiment(pm):
     # set up word-to-word inhibition matrix
     word_inhibition_matrix = set_up_inhibition_matrix(pm, lexicon, lexicon_word_ngrams)
     print("Inhibition grid ready.")
+    # word_inhibition_matrix = None
 
     # recognition threshold for each word in lexicon
     lexicon_thresholds = np.zeros((len(lexicon)), dtype=float)
@@ -515,6 +523,11 @@ def simulate_experiment(pm):
             for i, text in enumerate(pm.stim_all[:1]):
 
                 text_tokens = [pre_process_string(token) for token in text.split()]
+
+                predictions_in_text = None
+                if word_predictions:
+                    predictions_in_text = word_predictions[str(i)]
+
                 text_data = reading(pm,
                                     text_tokens,
                                     i,
@@ -523,8 +536,9 @@ def simulate_experiment(pm):
                                     lexicon_word_index,
                                     lexicon_thresholds,
                                     lexicon,
-                                    word_predictions[str(i)],
+                                    predictions_in_text,
                                     word_frequencies)
+
                 texts_simulations[i] = text_data
 
             all_data[sim_number] = texts_simulations

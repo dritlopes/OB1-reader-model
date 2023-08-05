@@ -111,7 +111,7 @@ def compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_p
 
     return n_ngrams, total_ngram_activity, all_ngrams, word_input
 
-def update_word_activity(lexicon_word_activity, word_overlap_matrix, pm, word_input, all_ngrams, lexicon_size):
+def update_word_activity(lexicon_word_activity, word_overlap_matrix, pm, word_input, lexicon_size):
 
     """
     In each processing cycle, re-compute word activity using word-to-word inhibition and decay.
@@ -133,6 +133,10 @@ def update_word_activity(lexicon_word_activity, word_overlap_matrix, pm, word_in
     lexicon_word_inhibition = np.dot((overlap_select ** 2), -(lexicon_select ** 2))
     # Combine word inhibition and input, and update word activity
     lexicon_total_input = np.add(lexicon_word_inhibition, word_input)
+
+    # in case you want to set word-to-word inhibition off
+    # lexicon_total_input = word_input
+    # lexicon_word_inhibition = None
 
     # final computation of word activity
     # pm.decay has a neg value, that's why it's here added, not subtracted
@@ -256,8 +260,9 @@ def activate_predicted_upcoming_word(position, target_word, lexicon_word_activit
 
         for token, pred in predicted['predictions'].items():
             if token in lexicon:
-                # print(f'PREDICTED: {token}, {pred}')
                 i = lexicon.index(token)
+                print(
+                    f'Word {token} received pre-activation {round(pred * pred_weight,3)} in position of text word {target_word} ({round(lexicon_word_activity[i],3)} -> {round(lexicon_word_activity[i] + pred * pred_weight,3)})')
                 # print(f'act before: {lexicon_word_activity[i]}')
                 lexicon_word_activity[i] += pred * pred_weight
                 # print(f'act after: {lexicon_word_activity[i]}')
@@ -280,7 +285,7 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
     next_fixation = 1
     refix_size = pm.refix_size
 
-    # regression: if the current fixation was a regression and next word has been recognized, move eyes to n+2 to resume reading
+    # skip bc regression: if the current fixation was a regression and next word has been recognized, move eyes to n+2 to resume reading
     if regression_flag[fixation] and recognized_word_at_position[fixation + 1]:
         next_fixation = 2
 
@@ -424,10 +429,10 @@ def compute_next_eye_position(pm, attention_position, eye_position, fixation, fi
                             2: 'wordskip'}
     eye_pos_in_fix_word = None
     word_letter_indices = [i for edges in word_edges.values() for i in range(edges[0], edges[1]+1)]
-    # if eye position is on a space, correct eye position to the closest letter to the left.
+    # if eye position is on a space, correct eye position to the closest letter to the right.
     if eye_position not in word_letter_indices:
         edges_indices = [edges[i] for edges in word_edges.values() for i in range(len(edges))]
-        eye_position = min(edges_indices, key=lambda x: abs(x - eye_position))
+        eye_position = min(edges_indices, key=lambda x: abs(x - eye_position)) + 2
     # find the next fixated word based on new eye position and determine saccade type based on that
     for word_i, edges in word_edges.items():
         if not eye_pos_in_fix_word:

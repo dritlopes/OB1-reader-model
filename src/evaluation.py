@@ -338,21 +338,24 @@ def drop_nan_values(true_values:pd.Series, simulated_values:pd.Series):
     return values
 
 # ---------------- Evaluation functions ------------------
-def compute_root_mean_squared_error(true_values:list, simulated_values:list):
+def compute_root_mean_squared_error(true_values:list, simulated_values:list, normalize):
 
     # root mean squared error measures the average difference between values predicted by the model
     # and the eye-tracking values. It provides an estimate of how well the model was able to predict the
     # eye-tracking value.
-    return math.sqrt(np.square(np.subtract(simulated_values, true_values)).mean())
+    diff = np.subtract(simulated_values, true_values)
+    if normalize:
+        diff = np.divide((np.subtract(diff, min(diff))), np.subtract(max(diff), min(diff)))
+    return math.sqrt(np.square(diff).mean())
 
-def compute_error(measures, true, pred):
+def compute_error(measures, true, pred, normalize=True):
 
     mean2errors = defaultdict(list)
 
     for measure in measures:
         # excluding words with nan value, e.g. skipped words of prob 1. Should words that are always skipped be included in the equation?
         values = drop_nan_values(true[measure], pred[measure])
-        mean2error = compute_root_mean_squared_error(values['true'], values['pred'])
+        mean2error = compute_root_mean_squared_error(values['true'], values['pred'], normalize)
         mean2errors['eye_tracking_measure'].append(measure)
         mean2errors['mean_squared_error'].append(mean2error)
     mean2error_df = pd.DataFrame(mean2errors)
@@ -500,7 +503,7 @@ def plot_word_measures(data, measures, results_filepath):
         plot.figure.savefig(filepath)
 
 # ---------------- MAIN ------------------
-def evaluate_output (parameters_list: list):
+def evaluate_output (parameters_list: list, verbose=True):
 
     # register which human and simulated data have been analysed
     data_log = dict()
@@ -516,6 +519,8 @@ def evaluate_output (parameters_list: list):
             simulation_output = pd.read_csv(output_filepath, sep='\t')
             simulation_output = simulation_output.rename(columns={'foveal_word_index': 'word_id',
                                                                   'foveal_word': 'word'})
+
+            if verbose: print(f'Evaluating output in {output_filepath}')
 
             if 'provo' in parameters.eye_tracking_filepath.lower():
                 # exclude first word of every passage (not in eye tracking -PROVO- data either)
@@ -590,7 +595,8 @@ def evaluate_output (parameters_list: list):
                                           mean_true_eye_movements,
                                           mean_predicted_eye_movements)
             filepath = output_filepath.replace('model_output', 'analysed').replace('simulation_', f'RM2E_eye_movements_')
-            mean2error_df.to_csv(filepath, sep='\t', index=False)
+            # mean2error_df.to_csv(filepath, sep='\t', index=False)
+            if verbose: print(mean2error_df.head(len(parameters.evaluation_measures)+1))
 
             # word recognition accuracy
             all_acc, sim_ids = [], []
@@ -604,27 +610,28 @@ def evaluate_output (parameters_list: list):
             sim_ids.append('MEAN')
             recog_acc_df = pd.DataFrame({'simulation_id': sim_ids,'word_recognition_accuracy': all_acc})
             filepath = output_filepath.replace('model_output', 'analysed').replace('simulation_', f'word_recognition_acc_')
-            recog_acc_df.to_csv(filepath, sep='\t', index=False)
+            # recog_acc_df.to_csv(filepath, sep='\t', index=False)
+            if verbose: print(recog_acc_df.head(len(simulation_output['simulation_id'].unique())+1))
 
             # stat tests
             # fit_mixed_effects(parameters, true_eye_movements, mean_predicted_eye_movements, output_filepath)
 
-    if data_log:
-        # scale durations from eye-tracking data to be more aligned to OB1 durations which happens in cycles of 25ms
-        data_log = scale_human_durations(data_log, parameters_list)
-
-        # merge simulation and human measures
-        all_data = merge_human_and_simulation_data(data_log, parameters_list)
-
-        # # plot results
-        # TODO add fixed factors to human data when more than one version of fixed factor (e.g. predictability cloze vs lm)
-        # plot_fixed_factor_vs_eye_movement(all_data,
-        #                                   ['predictability'],
-        #                                   parameters_list[0].evaluation_measures,
-        #                                   parameters_list[0].results_filepath)
-        plot_word_measures(all_data,
-                           parameters_list[0].evaluation_measures,
-                           parameters_list[0].results_filepath)
+    # if data_log:
+    #     # scale durations from eye-tracking data to be more aligned to OB1 durations which happens in cycles of 25ms
+    #     data_log = scale_human_durations(data_log, parameters_list)
+    #
+    #     # merge simulation and human measures
+    #     all_data = merge_human_and_simulation_data(data_log, parameters_list)
+    #
+    #     # # plot results
+    #     # TODO add fixed factors to human data when more than one version of fixed factor (e.g. predictability cloze vs lm)
+    #     # plot_fixed_factor_vs_eye_movement(all_data,
+    #     #                                   ['predictability'],
+    #     #                                   parameters_list[0].evaluation_measures,
+    #     #                                   parameters_list[0].results_filepath)
+    #     plot_word_measures(all_data,
+    #                        parameters_list[0].evaluation_measures,
+    #                        parameters_list[0].results_filepath)
 
 
 

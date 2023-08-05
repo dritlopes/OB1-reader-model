@@ -167,25 +167,24 @@ def return_task_params(task_attributes):
     output_dir = time.time()
 
     # word activation
-    bigram_to_word_excitation = 1  # 0.0044 # 3.09269333333 # 2.18 # inp. divded by #ngrams, so this param estimates excit per word [diff from paper] 1.65 for EmbeddedWords, 2.18 for classification and transposed
+    bigram_to_word_excitation = 1.0 # 1.0 # 1. # 0.0044 (paper) # 3.09269333333 # 2.18 # inp. divded by #ngrams, so this param estimates excit per word [diff from paper] 1.65 for EmbeddedWords, 2.18 for classification and transposed
     bigram_to_word_inhibition = 0.0 # -0.20625  # -0.65835 # -0.55  # general inhibition on all words. The more active bigrams, the more general inhibition.
-    word_inhibition = -.04 # -0.01  # -0.016093 # -0.002
+    word_inhibition = -.5 # -.0018 (paper) #-.04 # -0.01  # -0.016093 # -0.002
     min_activity = 0.0
-    max_activity = 1.0 # 1.3
-    decay = -0.09 # -0.06 # AL: decay in word activation over time
+    max_activity = 1.0 # 1.0
+    decay = -0.09 # -0.09 # -0.05 (paper) # -0.06 # AL: decay in word activation over time
     discounted_Ngrams = 10 # MM: Max extra wgt bigrams do to edges in 4-letter wrd w. gap 3. Added to bigram count in compute_input formula to compensate
     bigram_gap = 2  # How many in btw letters still lead to bigram? 5 (optimal) or 2 (paper, though there 3 because of different definition)
     #min_overlap = 0 # was 2 # min overlap for words to inhibit each other. MM: unnecessary, can be deleted later
 
-
     # threshold parameters
-    max_threshold = 0.6 # mm: changed because max activity changed from 1.3 to 1
+    max_threshold = 0.6 # 0.6 # mm: changed because max activity changed from 1.3 to 1
     # MM: a number of words have no freq because not in corpus, repaired by making freq less important
-    wordfreq_p = 0.2  # 0.2 #NV: difference between max and min threshold
-    wordpred_p = 0.2  # used if predictability regulates word threshold
+    wordfreq_p = 0.2  # 5.5 (paper) # 0.2 #NV: difference between max and min threshold
+    wordpred_p = 0.2  # 9.0 (paper) # 0.2  # used if predictability regulates word threshold
     word_length_similarity_constant = 0.15 # 0.35  # 0.15 # NV: determines how similar the length of 2 words must be for them to be recognised as 'similar word length'
-    linear = False
-    pred_weight = 0.05
+    frequency_flag = True  # use word freq in threshold
+    # short_words_p =  # AL: c6 in paper. Trying to reproduce model as in paper
     # use_grammar_prob = False  # True for using grammar probabilities, False for using cloze, overwritten by uniform_pred
     # uniform_prob = False  # Overwrites cloze/grammar probabilities with 0.25 for all words
     # grammar_weight = 0.5  # only used when using grammar_prob
@@ -197,7 +196,7 @@ def return_task_params(task_attributes):
     pred_p = 0.05 # scaling parameters in pre-activation formula
 
     # attention
-    attend_width = 15 # 5.0 for natural reading # 8.0  # NV: #!!!: was set to 15 for flanker, 20 for sentence and 3 for transposed
+    attend_width = 5 # 5.0 for natural reading # 8.0  # NV: #!!!: was set to 15 for flanker, 20 for sentence and 3 for transposed
     max_attend_width = 5.0 # AL: maybe increase this for reading simulation?
     min_attend_width = 3.0
     attention_skew = 4 # 1 equals symmetrical distribution # 4 (paper)
@@ -206,37 +205,24 @@ def return_task_params(task_attributes):
     salience_position = 5  # 5 (optimal) # 1.29 (paper)
 
     # saccade
-    include_sacc_type_sse = True  # Include the sse score based on the saccade type probability plot
-    sacc_type_objective = "total"  # If "total" all subplots will be included in the final sse, single objectives can be "length", "freq" or "pred"
-    include_sacc_dist_sse = True  # Include the SSE score derived from the saccade_distance.png plot
     sacc_optimal_distance = 8 # 9.99  # 3.1 # 7.0 # 8.0 (optimal) # 7.0 (paper)
     saccErr_scaler = 0.2  # to determine avg error for distance difference
     saccErr_sigma = 0.17  # basic sigma
     saccErr_sigma_scaler = 0.06  # effect of distance on sigma
+    mu, sigma = 12, 4 # 4.9, 2.2 (paper)
+    recog_speeding = 5.0 # 1.1
+    use_saccade_error = True
 
     # tuning
+    include_sacc_type_sse = True  # Include the sse score based on the saccade type probability plot
+    sacc_type_objective = "total"  # If "total" all subplots will be included in the final sse, single objectives can be "length", "freq" or "pred"
+    include_sacc_dist_sse = True  # Include the SSE score derived from the saccade_distance.png plot
     tuning_measure = "SSE"  # can be "KL" or "SSE"
     discretization = "bin"  # can be "bin" or "kde"
     objective = []  # empty list for total SSE/KL, for single objectives: "total viewing time", "Gaze durations", "Single fixations", "First fixation duration", "Second fixation duration", "Regression"
     epsilon = 0.1  # Step-size for approximation of the gradient
 
-    # model settings
-    frequency_flag = True  # use word freq in threshold
-    # prediction_flag = True # AL: changed this into a str variable that tells which probability type to be used (if none, prob = None)
-    similarity_based_recognition = True
-    use_saccade_error = True
-    use_attendposition_change = True  # attend width influenced by predictability next wrd
-    visualise = False
-    slow_word_activity = False
-    pauze_allocation_errors = False
-    use_boundary_task = False
-    corpora_repeats = 0  # how many times should corpus be repeated? (simulates diff. subjects)
-
-    # fixation durations
-    mu, sigma = 12, 4  # 4.9, 2.2 (paper)
-    recog_speeding = 5.0  # 1.1 Decrease in av. SRT when word recognized
-
-    # experiment set-up
+    # specific experiment set-up
     trial_ends_on_key_press = False  # whether trial ends when word is recognized, or should keep going until end of cycle (3350 ms)
 
     # affix system

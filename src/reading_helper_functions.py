@@ -62,29 +62,52 @@ def get_threshold(word, word_freq_dict, max_frequency, freq_p, max_threshold):
     try:
         word_frequency = word_freq_dict[word]
         word_threshold = word_threshold * ((max_frequency/freq_p) - word_frequency) / (max_frequency/freq_p)
+        # AL: changed this to be like in paper
+        # word_threshold = 0.22 * ((max_frequency/freq_p) - word_frequency) / (max_frequency/freq_p)
+        # AL: alter the size of effect of frequency and pred as a function of length effect on threshold, as in paper
+        # word_threshold = word_threshold * (1 - .61**(-0.44*len(word)))
     except KeyError:
-        pass
+        print(f'Word {word} not in frequency map')
 
     return word_threshold
 
-def update_threshold(word_position, word_threshold, max_predictability, pred_p, pred_values):
+def update_threshold(word_position, word, word_threshold, max_predictability, pred_p, pred_values):
 
-    word_pred = pred_values[str(word_position)]
+    word_pred = pred_values[str(word_position)]['predictions'][word]
     # word_pred = normalize_values(pred_p,float(word_pred),max_predictability)
     word_threshold = word_threshold * ((max_predictability/pred_p) - word_pred) / (max_predictability/pred_p)
 
     return word_threshold
 
-def update_lexicon_threshold(recognized_word_at_position,fixation,tokens,updated_thresh_positions,lexicon_thresholds,wordpred_p,pred_values,tokens_to_lexicon_indices):
+def update_lexicon_threshold(recognized_word_at_position,fixation,tokens,updated_thresh_positions,lexicon_thresholds,wordpred_p,pred_values,tokens_to_lexicon_indices,lexicon):
 
+    # # AL: update threshold of each predicted word
+    # position = check_predictability(recognized_word_at_position, fixation, tokens, updated_thresh_positions)
+    # if position:
+    #     predicted_words = list(pred_values[str(position)]['predictions'].keys())
+    #     for predicted_word in predicted_words:
+    #         if predicted_word in lexicon:
+    #             position_in_lexicon = lexicon.index(predicted_word)
+    #             lexicon_thresholds[position_in_lexicon] = update_threshold(position,
+    #                                                                        predicted_word,
+    #                                                                        lexicon_thresholds[position_in_lexicon],
+    #                                                                        max(pred_values.values()),
+    #                                                                        wordpred_p,
+    #                                                                        pred_values)
+    #     updated_thresh_positions.append(position)
+
+    # AL: update threshold just from word in text
     position = check_predictability(recognized_word_at_position, fixation, tokens, updated_thresh_positions)
     if position:
-        position_in_lexicon = tokens_to_lexicon_indices[position]
-        lexicon_thresholds[position_in_lexicon] = update_threshold(position,
-                                                                   lexicon_thresholds[position_in_lexicon],
-                                                                   max(pred_values.values()),
-                                                                   wordpred_p,
-                                                                   pred_values)
+        predicted_words = list(pred_values[str(position)]['predictions'].keys())
+        if tokens[position] in predicted_words:
+            position_in_lexicon = tokens_to_lexicon_indices[position]
+            lexicon_thresholds[position_in_lexicon] = update_threshold(position,
+                                                                       tokens[position],
+                                                                       lexicon_thresholds[position_in_lexicon],
+                                                                       max(pred_values[str(position)]['predictions'].values()),
+                                                                       wordpred_p,
+                                                                       pred_values)
         updated_thresh_positions.append(position)
 
     return updated_thresh_positions, lexicon_thresholds
@@ -97,8 +120,8 @@ def check_predictability(recognized_word_at_position, fixation, tokens, updated_
         # and next word has not been recognized yet, nor has been already updated
         if not recognized_word_at_position[fixation + 1] and fixation + 1 not in updated_positions:
             position = fixation + 1
-        # if n+1 has already been recognized or updated, update n+2 word if it exists
-        elif fixation < len(tokens) - 2 and recognized_word_at_position[fixation + 1] == tokens[fixation + 1]:
+        # if n+1 has already been recognized or updated, update n+2 word if it exists and it has not been updated yet
+        elif fixation < len(tokens) - 2 and recognized_word_at_position[fixation + 1] == tokens[fixation + 1] and fixation + 2 not in updated_positions:
             position = fixation + 2
 
     return position
