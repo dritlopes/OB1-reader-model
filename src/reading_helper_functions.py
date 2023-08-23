@@ -152,8 +152,8 @@ def build_word_inhibition_matrix(lexicon,lexicon_word_ngrams,pm,matrix_filepath,
             ngram_common = list(set(lexicon_word_ngrams[word1]).intersection(set(lexicon_word_ngrams[word2])))
             n_total_overlap = len(ngram_common)
             # MM: now inhib set as proportion of overlapping bigrams (instead of nr overlap)
-            word_overlap_matrix[word_1_index, word_2_index] = n_total_overlap / len(lexicon_word_ngrams[word1])
-            word_overlap_matrix[word_2_index, word_1_index] = n_total_overlap / len(lexicon_word_ngrams[word2])
+            word_overlap_matrix[word_1_index, word_2_index] = n_total_overlap / (len(lexicon_word_ngrams[word1])+2)
+            word_overlap_matrix[word_2_index, word_1_index] = n_total_overlap / (len(lexicon_word_ngrams[word2])+2)
             #print("word1 ", word1, "word2 ", word2, "overlap ", n_total_overlap, "len w1 ", len(lexicon_word_ngrams[word1]))
             #print("inhib one way", word_overlap_matrix[word_1_index, word_2_index])
 
@@ -224,7 +224,7 @@ def define_slot_matching_order(n_words_in_stim, fixated_position_stimulus, atten
     # Words are checked in the order of its attentwght. The closer to the fixation point, the more attention weight.
     # AL: made computation dependent on position of fixated word (so we are not assuming anymore that fixation is always at the center of the stimulus)
 
-    positions = [+1,-1,+2,-2,+3,-3]
+    positions = [+1,-1,+2,-2,+3,-3] # MM: no 0 because fix position gets added elsewhere
     # AL: number of words checked depend on attention width. The narrower the attention width the fewer words matched.
     n_words_to_match = min(n_words_in_stim, (math.floor(attend_width/3)*2+1))
     order_match_check = [fixated_position_stimulus]

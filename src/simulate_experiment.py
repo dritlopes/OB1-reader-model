@@ -136,6 +136,9 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
             # ---------------------- Update word activity per cycle ---------------------
             # Update word act with word inhibition (input remains same, so does not have to be updated)
             lexicon_word_activity, lexicon_word_inhibition = update_word_activity(lexicon_word_activity, word_overlap_matrix, pm, word_input, len(lexicon))
+            #print("input these:", word_input[lexicon.index('these')])
+            #print("inhib these:", lexicon_word_inhibition[lexicon.index('these')])
+            #print("activ these:", lexicon_word_activity[lexicon.index('these')])
 
             # update cycle info
             foveal_word_index = lexicon_word_index[tokens[fixation]]
@@ -267,7 +270,7 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
 
         # add fixation dict to list of dicts
         all_data[fixation_counter] = fixation_data
-        if verbose: print(fixation_data)
+        if verbose: print(recognized_word_at_position) #fixation_data)
 
         fixation_counter += 1
 
@@ -495,7 +498,7 @@ def simulate_experiment(pm):
     # set up word-to-word inhibition matrix
     word_inhibition_matrix = set_up_inhibition_matrix(pm, lexicon, lexicon_word_ngrams)
     print("Inhibition grid ready.")
-    # word_inhibition_matrix = None
+    print("Inhib from the to these:", word_inhibition_matrix[lexicon.index('these'),lexicon.index('the')])
 
     # recognition threshold for each word in lexicon
     lexicon_thresholds = np.zeros((len(lexicon)), dtype=float)
@@ -540,6 +543,7 @@ def simulate_experiment(pm):
                                     word_frequencies)
 
                 texts_simulations[i] = text_data
+                flirp=flurp
 
             all_data[sim_number] = texts_simulations
 
