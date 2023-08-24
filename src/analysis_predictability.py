@@ -38,6 +38,8 @@ def convert_json_to_csv(pred_map):
 
 def text_words_predictions(pos_pred_map, predictor):
 
+    """ Find the predictability value of each text word by each predictor"""
+
     pred_values = defaultdict(list)
 
     for text, words in pos_pred_map.items():
@@ -55,6 +57,8 @@ def text_words_predictions(pos_pred_map, predictor):
     return pred_values
 
 def compute_frequency_predictions(predictions):
+
+    """ Find how frequent each predictability value is for each predictor"""
 
     pred_values, counts, predictors, proportion = [],[],[],[]
 
@@ -80,6 +84,8 @@ def compute_frequency_predictions(predictions):
 
 def compute_unknown_proportion(pred_maps, pred_maps_unknown):
 
+    """Find the proportion of predicted tokens/words which are not in the lexicon of OB1-reader"""
+
     predictors, proportion = [],[]
 
     for predictor in pred_maps.keys():
@@ -104,6 +110,8 @@ def compute_unknown_proportion(pred_maps, pred_maps_unknown):
     return predictors, proportion
 
 def find_multi_token_targets(pred_map, predictor):
+
+    """ Find which text words are tokenized as multi-tokens by language model tokenizer"""
 
     counts = {'multi': 0,
               'total': 0}
@@ -145,19 +153,20 @@ pred_map_filepaths = {'cloze':'../data/processed/prediction_map_Provo_Corpus_clo
                       'LLAMA': '../data/processed/prediction_map_Provo_Corpus_llama_continuous_reading_english_topkall.json'}
 pred_maps = read_in_pred_files(pred_map_filepaths)
 
-target_predictions = defaultdict(list)
-for predictor, data in pred_maps.items():
-    pred_values = text_words_predictions(data,predictor)
-    target_predictions['text_word'].extend(pred_values['text_word'])
-    target_predictions['prediction'].extend(pred_values['prediction'])
-    target_predictions['predictor'].extend(pred_values['predictor'])
-
 # write out mappings in csv to visualise it more easily
 for predictor, pred_map in pred_maps.items():
     df = convert_json_to_csv(pred_map)
     if predictor == 'cloze': df = df.sort_values(by=['text_id','word_id'])
     filepath = pred_map_filepaths[predictor].replace('.json','.csv')
     df.to_csv(filepath, sep='\t', index=False)
+
+# get text word predictability values
+target_predictions = defaultdict(list)
+for predictor, data in pred_maps.items():
+    pred_values = text_words_predictions(data,predictor)
+    target_predictions['text_word'].extend(pred_values['text_word'])
+    target_predictions['prediction'].extend(pred_values['prediction'])
+    target_predictions['predictor'].extend(pred_values['predictor'])
 
 # count pred values in each predictor only including the predictability of target words (words in text)
 pred_value_counts_col = compute_frequency_predictions(target_predictions)
@@ -172,7 +181,7 @@ unknown_map_filepaths = {'cloze': '../data/processed/prediction_map_Provo_Corpus
                          'LLAMA': '../data/processed/prediction_map_Provo_Corpus_llama_continuous_reading_english_topkall_unknown.json'}
 
 pred_maps_unknown = read_in_pred_files(unknown_map_filepaths)
-predictors,proportion = compute_unknown_proportion(pred_maps,pred_maps_unknown)
+predictors, proportion = compute_unknown_proportion(pred_maps,pred_maps_unknown)
 # sb.set(rc={'figure.figsize': (10,5)})
 # ax = sb.barplot(x=predictors, y=proportion)
 # for i in ax.containers:
@@ -211,16 +220,27 @@ for predictor, pred_map in pred_maps.items():
 
 # measure word prediction accuracy
 for predictor, texts in pred_maps.items():
-    acc = []
-    for info in texts.values():
-        for predictions in info.values():
+    text_ids, target_ids, targets, preds, accuracy = [], [], [], [], []
+    for text_id, info in texts.items():
+        for word_id, predictions in info.items():
             target = predictions['target']
+            acc = 0
             if target in predictions['predictions'].keys():
-                acc.append(1)
-            else:
-                acc.append(0)
-    acc_score = sum(acc)/len(acc)
+                acc = 1
+            text_ids.append(int(text_id))
+            target_ids.append(int(word_id))
+            targets.append(target)
+            preds.append(list(predictions['predictions'].keys()))
+            accuracy.append(acc)
+    acc_score = sum(accuracy)/len(accuracy)
     print(f'{predictor} accuracy: {acc_score}')
+    df = pd.DataFrame({'text_id': text_ids,
+                       'word_id': target_ids,
+                       'word': targets,
+                       'predictions': preds,
+                       'accuracy': accuracy})
+    if predictor == 'cloze': df = df.sort_values(by=['text_id', 'word_id'])
+    df.to_csv(f'../data/processed/prediction_accuracy_{predictor}.csv', sep='\t', index=False)
 
 # inspect lexicon
 with open('../data/processed/lexicon.pkl', 'rb') as infile:

@@ -19,7 +19,7 @@ def compute_stimulus(fixation, tokens):
     start_window = fixation - 2
     end_window = fixation + 2
     # only add position if after text begin and below text length
-    stimulus_position = [i for i in range(start_window,end_window+1) if i >= 0 and i < len(tokens)]
+    stimulus_position = [i for i in range(start_window, end_window+1) if i >= 0 and i < len(tokens)]
     stimulus = ' '.join([tokens[i] for i in stimulus_position])
     fixated_position_stimulus = stimulus_position.index(fixation)
 
@@ -50,7 +50,7 @@ def compute_eye_position(stimulus, fixated_position_stimulus, eye_pos_in_fix_wor
 
     return int(np.round(eye_position))
 
-def compute_ngram_activity(stimulus, eye_position, attention_position, attend_width, letPerDeg, attention_skew, gap):
+def compute_ngram_activity(stimulus, eye_position, attention_position, attend_width, letPerDeg, attention_skew, gap, shift, recognized, tokens):
 
     """
     Initialize word activity based on ngram excitatory input.
@@ -58,20 +58,34 @@ def compute_ngram_activity(stimulus, eye_position, attention_position, attend_wi
     """
 
     unit_activations = {}
-    all_ngrams,all_weights,all_locations = string_to_open_ngrams(stimulus,gap)
+    all_ngrams, all_weights, all_locations = string_to_open_ngrams(stimulus, gap)
 
-    for ngram, weight, location in zip(all_ngrams,all_weights,all_locations):
-        activation = cal_ngram_exc_input(location, weight, eye_position, attention_position,
-                                         attend_width, letPerDeg, attention_skew)
-        # AL: a ngram that appears more than once in the simulus get summed activation
+    # AL: if attention shifted and fixated word recognized, ngrams from fixated word do not provide activation
+    # AL: help avoid repetition problem, i.e. remaining activation from recognized word leads to
+    # same word filling in the next slot.
+    fix_ngrams = []
+    if not shift and recognized and tokens:
+        for i in recognized:
+            ngrams, weights, locations = string_to_open_ngrams(tokens[i], gap)
+            fix_ngrams.extend(ngrams)
+
+    for ngram, weight, location in zip(all_ngrams, all_weights, all_locations):
+        if ngram in fix_ngrams:
+            activation = 0.0
+        else:
+            activation = cal_ngram_exc_input(location, weight, eye_position, attention_position,
+                                             attend_width, letPerDeg, attention_skew)
+        # AL: a ngram that appears more than once in the simulus
+        # will have the activation from the ngram in the position with highest activation
         if ngram in unit_activations.keys():
             unit_activations[ngram] = max(unit_activations[ngram], activation)
         else:
             unit_activations[ngram] = activation
+    # print(unit_activations)
 
     return unit_activations
 
-def compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_position, attend_width, pm):
+def compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_position, attend_width, pm, shift=False, recognized=False, tokens=False):
 
     """
     Calculate activity for each word in the lexicon given the excitatory input from all ngrams in the stimulus.
@@ -87,7 +101,8 @@ def compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_p
     # define ngram activity given stimulus
     unit_activations = compute_ngram_activity(stimulus, eye_position,
                                               attention_position, attend_width, pm.letPerDeg,
-                                              pm.attention_skew, pm.bigram_gap)
+                                              pm.attention_skew, pm.bigram_gap,
+                                              shift, recognized, tokens)
     total_ngram_activity = sum(unit_activations.values())
     n_ngrams = len(unit_activations.keys())
 
@@ -111,7 +126,7 @@ def compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_p
 
     return n_ngrams, total_ngram_activity, all_ngrams, word_input
 
-def update_word_activity(lexicon_word_activity, word_overlap_matrix, pm, word_input, lexicon_size):
+def update_word_activity(lexicon_word_activity, word_overlap_matrix, pm, word_input, lexicon_size, shift):
 
     """
     In each processing cycle, re-compute word activity using word-to-word inhibition and decay.
@@ -123,8 +138,8 @@ def update_word_activity(lexicon_word_activity, word_overlap_matrix, pm, word_in
     # Activity is multiplied by inhibition constant.
     # NV: then, this inhibition value is weighed by how much overlap there is between that word and every other.
     lexicon_normalized_word_inhibition = (100.0 / lexicon_size) * pm.word_inhibition
-    # find which words are active
     lexicon_active_words = np.zeros((lexicon_size), dtype=bool)
+    # find which words are active
     lexicon_active_words[(lexicon_word_activity > 0.0) | (word_input > 0.0)] = True
     overlap_select = word_overlap_matrix[:, (lexicon_active_words == True)]
     lexicon_select = (lexicon_word_activity + word_input)[
@@ -149,7 +164,7 @@ def update_word_activity(lexicon_word_activity, word_overlap_matrix, pm, word_in
 
     return lexicon_word_activity, lexicon_word_inhibition
 
-def match_active_words_to_input_slots(order_match_check, stimulus, recognized_word_at_position, lexicon_thresholds, lexicon_word_activity, lexicon, min_activity, stimulus_position, len_sim_const):
+def match_active_words_to_input_slots(order_match_check, stimulus, recognized_word_at_position, lexicon_thresholds, lexicon_word_activity, lexicon, min_activity, stimulus_position, len_sim_const, recognition_in_stimulus):
 
     """
     Match active words to spatio-topic representation. Fill in the stops in the stimulus.
@@ -182,6 +197,7 @@ def match_active_words_to_input_slots(order_match_check, stimulus, recognized_wo
                 # Find the word with the highest activation in all words that have a similar length
                 highest = np.argmax(recognized_words_fit_len * lexicon_word_activity)
                 highest_word = lexicon[highest]
+                recognition_in_stimulus.append(word_index)
                 print('word in input: ', word_searched, '      one w. highest act: ', highest_word)
                 # The winner is matched to the slot,
                 # and its activity is reset to minimum to not have it matched to other words
@@ -189,7 +205,7 @@ def match_active_words_to_input_slots(order_match_check, stimulus, recognized_wo
                 lexicon_word_activity[highest] = min_activity
                 above_thresh_lexicon[highest] = 0
 
-    return recognized_word_at_position, lexicon_word_activity
+    return recognized_word_at_position, lexicon_word_activity, recognition_in_stimulus
 
 def semantic_processing(text, tokenizer, language_model, prediction_flag, top_k = 10, threshold = None, device = None):
 

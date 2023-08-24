@@ -227,6 +227,7 @@ def define_slot_matching_order(n_words_in_stim, fixated_position_stimulus, atten
     positions = [+1,-1,+2,-2,+3,-3] # MM: no 0 because fix position gets added elsewhere
     # AL: number of words checked depend on attention width. The narrower the attention width the fewer words matched.
     n_words_to_match = min(n_words_in_stim, (math.floor(attend_width/3)*2+1))
+    # AL: add fixated position to always be checked first
     order_match_check = [fixated_position_stimulus]
     for i, p in enumerate(positions):
         if i < n_words_to_match-1:

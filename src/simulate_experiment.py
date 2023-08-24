@@ -119,6 +119,8 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
         n_cycles = 0
         n_cycles_since_attent_shift = 0
         attention_position = eye_position
+        # stimulus positions in which recognition is achieved during current fixation
+        recognition_in_stimulus = []
         # define index of letters at the words edges.
         word_edges = find_word_edges(stimulus)
 
@@ -133,9 +135,27 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
         # then starts counting to 5 (because a saccade program takes 5 cycles, or 125ms.)
         while n_cycles_since_attent_shift < 5:
 
+            # if a word has been recognized during this fixation and attention has not shifted yet,
+            # recompute ngram activation such that ngram activation from matched words is removed until attention shifts
+            if recognition_in_stimulus and not shift:
+                n_ngrams, total_ngram_activity, all_ngrams, word_input = compute_words_input(stimulus,
+                                                                                             lexicon_word_ngrams,
+                                                                                             eye_position,
+                                                                                             attention_position,
+                                                                                             attend_width, pm,
+                                                                                             shift,
+                                                                                             recognition_in_stimulus,
+                                                                                             tokens)
+
             # ---------------------- Update word activity per cycle ---------------------
             # Update word act with word inhibition (input remains same, so does not have to be updated)
-            lexicon_word_activity, lexicon_word_inhibition = update_word_activity(lexicon_word_activity, word_overlap_matrix, pm, word_input, len(lexicon))
+            lexicon_word_activity, lexicon_word_inhibition = update_word_activity(lexicon_word_activity,
+                                                                                  word_overlap_matrix,
+                                                                                  pm, word_input,
+                                                                                  len(lexicon),
+                                                                                  shift)
+
+
             #print("input these:", word_input[lexicon.index('these')])
             #print("inhib these:", lexicon_word_inhibition[lexicon.index('these')])
             #print("activ these:", lexicon_word_activity[lexicon.index('these')])
@@ -155,7 +175,7 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
 
             # ---------------------- Match words in lexicon to slots in input ---------------------
             # word recognition, by checking matching active wrds to slots
-            recognized_word_at_position, lexicon_word_activity = \
+            recognized_word_at_position, lexicon_word_activity, recognition_in_stimulus = \
                 match_active_words_to_input_slots(order_match_check,
                                                   stimulus,
                                                   recognized_word_at_position,
@@ -164,7 +184,8 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                                                   lexicon,
                                                   pm.min_activity,
                                                   stimulus_position,
-                                                  pm.word_length_similarity_constant)
+                                                  pm.word_length_similarity_constant,
+                                                  recognition_in_stimulus)
 
             # update threshold of n+1 or n+2 with pred value
             # if recognized_word_at_position.any() and pm.prediction_flag and fixation < total_n_words-1:
@@ -231,10 +252,10 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                     if attention_position:
                         # AL: recompute word input, using ngram excitation and inhibition, because attentshift changes bigram input
                         n_ngrams, total_ngram_activity, all_ngrams, word_input = compute_words_input(stimulus,
-                                                                                                    lexicon_word_ngrams,
-                                                                                                    eye_position,
-                                                                                                    attention_position,
-                                                                                                    attend_width, pm)
+                                                                                                     lexicon_word_ngrams,
+                                                                                                     eye_position,
+                                                                                                     attention_position,
+                                                                                                     attend_width, pm)
                         attention_position = np.round(attention_position)
                     if verbose: print("  input after attentshift: " + str(round(word_input[tokens_to_lexicon_indices[fixation]], 3)))
 
@@ -543,7 +564,6 @@ def simulate_experiment(pm):
                                     word_frequencies)
 
                 texts_simulations[i] = text_data
-                flirp=flurp
 
             all_data[sim_number] = texts_simulations
 
