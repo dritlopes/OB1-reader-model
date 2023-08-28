@@ -84,7 +84,7 @@ def simulate_reading(global_parameters):
 
 def main():
 
-    useparser=False
+    useparser=True
     if useparser:
         parser = argparse.ArgumentParser()
         parser.add_argument('stimuli_filepath')
