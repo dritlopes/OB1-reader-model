@@ -80,7 +80,7 @@ def simulate_reading(global_parameters):
 
 def main():
 
-    useparser=False
+    useparser=True
     if useparser:
         parser = argparse.ArgumentParser()
         parser.add_argument('stimuli_filepath')
@@ -127,7 +127,7 @@ def main():
             "analyze_results": True,
             "results_filepath": '',
             "parameters_filepath": '',
-            "number_of_simulations": 5,
+            "number_of_simulations": 1,
             "eye_tracking_filepath": '../data/raw/Provo_Corpus-Eyetracking_Data.csv',
             "results_identifier": 'prediction_flag',
             "experiment_parameters_filepath": '',

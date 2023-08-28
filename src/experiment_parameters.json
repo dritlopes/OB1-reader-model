@@ -1,12 +1,19 @@
 {
   "parameters" : [
     {
-      "prediction_flag": "llama",
-      "number_of_simulations": 1
+      "prediction_flag": "cloze",
+      "number_of_simulations": 10,
+      "pred_p": 0.01
     },
     {
-      "prediction_flag": "gpt2",
-      "number_of_simulations": 1
+      "prediction_flag": "cloze",
+      "number_of_simulations": 10,
+      "pred_p": 0.05
+    },
+    {
+      "prediction_flag": "cloze",
+      "number_of_simulations": 10,
+      "pred_p": 0.1
     }
   ]
 }

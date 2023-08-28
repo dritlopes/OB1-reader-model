@@ -545,7 +545,7 @@ def simulate_experiment(pm):
             # AL: if language model, generate new predictions with a new seed for every x simulations
             word_predictions = get_pred_dict(pm, lexicon)
 
-            for i, text in enumerate(pm.stim_all):
+            for i, text in enumerate(pm.stim_all[:38]):
 
                 text_tokens = [pre_process_string(token) for token in text.split()]
 

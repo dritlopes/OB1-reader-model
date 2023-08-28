@@ -343,9 +343,24 @@ def compute_root_mean_squared_error(true_values:list, simulated_values:list, nor
     # root mean squared error measures the average difference between values predicted by the model
     # and the eye-tracking values. It provides an estimate of how well the model was able to predict the
     # eye-tracking value.
-    diff = np.subtract(simulated_values, true_values)
-    if normalize:
-        diff = np.divide((np.subtract(diff, min(diff))), np.subtract(max(diff), min(diff)))
+
+    # diff = np.subtract(simulated_values, true_values)
+    # if normalize:
+    # # normalize difference: subtract the min difference from the difference and divide it by the difference between max and min differences
+    #     diff = np.divide((np.subtract(diff, min(diff))), np.subtract(max(diff), min(diff)))
+
+    # another way: first normalize values with min-max scaler, then compute difference
+    norm_sim_values = np.divide((np.subtract(simulated_values, min(simulated_values))), np.subtract(max(simulated_values), min(simulated_values)))
+    norm_true_values = np.divide((np.subtract(true_values, min(true_values))), np.subtract(max(true_values), min(true_values)))
+    diff = np.subtract(norm_sim_values, norm_true_values)
+
+    # or standardize values: subtract value by the mean and divide by standard deviation, but Gaussian distribution is assumed
+    # norm_sim_values = np.divide(np.subtract(simulated_values, np.mean(simulated_values)), np.std(simulated_values))
+    # print(norm_sim_values)
+    # norm_true_values = np.divide(np.subtract(true_values, np.mean(true_values)), np.std(true_values))
+    # print(norm_true_values)
+    # diff = np.subtract(norm_sim_values, norm_true_values)
+
     return math.sqrt(np.square(diff).mean())
 
 def compute_error(measures, true, pred, normalize=True):
@@ -358,6 +373,11 @@ def compute_error(measures, true, pred, normalize=True):
         mean2error = compute_root_mean_squared_error(values['true'], values['pred'], normalize)
         mean2errors['eye_tracking_measure'].append(measure)
         mean2errors['mean_squared_error'].append(mean2error)
+
+    average = np.mean(mean2errors['mean_squared_error'])
+    mean2errors['eye_tracking_measure'].append("MEAN")
+    mean2errors['mean_squared_error'].append(average)
+
     mean2error_df = pd.DataFrame(mean2errors)
 
     return mean2error_df
@@ -531,7 +551,7 @@ def evaluate_output (parameters_list: list, verbose=True):
             processed_mean_eye_tracking_path = parameters.eye_tracking_filepath.replace('-Eyetracking_Data', '_eye_tracking_mean').replace('raw','processed')
 
             if parameters.eye_tracking_filepath in data_log.keys():
-                true_eye_movements = data_log[parameters.eye_tracking_filepath]
+                # true_eye_movements = data_log[parameters.eye_tracking_filepath]
                 mean_true_eye_movements = data_log[parameters.eye_tracking_filepath + '_mean']
 
             elif os.path.exists(processed_eye_tracking_path) and os.path.exists(processed_mean_eye_tracking_path):
@@ -595,7 +615,7 @@ def evaluate_output (parameters_list: list, verbose=True):
                                           mean_true_eye_movements,
                                           mean_predicted_eye_movements)
             filepath = output_filepath.replace('model_output', 'analysed').replace('simulation_', f'RM2E_eye_movements_')
-            # mean2error_df.to_csv(filepath, sep='\t', index=False)
+            mean2error_df.to_csv(filepath, sep='\t', index=False)
             if verbose: print(mean2error_df.head(len(parameters.evaluation_measures)+1))
 
             # word recognition accuracy
@@ -610,7 +630,7 @@ def evaluate_output (parameters_list: list, verbose=True):
             sim_ids.append('MEAN')
             recog_acc_df = pd.DataFrame({'simulation_id': sim_ids,'word_recognition_accuracy': all_acc})
             filepath = output_filepath.replace('model_output', 'analysed').replace('simulation_', f'word_recognition_acc_')
-            # recog_acc_df.to_csv(filepath, sep='\t', index=False)
+            recog_acc_df.to_csv(filepath, sep='\t', index=False)
             if verbose: print(recog_acc_df.head(len(simulation_output['simulation_id'].unique())+1))
 
             # stat tests

@@ -190,7 +190,7 @@ def return_task_params(task_attributes):
     # grammar_weight = 0.5  # only used when using grammar_prob
 
     # pre-activation based on predictability
-    prediction_flag = False #'cloze' # cloze # uniform # grammar # language_model
+    prediction_flag = 'cloze' # cloze # uniform # grammar # language_model # None
     topk = 'all' # in case of language model providing predictions, save only the k highest predictions
     pred_threshold = 0.01 # in case of language model providing predictions, save only the predictions above certain threshold
     pred_p = 0.05 # scaling parameters in pre-activation formula
