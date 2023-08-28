@@ -11,6 +11,7 @@ class TaskAttributes:
     """
 
     def __init__(self, task_name, stim_name, stim, stimAll, language,
+                 n_trials = 0,
                  stimcycles=0,
                  blankscreen_type='blank', blankscreen_cycles_begin=0, blankscreen_cycles_end=0,
                  is_priming_task=False, ncyclesprime=0,
@@ -18,8 +19,9 @@ class TaskAttributes:
                  affix_implemented=False):
         self.task_name = task_name
         self.stim_name = stim_name
-        self.stim = stim
-        self.stim_all = stimAll
+        self.stim = stim # all stimuli data frame
+        self.stim_all = stimAll # list of stimuli
+        self.n_trials = n_trials # how many trials/texts from corpus/data should be used
         self.language = language
         self.stimcycles = stimcycles
         self.is_priming_task = is_priming_task

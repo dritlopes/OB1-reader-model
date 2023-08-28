@@ -57,20 +57,20 @@ def normalize_values(p, values, max_value):
 
     return ((p * max_value) - values) / (p * max_value)
 
-def get_threshold(word, word_freq_dict, max_frequency, freq_p, max_threshold):
+def get_threshold(word, word_freq_dict, max_frequency, freq_p, max_threshold, verbose=False):
 
     # should always ensure that the maximum possible value of the threshold doesn't exceed the maximum allowable word activity
     # let threshold be fun of word freq. freq_p weighs how strongly freq is (1=max, then thresh. 0 for most freq. word; <1 means less havy weighting)
     # from 0-1, inverse of frequency, scaled to 0(highest freq)-1(lowest freq)
     word_threshold = max_threshold
-    try:
+    if word in word_freq_dict.keys():
         word_frequency = word_freq_dict[word]
         word_threshold = word_threshold * ((max_frequency/freq_p) - word_frequency) / (max_frequency/freq_p)
         # AL: changed this to be like in paper
         # word_threshold = 0.22 * ((max_frequency/freq_p) - word_frequency) / (max_frequency/freq_p)
         # AL: alter the size of effect of frequency and pred as a function of length effect on threshold, as in paper
         # word_threshold = word_threshold * (1 - .61**(-0.44*len(word)))
-    except KeyError:
+    elif verbose:
         print(f'Word {word} not in frequency map')
 
     return word_threshold

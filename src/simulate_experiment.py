@@ -3,6 +3,8 @@ import numpy as np
 import pickle
 from collections import defaultdict
 import math
+from tqdm import tqdm
+from time import sleep
 import random
 from utils import get_word_freq, get_pred_dict, set_up_inhibition_matrix, pre_process_string
 from reading_components import compute_stimulus, compute_eye_position, compute_words_input, update_word_activity, \
@@ -209,10 +211,11 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                     if not (pm.prediction_flag == 'cloze' and 'provo' in pm.stim_name.lower() and position == 50 and text_id == 17):
                         lexicon_word_activity = activate_predicted_upcoming_word(position,
                                                                                  tokens[position],
-                                                                                  lexicon_word_activity,
-                                                                                  lexicon,
-                                                                                  pred_dict,
-                                                                                  pm.wordpred_p)
+                                                                                 lexicon_word_activity,
+                                                                                 lexicon,
+                                                                                 pred_dict,
+                                                                                 pm.wordpred_p,
+                                                                                 verbose)
                     updated_positions.append(position)
 
             # ---------------------- Make saccade decisions ---------------------
@@ -470,7 +473,7 @@ def word_recognition(pm,word_inhibition_matrix,lexicon_word_ngrams,lexicon_word_
 
 def simulate_experiment(pm):
 
-    print('Preparing simulation...')
+    print('\nPreparing simulation(s)...')
     tokens = [token for stimulus in pm.stim_all for token in stimulus.split(' ') if token != '']
 
     if pm.is_priming_task:
@@ -530,13 +533,19 @@ def simulate_experiment(pm):
             lexicon_thresholds[i] = word_thresh_dict[word]
 
     print("")
-    print("BEGIN SIMULATION")
+    print("BEGIN SIMULATION(S)")
     print("")
+
+    # how many trials/texts from corpus/data should be used
+    if pm.n_trials == 0 or pm.n_trials > len(pm.stim_all):
+        pm.n_trials = len(pm.stim_all)
 
     # read text/trials
     all_data = defaultdict()
 
     for sim_number in range(pm.number_of_simulations):
+
+        print(f"SIMULATION ", sim_number)
 
         if pm.task_to_run == 'continuous_reading':
 
@@ -545,7 +554,10 @@ def simulate_experiment(pm):
             # AL: if language model, generate new predictions with a new seed for every x simulations
             word_predictions = get_pred_dict(pm, lexicon)
 
-            for i, text in enumerate(pm.stim_all[:38]):
+            # initiate progress bar
+            pbar = tqdm(total=pm.n_trials)
+
+            for i, text in enumerate(pm.stim_all[:pm.n_trials]):
 
                 text_tokens = [pre_process_string(token) for token in text.split()]
 
@@ -562,11 +574,16 @@ def simulate_experiment(pm):
                                     lexicon_thresholds,
                                     lexicon,
                                     predictions_in_text,
-                                    word_frequencies)
+                                    word_frequencies,
+                                    verbose=False)
 
                 texts_simulations[i] = text_data
 
+                sleep(0.1)
+                pbar.update(1)
+
             all_data[sim_number] = texts_simulations
+            pbar.close()
 
         else:
             all_data = word_recognition(pm,
@@ -576,8 +593,6 @@ def simulate_experiment(pm):
                                         word_thresh_dict,
                                         lexicon,
                                         word_frequencies)
-
-        print(f'END of SIMULATION {sim_number}\n')
 
     print(f'THE END')
 

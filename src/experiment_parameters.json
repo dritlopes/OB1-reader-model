@@ -3,16 +3,19 @@
     {
       "prediction_flag": "cloze",
       "number_of_simulations": 10,
+      "n_trials": 38,
       "pred_p": 0.01
     },
     {
       "prediction_flag": "cloze",
       "number_of_simulations": 10,
+      "n_trials": 38,
       "pred_p": 0.05
     },
     {
       "prediction_flag": "cloze",
       "number_of_simulations": 10,
+      "n_trials": 38,
       "pred_p": 0.1
     }
   ]

@@ -267,18 +267,19 @@ def semantic_processing(text, tokenizer, language_model, prediction_flag, top_k 
 
     return pred_info
 
-def activate_predicted_upcoming_word(position, target_word, lexicon_word_activity, lexicon, pred_dict, pred_weight):
+def activate_predicted_upcoming_word(position, target_word, lexicon_word_activity, lexicon, pred_dict, pred_weight, verbose):
 
     try:
         predicted = pred_dict[str(position)]
 
-        if predicted['target'] != target_word:
+        if predicted['target'] != target_word and verbose:
             warnings.warn(f'Target word in predictability map "{predicted["target"]}" not the same as target word in model stimuli "{target_word}", position {position}')
 
         for token, pred in predicted['predictions'].items():
             if token in lexicon:
                 i = lexicon.index(token)
-                print(
+                if verbose:
+                    print(
                     f'Word {token} received pre-activation {round(pred * pred_weight,3)} in position of text word {target_word} ({round(lexicon_word_activity[i],3)} -> {round(lexicon_word_activity[i] + pred * pred_weight,3)})')
                 # print(f'act before: {lexicon_word_activity[i]}')
                 lexicon_word_activity[i] += pred * pred_weight

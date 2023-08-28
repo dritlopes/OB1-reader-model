@@ -30,6 +30,10 @@ def simulate_reading(global_parameters):
 
     print("\nTASK: " + pm.task_to_run)
     print("\nLANGUAGE: " + pm.language)
+    print("\nCORPUS: " + pm.stimuli_filepath)
+    # print out the parameters you think are important for your experiment
+    print("\nPREDICTION_FLAG " + pm.prediction_flag)
+    print("\nPREDICTION_WEIGHT " + str(pm.pred_p))
 
     results_id = ''
     dir = f'../data/model_output/{dt_string}/'
@@ -80,7 +84,7 @@ def simulate_reading(global_parameters):
 
 def main():
 
-    useparser=True
+    useparser=False
     if useparser:
         parser = argparse.ArgumentParser()
         parser.add_argument('stimuli_filepath')
@@ -128,6 +132,7 @@ def main():
             "results_filepath": '',
             "parameters_filepath": '',
             "number_of_simulations": 1,
+            "n_trials": 10,
             "eye_tracking_filepath": '../data/raw/Provo_Corpus-Eyetracking_Data.csv',
             "results_identifier": 'prediction_flag',
             "experiment_parameters_filepath": '',
