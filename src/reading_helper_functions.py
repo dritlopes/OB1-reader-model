@@ -29,13 +29,17 @@ def string_to_open_ngrams(string,gap):
         if letter != ' ':
             if position in edge_locations:
                 weight = 1.
+                # AL: increases weigth of unigrams with no crowding (one-letter words, e.g. "a")
+                if position > 0 and position < len(string) - 1:
+                    if string[position-1] == ' ' and string[position+1] == ' ':
+                        weight = 2.0
                 # AL: include monogram if at word edge
                 all_ngrams.append(letter)
                 all_weights.append(weight)
                 all_locations.append([position])
 
             # AL: find bigrams
-            for i in range(1,gap+1):
+            for i in range(1, gap+1):
                 # AL: make sure second letter of bigram does not cross the stimulus string nor the word
                 if position+i >= len(string) or string[position+i] == ' ':
                     break
@@ -145,6 +149,7 @@ def build_word_inhibition_matrix(lexicon,lexicon_word_ngrams,pm,matrix_filepath,
         # AL: make sure word1-word2, but not word2-word1 or word1-word1.
         for word_2_index in range(word_1_index+1,lexicon_size):    # MM: sending unit, I think...
             word1, word2 = lexicon[word_1_index], lexicon[word_2_index]
+            length_sim = 1 - (abs(len(word1)-len(word2))/max(len(word1),len(word2)))
             # if not is_similar_word_length(len(word1), len(word2), pm.word_length_similarity_constant):
             #     continue
             # else:
@@ -152,8 +157,8 @@ def build_word_inhibition_matrix(lexicon,lexicon_word_ngrams,pm,matrix_filepath,
             ngram_common = list(set(lexicon_word_ngrams[word1]).intersection(set(lexicon_word_ngrams[word2])))
             n_total_overlap = len(ngram_common)
             # MM: now inhib set as proportion of overlapping bigrams (instead of nr overlap)
-            word_overlap_matrix[word_1_index, word_2_index] = n_total_overlap / (len(lexicon_word_ngrams[word1])+2)
-            word_overlap_matrix[word_2_index, word_1_index] = n_total_overlap / (len(lexicon_word_ngrams[word2])+2)
+            word_overlap_matrix[word_1_index, word_2_index] = (n_total_overlap / (len(lexicon_word_ngrams[word1]))) * length_sim
+            word_overlap_matrix[word_2_index, word_1_index] = (n_total_overlap / (len(lexicon_word_ngrams[word2]))) * length_sim
             #print("word1 ", word1, "word2 ", word2, "overlap ", n_total_overlap, "len w1 ", len(lexicon_word_ngrams[word1]))
             #print("inhib one way", word_overlap_matrix[word_1_index, word_2_index])
 
@@ -201,6 +206,7 @@ def calc_acuity(eye_eccentricity, letPerDeg):
 def cal_ngram_exc_input(ngram_location, ngram_weight, eye_position, attention_position, attend_width, let_per_deg, attention_skew):
 
     total_exc_input = 1
+
     # ngram activity depends on distance of ngram letters to the centre of attention and fixation, and left/right is skewed using negative/positve att_ecc
     for letter_position in ngram_location:
         attention_eccentricity = letter_position - attention_position
@@ -209,9 +215,11 @@ def cal_ngram_exc_input(ngram_location, ngram_weight, eye_position, attention_po
         visual_accuity = calc_acuity(eye_eccentricity, let_per_deg)
         exc_input = attention * visual_accuity
         total_exc_input = total_exc_input * exc_input
+
     # AL: if ngram contains more than one letter, total excitatory input is squared
     if len(ngram_location) > 1:
         total_exc_input = math.sqrt(total_exc_input)
+
     # AL: excitation is regulated by ngram location. Ngrams at the word edges have a higher excitatory input.
     total_exc_input = total_exc_input * ngram_weight
 

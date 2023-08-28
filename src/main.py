@@ -127,7 +127,7 @@ def main():
             "analyze_results": True,
             "results_filepath": '',
             "parameters_filepath": '',
-            "number_of_simulations": 3,
+            "number_of_simulations": 5,
             "eye_tracking_filepath": '../data/raw/Provo_Corpus-Eyetracking_Data.csv',
             "results_identifier": 'prediction_flag',
             "experiment_parameters_filepath": '',

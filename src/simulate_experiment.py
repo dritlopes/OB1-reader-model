@@ -170,8 +170,8 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
             total_activity = sum(lexicon_word_activity)
             fixation_data['lexicon_activity_per_cycle'].append(total_activity)
 
-            if verbose: print('CYCLE ', str(n_cycles), '   activ @fix ', str(round(foveal_word_activity,3)))
-            # ' inhib  #@fix', str(round(lexicon_word_inhibition[foveal_word_index],6))
+            if verbose: print('CYCLE ', str(n_cycles), '   activ @fix ', str(round(foveal_word_activity, 3)),
+            '   inhib  #@fix', str(round(lexicon_word_inhibition[foveal_word_index], 6)))
 
             # ---------------------- Match words in lexicon to slots in input ---------------------
             # word recognition, by checking matching active wrds to slots
@@ -185,7 +185,8 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                                                   pm.min_activity,
                                                   stimulus_position,
                                                   pm.word_length_similarity_constant,
-                                                  recognition_in_stimulus)
+                                                  recognition_in_stimulus,
+                                                  verbose)
 
             # update threshold of n+1 or n+2 with pred value
             # if recognized_word_at_position.any() and pm.prediction_flag and fixation < total_n_words-1:
@@ -519,7 +520,7 @@ def simulate_experiment(pm):
     # set up word-to-word inhibition matrix
     word_inhibition_matrix = set_up_inhibition_matrix(pm, lexicon, lexicon_word_ngrams)
     print("Inhibition grid ready.")
-    print("Inhib from the to these:", word_inhibition_matrix[lexicon.index('these'),lexicon.index('the')])
+    # print("Inhib from the to these:", word_inhibition_matrix[lexicon.index('these'),lexicon.index('the')])
 
     # recognition threshold for each word in lexicon
     lexicon_thresholds = np.zeros((len(lexicon)), dtype=float)
@@ -544,7 +545,7 @@ def simulate_experiment(pm):
             # AL: if language model, generate new predictions with a new seed for every x simulations
             word_predictions = get_pred_dict(pm, lexicon)
 
-            for i, text in enumerate(pm.stim_all[:1]):
+            for i, text in enumerate(pm.stim_all):
 
                 text_tokens = [pre_process_string(token) for token in text.split()]
 

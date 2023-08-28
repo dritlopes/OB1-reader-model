@@ -75,6 +75,7 @@ def compute_ngram_activity(stimulus, eye_position, attention_position, attend_wi
         else:
             activation = cal_ngram_exc_input(location, weight, eye_position, attention_position,
                                              attend_width, letPerDeg, attention_skew)
+            # AL: weight activation by frequency and legnth
         # AL: a ngram that appears more than once in the simulus
         # will have the activation from the ngram in the position with highest activation
         if ngram in unit_activations.keys():
@@ -164,7 +165,7 @@ def update_word_activity(lexicon_word_activity, word_overlap_matrix, pm, word_in
 
     return lexicon_word_activity, lexicon_word_inhibition
 
-def match_active_words_to_input_slots(order_match_check, stimulus, recognized_word_at_position, lexicon_thresholds, lexicon_word_activity, lexicon, min_activity, stimulus_position, len_sim_const, recognition_in_stimulus):
+def match_active_words_to_input_slots(order_match_check, stimulus, recognized_word_at_position, lexicon_thresholds, lexicon_word_activity, lexicon, min_activity, stimulus_position, len_sim_const, recognition_in_stimulus, verbose=True):
 
     """
     Match active words to spatio-topic representation. Fill in the stops in the stimulus.
@@ -198,7 +199,7 @@ def match_active_words_to_input_slots(order_match_check, stimulus, recognized_wo
                 highest = np.argmax(recognized_words_fit_len * lexicon_word_activity)
                 highest_word = lexicon[highest]
                 recognition_in_stimulus.append(word_index)
-                print('word in input: ', word_searched, '      one w. highest act: ', highest_word)
+                if verbose: print('word in input: ', word_searched, '      one w. highest act: ', highest_word)
                 # The winner is matched to the slot,
                 # and its activity is reset to minimum to not have it matched to other words
                 recognized_word_at_position[word_index] = highest_word
