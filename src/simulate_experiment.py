@@ -579,7 +579,7 @@ def simulate_experiment(pm):
                                     lexicon,
                                     predictions_in_text,
                                     word_frequencies,
-                                    verbose=True)
+                                    verbose=False)
 
                 texts_simulations[i] = text_data
 
