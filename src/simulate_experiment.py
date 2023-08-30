@@ -116,7 +116,8 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
 
         # ---------------------- Start processing of stimulus ---------------------
         #print('Entering cycle loops to define word activity...')
-        if verbose: print("fix on: " + tokens[fixation] + '  attent. width: ' + str(attend_width) + ' fixwrd thresh.' + str(round(lexicon_thresholds[tokens_to_lexicon_indices[fixation]],3)))
+        if verbose: print("fix on: " + tokens[fixation] + '  attent. width: ' + str(attend_width) + ' fixwrd thresh.' + str(pm.max_threshold))
+        # str(round(lexicon_thresholds[tokens_to_lexicon_indices[fixation]],3))
         shift = False
         n_cycles = 0
         n_cycles_since_attent_shift = 0
@@ -128,7 +129,7 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
 
         # ---------------------- Define word excitatory input ---------------------
         # compute word input using ngram excitation and inhibition (out the cycle loop because this is constant)
-        n_ngrams, total_ngram_activity, all_ngrams, word_input = compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_position, attend_width, pm)
+        n_ngrams, total_ngram_activity, all_ngrams, word_input = compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_position, attend_width, pm, freq_values)
         fixation_data['n_ngrams'] = n_ngrams
         fixation_data['total_ngram_activity'] = total_ngram_activity
         if verbose: print("  input to fixwrd at first cycle: " + str(round(word_input[tokens_to_lexicon_indices[fixation]], 3)))
@@ -145,6 +146,7 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                                                                                              eye_position,
                                                                                              attention_position,
                                                                                              attend_width, pm,
+                                                                                             freq_values,
                                                                                              shift,
                                                                                              recognition_in_stimulus,
                                                                                              tokens)
@@ -188,6 +190,7 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                                                   stimulus_position,
                                                   pm.word_length_similarity_constant,
                                                   recognition_in_stimulus,
+                                                  pm.max_threshold,
                                                   verbose)
 
             # update threshold of n+1 or n+2 with pred value
@@ -259,7 +262,8 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                                                                                                      lexicon_word_ngrams,
                                                                                                      eye_position,
                                                                                                      attention_position,
-                                                                                                     attend_width, pm)
+                                                                                                     attend_width, pm,
+                                                                                                     freq_values)
                         attention_position = np.round(attention_position)
                     if verbose: print("  input after attentshift: " + str(round(word_input[tokens_to_lexicon_indices[fixation]], 3)))
 
@@ -575,14 +579,16 @@ def simulate_experiment(pm):
                                     lexicon,
                                     predictions_in_text,
                                     word_frequencies,
-                                    verbose=False)
+                                    verbose=True)
 
                 texts_simulations[i] = text_data
 
+                # progress bar update
                 sleep(0.1)
                 pbar.update(1)
 
             all_data[sim_number] = texts_simulations
+            # close progress bar
             pbar.close()
 
         else:

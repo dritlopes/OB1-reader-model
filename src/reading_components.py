@@ -1,6 +1,6 @@
 import numpy as np
-#import torch
-#from torch import nn
+import torch
+from torch import nn
 import warnings
 from reading_helper_functions import string_to_open_ngrams, cal_ngram_exc_input, is_similar_word_length, \
     get_midword_position_for_surrounding_word, calc_word_attention_right, calc_saccade_error,\
@@ -86,7 +86,7 @@ def compute_ngram_activity(stimulus, eye_position, attention_position, attend_wi
 
     return unit_activations
 
-def compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_position, attend_width, pm, shift=False, recognized=False, tokens=False):
+def compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_position, attend_width, pm, freq_dict, shift=False, recognized=False, tokens=False):
 
     """
     Calculate activity for each word in the lexicon given the excitatory input from all ngrams in the stimulus.
@@ -117,6 +117,9 @@ def compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_p
         ngram_intersect_list = set(unit_activations.keys()).intersection(set(lexicon_word_ngrams[lexicon_word]))
         for ngram in ngram_intersect_list:
             word_excitation_input += pm.bigram_to_word_excitation * unit_activations[ngram]
+        # change activation based on frequency
+        if lexicon_word in freq_dict.keys():
+            word_excitation_input += word_excitation_input * (freq_dict[lexicon_word]**pm.wordfreq_p)
         word_input[lexicon_ix] = word_excitation_input + ngram_inhibition_input
 
     # normalize based on number of ngrams in lexicon
@@ -165,7 +168,7 @@ def update_word_activity(lexicon_word_activity, word_overlap_matrix, pm, word_in
 
     return lexicon_word_activity, lexicon_word_inhibition
 
-def match_active_words_to_input_slots(order_match_check, stimulus, recognized_word_at_position, lexicon_thresholds, lexicon_word_activity, lexicon, min_activity, stimulus_position, len_sim_const, recognition_in_stimulus, verbose=True):
+def match_active_words_to_input_slots(order_match_check, stimulus, recognized_word_at_position, lexicon_thresholds, lexicon_word_activity, lexicon, min_activity, stimulus_position, len_sim_const, recognition_in_stimulus, max_threshold, verbose=True):
 
     """
     Match active words to spatio-topic representation. Fill in the stops in the stimulus.
@@ -174,7 +177,9 @@ def match_active_words_to_input_slots(order_match_check, stimulus, recognized_wo
     lexicon_word_activity is the updated array with activity of each word in the lexicon
     """
 
-    above_thresh_lexicon = np.where(lexicon_word_activity > lexicon_thresholds, 1, 0)
+    # above_thresh_lexicon = np.where(lexicon_word_activity > lexicon_thresholds, 1, 0)
+    # change threshold to fixed value
+    above_thresh_lexicon = np.where(lexicon_word_activity > max_threshold, 1, 0)
 
     for slot_to_check in range(len(order_match_check)):
         # slot_num is the slot in the stim (spot of still-unrecogn word) that we're checking

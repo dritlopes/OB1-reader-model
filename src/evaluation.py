@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from collections import defaultdict
 import statsmodels.api as sm
+import scipy.stats as stats
 import statsmodels.formula.api as smf
 import matplotlib.pyplot as plt
 import seaborn as sb
@@ -331,7 +332,7 @@ def drop_nan_values(true_values:pd.Series, simulated_values:pd.Series):
     values = defaultdict(list)
     counter = 0
     for true_value, simulated_value in zip(true_values, simulated_values):
-        if not true_values.isnull()[counter] and not simulated_values.isnull()[counter]:
+        if not true_values.isnull().tolist()[counter] and not simulated_values.isnull().tolist()[counter]:
             values['true'].append(true_value)
             values['pred'].append(simulated_value)
         counter += 1
@@ -350,6 +351,7 @@ def compute_root_mean_squared_error(true_values:list, simulated_values:list, nor
     #     diff = np.divide((np.subtract(diff, min(diff))), np.subtract(max(diff), min(diff)))
 
     # another way: first normalize values with min-max scaler, then compute difference
+
     norm_sim_values = np.divide((np.subtract(simulated_values, min(simulated_values))), np.subtract(max(simulated_values), min(simulated_values)))
     norm_true_values = np.divide((np.subtract(true_values, min(true_values))), np.subtract(max(true_values), min(true_values)))
     diff = np.subtract(norm_sim_values, norm_true_values)
@@ -466,6 +468,37 @@ def fit_mixed_effects(parameters, true, predicted, output_filepath):
                 fh.write(stats_result.summary().as_text())
         print('end stats model')
 
+def test_difference(measure, sim_values1, sim_values2, filepath):
+
+    # https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.ttest_rel.html
+    # "The T-statistic measures whether the average score differs significantly across samples.
+    # It is calculated as np.mean(a - b)/se, where se is the standard error.
+    # Therefore, the T-statistic will be positive when the sample mean of a - b is greater than zero
+    # and negative when the sample mean of a - b is less than zero"
+
+    assert len(sim_values1) == len(sim_values2)
+
+    # # test if distribution is normal
+    # if len(sim_values1) > 3:
+    #     print(stats.shapiro(sim_values1))
+    # if len(sim_values2) > 3:
+    #     print(stats.shapiro(sim_values2))
+
+    # test if difference in mean2error is significant between conditions
+    # test = stats.ttest_rel(sim_values2*100, sim_values2*100)
+    # t_test = {'test': ['t-statistics', 'p-value', 'degrees of freedom', 'confidence interval'],
+    #           'result': [test.statistic, test.pvalue, test.df, test.confidence_interval()]}
+    # AL: since no normal distribution, try Wilcoxon T-test
+    # https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.wilcoxon.html
+    # It is a non-parametric version of the paired T-test
+    test = stats.wilcoxon(sim_values1, sim_values2)
+    print(measure, test)
+    t_test = {'test': ['t-statistics', 'p-value'],
+              'result': [test.statistic, test.pvalue]}
+    # Wilcoxon statistic: the sum of the ranks of the differences above zero
+    df = pd.DataFrame.from_dict(t_test)
+    df.to_csv(filepath, sep='\t', index=False)
+
 def scale_human_durations(data_log, parameters_list):
 
     all_measures = [measure for parameters in parameters_list for measure in parameters.evaluation_measures]
@@ -540,7 +573,8 @@ def evaluate_output (parameters_list: list, verbose=True):
             simulation_output = simulation_output.rename(columns={'foveal_word_index': 'word_id',
                                                                   'foveal_word': 'word'})
 
-            if verbose: print(f'Evaluating output in {output_filepath}')
+            if verbose:
+                print(f'Evaluating output in {output_filepath}')
 
             if 'provo' in parameters.eye_tracking_filepath.lower():
                 # exclude first word of every passage (not in eye tracking -PROVO- data either)
@@ -614,9 +648,26 @@ def evaluate_output (parameters_list: list, verbose=True):
             mean2error_df = compute_error(parameters.evaluation_measures,
                                           mean_true_eye_movements,
                                           mean_predicted_eye_movements)
-            filepath = output_filepath.replace('model_output', 'analysed').replace('simulation_', f'RM2E_eye_movements_')
+            filepath = output_filepath.replace('model_output', 'analysed').replace('simulation_', f'RM2E_mean_eye_movements_')
             mean2error_df.to_csv(filepath, sep='\t', index=False)
-            if verbose: print(mean2error_df.head(len(parameters.evaluation_measures)+1))
+            mean2error_df.to_csv(filepath, sep='\t', index=False)
+            if verbose:
+                print(mean2error_df.head(len(parameters.evaluation_measures)+1))
+
+            # mean square error per simulation
+            error_dfs = []
+            for sim, sim_info in predicted_eye_movements.groupby('simulation_id'):
+                df = compute_error(parameters.evaluation_measures,
+                                   sim_info,
+                                   mean_true_eye_movements)
+                df['simulation_id'] = [sim for i in df.eye_tracking_measure.tolist()]
+                error_dfs.append(df)
+            error_df = pd.concat(error_dfs)
+            error_df = error_df.pivot_table('mean_squared_error',['simulation_id'],'eye_tracking_measure')
+            error_df = error_df.sort_values('simulation_id')
+            filepath = output_filepath.replace('model_output', 'analysed').replace('simulation_',f'RM2E_eye_movements_')
+            error_df.to_csv(filepath, sep='\t')
+            data_log[parameters.results_filepath + '_error'] = error_df
 
             # word recognition accuracy
             all_acc, sim_ids = [], []
@@ -636,15 +687,27 @@ def evaluate_output (parameters_list: list, verbose=True):
             # stat tests
             # fit_mixed_effects(parameters, true_eye_movements, mean_predicted_eye_movements, output_filepath)
 
-    # if data_log:
-    #     # scale durations from eye-tracking data to be more aligned to OB1 durations which happens in cycles of 25ms
-    #     data_log = scale_human_durations(data_log, parameters_list)
-    #
+    if data_log:
+        # test significance of difference in mean2error between conditions
+        measures = parameters_list[0].evaluation_measures
+        measures.append('MEAN')
+        for measure in measures:
+            sim_values1, sim_values2 = [], []
+            for data_name, data in data_log.items():
+                if 'error' in data_name and 'cloze' in data_name:
+                    sim_values1 = data[measure].tolist()
+                elif 'error' in data_name and 'llama' in data_name:
+                    sim_values2 = data[measure].tolist()
+            if len(sim_values1) > 0 and len(sim_values2) > 0:
+                filepath = parameters_list[0].results_filepath.replace('cloze','').replace('llama','')
+                filepath = filepath.replace('__', f'_{measure}_t-test_').replace('model_output', 'analysed')
+                test_difference(measure, sim_values1, sim_values2, filepath)
+
+    # # scale durations from eye-tracking data to be more aligned to OB1 durations which happens in cycles of 25ms
+    # data_log = scale_human_durations(data_log, parameters_list)
     #     # merge simulation and human measures
     #     all_data = merge_human_and_simulation_data(data_log, parameters_list)
-    #
     #     # # plot results
-    #     # TODO add fixed factors to human data when more than one version of fixed factor (e.g. predictability cloze vs lm)
     #     # plot_fixed_factor_vs_eye_movement(all_data,
     #     #                                   ['predictability'],
     #     #                                   parameters_list[0].evaluation_measures,
