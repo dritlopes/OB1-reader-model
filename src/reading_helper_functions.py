@@ -32,7 +32,7 @@ def string_to_open_ngrams(string,gap):
                 # AL: increases weigth of unigrams with no crowding (one-letter words, e.g. "a")
                 if position > 0 and position < len(string) - 1:
                     if string[position-1] == ' ' and string[position+1] == ' ':
-                        weight = 2.0
+                        weight = 3
                 # AL: include monogram if at word edge
                 all_ngrams.append(letter)
                 all_weights.append(weight)

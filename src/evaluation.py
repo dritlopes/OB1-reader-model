@@ -351,7 +351,8 @@ def compute_root_mean_squared_error(true_values:list, simulated_values:list, nor
     #     diff = np.divide((np.subtract(diff, min(diff))), np.subtract(max(diff), min(diff)))
 
     # another way: first normalize values with min-max scaler, then compute difference
-
+    assert len(simulated_values) > 0, print(simulated_values)
+    assert len(simulated_values) == len(true_values), print(len(simulated_values), len(true_values))
     norm_sim_values = np.divide((np.subtract(simulated_values, min(simulated_values))), np.subtract(max(simulated_values), min(simulated_values)))
     norm_true_values = np.divide((np.subtract(true_values, min(true_values))), np.subtract(max(true_values), min(true_values)))
     diff = np.subtract(norm_sim_values, norm_true_values)
@@ -384,12 +385,63 @@ def compute_error(measures, true, pred, normalize=True):
 
     return mean2error_df
 
-def word_recognition_acc(model_recognized, text_words):
+def word_recognition_acc_to_factor(accuracy, word_factor, recog_cycles):
 
-    acc = [1 if text_word == model_recognized[i] else 0 for i, text_word in enumerate(text_words)]
-    acc_score = sum(acc)/len(acc)
+    count, acc_dict = defaultdict(dict), defaultdict(dict)
 
-    return acc_score
+    for factor_value, recog, cycle in zip(word_factor, accuracy, recog_cycles):
+
+        if factor_value != -1:
+
+            factor_value = str(round(factor_value))
+            cycle = int(cycle)
+
+            if factor_value in count.keys():
+                count[factor_value]['recog_count'] += recog
+                if cycle >= 0:
+                    if 'cycle_count' in count[factor_value].keys():
+                        count[factor_value]['cycle_count'] += cycle
+                    else:
+                        count[factor_value]['cycle_count'] = cycle
+            else:
+                count[factor_value] = {'recog_count': recog}
+                if cycle >= 0:
+                    count[factor_value]['cycle_count'] = cycle
+
+    for factor_value in count.keys():
+        acc_dict[factor_value]['mean_acc'] = count[factor_value]['recog_count'] / len(list(filter(lambda x: round(x) == int(factor_value), word_factor)))
+        if 'cycle_count' in count[factor_value].keys():
+            acc_dict[factor_value]['mean_cycle'] = count[factor_value]['cycle_count'] / len(list(filter(lambda x: round(x) == int(factor_value), word_factor)))
+
+    return acc_dict
+
+def word_recognition_acc(fixations, pm):
+
+    acc, lengths, freqs, recog_cycles = [], [], [], []
+    freq_map = get_word_freq(pm, None)
+
+    for text_id, text_fix in fixations.groupby('text_id'):
+
+        recognized_words = text_fix['recognized_words'].tolist()[-1].replace('[','').replace(']','').replace(',','').replace("'","").split()
+        text_words = text_fix['stimulus_words'].tolist()[-1].replace('[','').replace(']','').replace(',','').replace("'","").split()
+
+        assert len(recognized_words) == len(text_words)
+
+        acc.extend([1 if recognized_word == text_word else 0 for recognized_word, text_word in zip(recognized_words, text_words)])
+        recog_cycles.extend(text_fix['cycle_of_recognition'].tolist()[-1].replace('[', '').replace(']', '').replace(',','').replace("'", "").split())
+
+        for text_word in text_words:
+            lengths.append(len(text_word))
+            if text_word in freq_map.keys():
+                freqs.append(freq_map[text_word])
+            else:
+                freqs.append(-1)
+
+    # recog acc and recog speed in relation to a word factor
+    len_acc = word_recognition_acc_to_factor(acc, lengths, recog_cycles)
+    freq_acc = word_recognition_acc_to_factor(acc, freqs, recog_cycles)
+
+    return acc, len_acc, freq_acc
 
 def fit_mixed_effects(parameters, true, predicted, output_filepath):
     
@@ -483,16 +535,18 @@ def test_difference(measure, sim_values1, sim_values2, filepath):
     #     print(stats.shapiro(sim_values1))
     # if len(sim_values2) > 3:
     #     print(stats.shapiro(sim_values2))
-
+    print(measure)
+    print(sim_values1, sim_values2)
     # test if difference in mean2error is significant between conditions
-    # test = stats.ttest_rel(sim_values2*100, sim_values2*100)
-    # t_test = {'test': ['t-statistics', 'p-value', 'degrees of freedom', 'confidence interval'],
-    #           'result': [test.statistic, test.pvalue, test.df, test.confidence_interval()]}
+    test = stats.ttest_rel(sim_values2, sim_values2)
+    t_test = {'test': ['t-statistics', 'p-value', 'degrees of freedom', 'confidence interval'],
+             'result': [test.statistic, test.pvalue, test.df, test.confidence_interval()]}
+    print(test)
     # AL: since no normal distribution, try Wilcoxon T-test
     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.wilcoxon.html
     # It is a non-parametric version of the paired T-test
     test = stats.wilcoxon(sim_values1, sim_values2)
-    print(measure, test)
+    print(test)
     t_test = {'test': ['t-statistics', 'p-value'],
               'result': [test.statistic, test.pvalue]}
     # Wilcoxon statistic: the sum of the ranks of the differences above zero
@@ -569,8 +623,8 @@ def evaluate_output (parameters_list: list, verbose=True):
         if parameters.task_to_run == 'continuous_reading':
 
             output_filepath = parameters.results_filepath
-            simulation_output = pd.read_csv(output_filepath, sep='\t')
-            simulation_output = simulation_output.rename(columns={'foveal_word_index': 'word_id',
+            simulation_output_all = pd.read_csv(output_filepath, sep='\t')
+            simulation_output_all = simulation_output_all.rename(columns={'foveal_word_index': 'word_id',
                                                                   'foveal_word': 'word'})
 
             if verbose:
@@ -578,7 +632,7 @@ def evaluate_output (parameters_list: list, verbose=True):
 
             if 'provo' in parameters.eye_tracking_filepath.lower():
                 # exclude first word of every passage (not in eye tracking -PROVO- data either)
-                simulation_output = simulation_output[simulation_output['word_id'] != 0]
+                simulation_output = simulation_output_all[simulation_output_all['word_id'] != 0]
 
             # get word-level eye-movement measures in human data
             processed_eye_tracking_path = parameters.eye_tracking_filepath.replace('-Eyetracking_Data', '_eye_tracking').replace('raw','processed')
@@ -670,18 +724,74 @@ def evaluate_output (parameters_list: list, verbose=True):
             data_log[parameters.results_filepath + '_error'] = error_df
 
             # word recognition accuracy
-            all_acc, sim_ids = [], []
-            for sim_id, fixations in simulation_output.groupby('simulation_id'):
-                recognized_words = fixations['recognized_word_at_foveal_position'].tolist()
-                stimulus_words = fixations['word'].tolist()
-                acc_score = word_recognition_acc(recognized_words,stimulus_words)
-                all_acc.append(round(acc_score,3))
-                sim_ids.append(sim_id)
-            all_acc.append(round(sum(all_acc)/len(all_acc),3))
-            sim_ids.append('MEAN')
-            recog_acc_df = pd.DataFrame({'simulation_id': sim_ids,'word_recognition_accuracy': all_acc})
+            all_acc, sim_ids_all = [], []
+            len_accs, freq_accs = dict(), dict()
+            sim_count_len = dict()
+            sim_count_freq = dict()
+
+            for sim_id, fixations in simulation_output_all.groupby('simulation_id'):
+                acc, len_acc, freq_acc = word_recognition_acc(fixations, parameters)
+                all_acc.append(round(sum(acc) / len(acc), 3))
+                sim_ids_all.append(sim_id)
+
+                for length in len_acc.keys():
+                    if length in len_accs.keys():
+                        len_accs[length]['mean_acc'] += len_acc[length]['mean_acc']
+                        if 'mean_cycle' in len_acc[length].keys():
+                            if 'mean_cycle' in len_accs[length].keys():
+                                len_accs[length]['mean_cycle'] += len_acc[length]['mean_cycle']
+                                sim_count_len[length] += 1
+                            else:
+                                len_accs[length]['mean_cycle'] = len_acc[length]['mean_cycle']
+                                sim_count_len[length] = 1
+                    else:
+                        len_accs[length] = {'mean_acc': len_acc[length]['mean_acc']}
+                        if 'mean_cycle' in len_acc[length].keys():
+                            len_accs[length]['mean_cycle'] = len_acc[length]['mean_cycle']
+                            sim_count_len[length] = 1
+
+                for freq in freq_acc.keys():
+                    if freq in freq_accs.keys():
+                        freq_accs[freq]['mean_acc'] += freq_acc[freq]['mean_acc']
+                        if 'mean_cycle' in freq_acc[freq].keys():
+                            if 'mean_cycle' in freq_accs[freq].keys():
+                                freq_accs[freq]['mean_cycle'] += freq_acc[freq]['mean_cycle']
+                                sim_count_freq[freq] += 1
+                            else:
+                                freq_accs[freq]['mean_cycle'] = freq_acc[freq]['mean_cycle']
+                                sim_count_freq[freq] = 1
+                    else:
+                        freq_accs[freq] = {'mean_acc': freq_acc[freq]['mean_acc']}
+                        if 'mean_cycle' in freq_acc[freq].keys():
+                            freq_accs[freq]['mean_cycle'] = freq_acc[freq]['mean_cycle']
+                            sim_count_freq[freq] = 1
+
+            for length in len_accs.keys():
+                len_accs[length]['mean_acc'] = round(len_accs[length]['mean_acc']/len(sim_ids_all),3)
+                if 'mean_cycle' in len_accs[length].keys():
+                    len_accs[length]['mean_cycle'] = round(len_accs[length]['mean_cycle']/sim_count_len[length],3)
+            for freq in freq_accs.keys():
+                freq_accs[freq]['mean_acc'] = round(freq_accs[freq]['mean_acc']/len(sim_ids_all),3)
+                if 'mean_cycle' in freq_accs[freq].keys():
+                    freq_accs[freq]['mean_cycle'] = round(freq_accs[freq]['mean_cycle']/sim_count_freq[freq],3)
+
+            all_acc.append(round(sum(all_acc)/len(all_acc), 3))
+            sim_ids_all.append('MEAN')
+            recog_acc_df = pd.DataFrame({'simulation_id': sim_ids_all,'word_recognition_accuracy': all_acc})
             filepath = output_filepath.replace('model_output', 'analysed').replace('simulation_', f'word_recognition_acc_')
             recog_acc_df.to_csv(filepath, sep='\t', index=False)
+            recog_acc_df_len = pd.DataFrame({'length': [int(length) for length in len_accs.keys()],
+                                             'word_recognition_accuracy': [item['mean_acc'] for length, item in len_accs.items()],
+                                             'word_recognition_speed': [item['mean_cycle'] if 'mean_cycle' in item.keys() else None for length, item in len_accs.items()]})
+            filepath = output_filepath.replace('model_output', 'analysed').replace('simulation_', f'word_recognition_acc_length_')
+            recog_acc_df_len = recog_acc_df_len.sort_values('length')
+            recog_acc_df_len.to_csv(filepath, sep='\t', index=False)
+            recog_acc_df_freq = pd.DataFrame({'freq': [int(freq) for freq in freq_accs.keys()],
+                                              'word_recognition_accuracy': [item['mean_acc'] for freq, item in freq_accs.items()],
+                                              'word_recognition_speed': [item['mean_cycle'] if 'mean_cycle' in item.keys() else None for freq, item in freq_accs.items()]})
+            filepath = output_filepath.replace('model_output', 'analysed').replace('simulation_',f'word_recognition_acc_freq_')
+            recog_acc_df_freq = recog_acc_df_freq.sort_values('freq')
+            recog_acc_df_freq.to_csv(filepath, sep='\t', index=False)
             if verbose: print(recog_acc_df.head(len(simulation_output['simulation_id'].unique())+1))
 
             # stat tests

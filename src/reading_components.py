@@ -5,6 +5,10 @@ import warnings
 from reading_helper_functions import string_to_open_ngrams, cal_ngram_exc_input, is_similar_word_length, \
     get_midword_position_for_surrounding_word, calc_word_attention_right, calc_saccade_error,\
     check_previous_refixations_at_position
+import logging
+
+logger = logging.getLogger(__name__)
+print = logger.info
 
 def compute_stimulus(fixation, tokens):
 
@@ -50,7 +54,7 @@ def compute_eye_position(stimulus, fixated_position_stimulus, eye_pos_in_fix_wor
 
     return int(np.round(eye_position))
 
-def compute_ngram_activity(stimulus, eye_position, attention_position, attend_width, letPerDeg, attention_skew, gap, shift, recognized, tokens):
+def compute_ngram_activity(stimulus, eye_position, attention_position, attend_width, letPerDeg, attention_skew, gap, shift, recognized, tokens, recognition_cycle, n_cycles):
 
     """
     Initialize word activity based on ngram excitatory input.
@@ -63,11 +67,19 @@ def compute_ngram_activity(stimulus, eye_position, attention_position, attend_wi
     # AL: if attention shifted and fixated word recognized, ngrams from fixated word do not provide activation
     # AL: help avoid repetition problem, i.e. remaining activation from recognized word leads to
     # same word filling in the next slot.
+    # fix_ngrams = []
+    # if not shift and recognized and tokens:
+    #     for i in recognized:
+    #         ngrams, weights, locations = string_to_open_ngrams(tokens[i], gap)
+    #         fix_ngrams.extend(ngrams)
     fix_ngrams = []
-    if not shift and recognized and tokens:
+
+    if len(recognized) > 0 and len(tokens) > 0 and len(recognition_cycle) > 0 and n_cycles > -1:
         for i in recognized:
-            ngrams, weights, locations = string_to_open_ngrams(tokens[i], gap)
-            fix_ngrams.extend(ngrams)
+            if n_cycles - recognition_cycle[i] <= 8: # after recognition, 200ms block on activation (= 8 act cycles)
+                ngrams, weights, locations = string_to_open_ngrams(tokens[i], gap)
+                fix_ngrams.extend(ngrams)
+                # print(tokens[i], n_cycles, recognition_cycle[i], ngrams)
 
     for ngram, weight, location in zip(all_ngrams, all_weights, all_locations):
         if ngram in fix_ngrams:
@@ -86,7 +98,7 @@ def compute_ngram_activity(stimulus, eye_position, attention_position, attend_wi
 
     return unit_activations
 
-def compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_position, attend_width, pm, freq_dict, shift=False, recognized=False, tokens=False):
+def compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_position, attend_width, pm, freq_dict, shift=False, recognized=[], tokens=[], recognition_cycle=[], n_cycles=-1):
 
     """
     Calculate activity for each word in the lexicon given the excitatory input from all ngrams in the stimulus.
@@ -103,7 +115,7 @@ def compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_p
     unit_activations = compute_ngram_activity(stimulus, eye_position,
                                               attention_position, attend_width, pm.letPerDeg,
                                               pm.attention_skew, pm.bigram_gap,
-                                              shift, recognized, tokens)
+                                              shift, recognized, tokens, recognition_cycle, n_cycles)
     total_ngram_activity = sum(unit_activations.values())
     n_ngrams = len(unit_activations.keys())
 
@@ -119,7 +131,7 @@ def compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_p
             word_excitation_input += pm.bigram_to_word_excitation * unit_activations[ngram]
         # change activation based on frequency
         if lexicon_word in freq_dict.keys():
-            word_excitation_input += word_excitation_input * (freq_dict[lexicon_word]**pm.wordfreq_p)
+            word_excitation_input = word_excitation_input * (freq_dict[lexicon_word]**pm.freq_weight) # / len(lexicon_word) * pm.len_weight
         word_input[lexicon_ix] = word_excitation_input + ngram_inhibition_input
 
     # normalize based on number of ngrams in lexicon
@@ -130,7 +142,7 @@ def compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_p
 
     return n_ngrams, total_ngram_activity, all_ngrams, word_input
 
-def update_word_activity(lexicon_word_activity, word_overlap_matrix, pm, word_input, lexicon_size, shift):
+def update_word_activity(lexicon_word_activity, word_overlap_matrix, pm, word_input, lexicon_size):
 
     """
     In each processing cycle, re-compute word activity using word-to-word inhibition and decay.
@@ -168,7 +180,7 @@ def update_word_activity(lexicon_word_activity, word_overlap_matrix, pm, word_in
 
     return lexicon_word_activity, lexicon_word_inhibition
 
-def match_active_words_to_input_slots(order_match_check, stimulus, recognized_word_at_position, lexicon_thresholds, lexicon_word_activity, lexicon, min_activity, stimulus_position, len_sim_const, recognition_in_stimulus, max_threshold, verbose=True):
+def match_active_words_to_input_slots(order_match_check, stimulus, recognized_word_at_position, lexicon_word_activity, lexicon, min_activity, stimulus_position, len_sim_const, recognition_in_stimulus, max_threshold, verbose=True):
 
     """
     Match active words to spatio-topic representation. Fill in the stops in the stimulus.
@@ -204,7 +216,8 @@ def match_active_words_to_input_slots(order_match_check, stimulus, recognized_wo
                 highest = np.argmax(recognized_words_fit_len * lexicon_word_activity)
                 highest_word = lexicon[highest]
                 recognition_in_stimulus.append(word_index)
-                if verbose: print('word in input: ', word_searched, '      one w. highest act: ', highest_word)
+                if verbose:
+                    print(f'word in input: {word_searched}      one w. highest act: {highest_word}')
                 # The winner is matched to the slot,
                 # and its activity is reset to minimum to not have it matched to other words
                 recognized_word_at_position[word_index] = highest_word
@@ -378,72 +391,6 @@ def compute_next_eye_position(pm, attention_position, eye_position, fixation, fi
 
     # compute the position of next fixation
     eye_position = int(np.round(eye_position + saccade_distance))
-
-    # if next_eye_position >= len(stimulus) - 1:
-    #     next_eye_position = len(stimulus) - 2
-
-    # # Regression
-    # if next_eye_position < word_edges[fixated_position_in_stimulus][0]:
-    #     # AL: if eye at space right to word n - 1, offset corrects eye to word n - 1
-    #     if next_eye_position > word_edges[fixated_position_in_stimulus-1][1]:
-    #         offset_from_word_center -= 1
-    #     # AL: if eye at space left to word n - 1, offset corrects eye to word n - 1
-    #     if next_eye_position < word_edges[fixated_position_in_stimulus-1][0]:
-    #         center_position = get_midword_position_for_surrounding_word(-1,word_edges,fixated_position_in_stimulus)
-    #         offset_from_word_center = center_position - word_edges[fixated_position_in_stimulus-1][0]
-    #     fixation -= 1
-    #     saccade_info['saccade type'] = 'regression'
-    # 
-    # # Forward (include space between n and n+2)
-    # # AL: next eye position is too long (between space after last letter of fixated word and last letter of word n + 1)
-    # elif ((fixation < total_n_words - 1)
-    #       and (next_eye_position > word_edges[fixated_position_in_stimulus][1])
-    #       and (next_eye_position <= (word_edges[fixated_position_in_stimulus+1][1]))):
-    #     # When saccade too short due to saccade error recalculate offset for n+1 (old offset is for N or N+2)
-    #     if saccade_info['saccade type'] in ['wordskip', 'refixation']:
-    #         center_position = get_midword_position_for_surrounding_word(1,word_edges,fixated_position_in_stimulus)
-    #         offset_from_word_center = next_eye_position - center_position
-    #         # AL: forward due to saccade error
-    #         saccade_info['saccade type by error'] = True
-    #     # Eye at (n+0 <-> n+1) space position
-    #     if next_eye_position < word_edges[fixated_position_in_stimulus+1][0]:
-    #         offset_from_word_center += 1
-    #     fixation += 1
-    #     saccade_info['saccade type'] = 'forward'
-    # 
-    # # Wordskip
-    # # AL: next eye position after last letter of word n+1 and before 3 chars after last letter of word n+2
-    # elif ((fixation < total_n_words - 2)
-    #       and (next_eye_position > word_edges[fixated_position_in_stimulus+1][1])
-    #       and (next_eye_position <= word_edges[fixated_position_in_stimulus+2][1] + 2)):
-    #     # AL: When saccade is too short, recalculate offset to correct eye position to n+2 (old offset is for n or n+1)
-    #     if saccade_info['saccade type'] in ['forward', 'refixation']:
-    #         # recalculate offset for n+2, todo check for errors
-    #         center_position = get_midword_position_for_surrounding_word(2,word_edges,fixated_position_in_stimulus)
-    #         offset_from_word_center = next_eye_position - center_position
-    #         # AL: wordskip due to saccade error
-    #         saccade_info['saccade type by error'] = True
-    #     # Eye at (n+1 <-> n+2) space position
-    #     if next_eye_position < word_edges[fixated_position_in_stimulus+2][0]:
-    #         offset_from_word_center += 1
-    #     # Eye at (> n+2) space position
-    #     elif next_eye_position > word_edges[fixated_position_in_stimulus+2][1]:
-    #         offset_from_word_center -= (next_eye_position - word_edges[fixated_position_in_stimulus+2][1])
-    #     fixation += 2
-    #     saccade_info['saccade type'] = 'wordskip'
-    # 
-    # # Refixation due to saccade error
-    # # AL: weird to me, isn't this converting all saccades which were not refixation not due by error to refixation due by error?
-    # elif saccade_info['saccade type'] != 'refixation':
-    #     # TODO find out if not regression is necessary
-    #     center_position = np.round(word_edges[fixated_position_in_stimulus][0] +
-    #                               ((word_edges[fixated_position_in_stimulus][1] - word_edges[fixated_position_in_stimulus][0]) / 2.))
-    #     offset_from_word_center = next_eye_position - center_position
-    #     saccade_info['saccade type by error'] = True
-    #     saccade_info['saccade type'] = 'refixation'
-    # 
-    # update saccade info
-    # saccade_info['offset from word center'] = float(offset_from_word_center)
 
     # determine next fixation depending on next eye position
     fixation_saccade_map = {0: 'refixation',

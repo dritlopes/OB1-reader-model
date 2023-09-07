@@ -32,16 +32,16 @@ def simulate_reading(global_parameters):
     print("\nLANGUAGE: " + pm.language)
     print("\nCORPUS: " + pm.stimuli_filepath)
     # print out the parameters you think are important for your experiment
-    print("\nPREDICTION_FLAG: " + str(pm.prediction_flag))
     if pm.prediction_flag:
-        print("\nPREDICTION_WEIGHT: " + str(pm.pred_p))
+        print("\nPREDICTION_FLAG: " + str(pm.prediction_flag))
+        print("\nPREDICTION_WEIGHT: " + str(pm.pred_weight))
 
     results_id = ''
     dir = f'../data/model_output/{dt_string}/'
     if not os.path.exists(dir):
         os.makedirs(dir)
     if 'prediction_flag' in pm.results_identifier:
-        results_id = f'{pm.prediction_flag}_{pm.pred_p}'
+        results_id = f'{pm.prediction_flag}_{pm.pred_weight}'
     if not pm.results_filepath:
         pm.results_filepath = f"{dir}simulation_{pm.stim_name}_{pm.task_to_run}_{results_id}_{dt_string}.csv"
     if not pm.parameters_filepath:
@@ -85,7 +85,7 @@ def simulate_reading(global_parameters):
 
 def main():
 
-    useparser=True
+    useparser=False
     if useparser:
         parser = argparse.ArgumentParser()
         parser.add_argument('stimuli_filepath')
@@ -130,10 +130,8 @@ def main():
             "language": 'english',
             "run_exp": True,
             "analyze_results": True,
-            "results_filepath": "",
-            "parameters_filepath": "",
-            # "number_of_simulations": 2,
-            # "n_trials": 1,
+            "results_filepath": "", # "../data/model_output/_05_09_2023_12-39-58/simulation_Provo_Corpus_continuous_reading__0.1__05_09_2023_12-39-58.csv",
+            "parameters_filepath": "", # "../data/model_output/_05_09_2023_12-39-58/parameters_Provo_Corpus_continuous_reading__0.1__05_09_2023_12-39-58.pkl",
             "eye_tracking_filepath": '../data/raw/Provo_Corpus-Eyetracking_Data.csv',
             "results_identifier": 'prediction_flag',
             "experiment_parameters_filepath": 'experiment_parameters.json',
