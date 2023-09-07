@@ -8,7 +8,7 @@ import json
 import re
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 from transformers import LlamaForCausalLM, LlamaTokenizer
-#import torch
+import torch
 from reading_components import semantic_processing
 from reading_helper_functions import build_word_inhibition_matrix
 import logging
@@ -17,6 +17,7 @@ import warnings
 from string import punctuation
 
 logger = logging.getLogger(__name__)
+print = logger.info
 
 def get_stimulus_text_from_file(filepath, sep='\t'):
 

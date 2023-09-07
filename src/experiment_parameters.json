@@ -6,37 +6,37 @@
       "n_trials": 28
     },
     {
-      "prediction_flag": "cloze",
+      "prediction_flag": "llama",
       "number_of_simulations": 10,
       "n_trials": 28,
       "pred_weight": 0.1
     },
     {
-      "prediction_flag": "cloze",
+      "prediction_flag": "llama",
       "number_of_simulations": 10,
       "n_trials": 28,
       "pred_weight": 0.05
     },
     {
-      "prediction_flag": "cloze",
+      "prediction_flag": "llama",
       "number_of_simulations": 10,
       "n_trials": 28,
       "pred_weight": 0.01
     },
     {
-      "prediction_flag": "llama",
+      "prediction_flag": "cloze",
       "number_of_simulations": 10,
       "n_trials": 28,
       "pred_weight": 0.1
     },
     {
-      "prediction_flag": "llama",
+      "prediction_flag": "cloze",
       "number_of_simulations": 10,
       "n_trials": 28,
       "pred_weight": 0.05
     },
     {
-      "prediction_flag": "llama",
+      "prediction_flag": "cloze",
       "number_of_simulations": 10,
       "n_trials": 28,
       "pred_weight": 0.01
