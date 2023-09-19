@@ -184,7 +184,6 @@ def return_task_params(task_attributes):
     # MM: a number of words have no freq because not in corpus, repaired by making freq less important
     freq_weight = 0.1 # 5.5 (paper) # 0.2 #NV: difference between max and min threshold
     # len_weight = 0.2
-    wordpred_p = 0.1  # 9.0 (paper) # 0.2  # used if predictability regulates word threshold
     word_length_similarity_constant = 0.15 # 0.35  # 0.15 # NV: determines how similar the length of 2 words must be for them to be recognised as 'similar word length'
     frequency_flag = True  # use word freq in threshold
     # short_words_p =  # AL: c6 in paper. Trying to reproduce model as in paper

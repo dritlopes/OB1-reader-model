@@ -43,9 +43,9 @@ def simulate_reading(global_parameters):
     if 'prediction_flag' in pm.results_identifier:
         results_id = f'{pm.prediction_flag}_{pm.pred_weight}'
     if not pm.results_filepath:
-        pm.results_filepath = f"{dir}simulation_{pm.stim_name}_{pm.task_to_run}_{results_id}_{dt_string}.csv"
+        pm.results_filepath = f"{dir}simulation_{pm.stim_name}_{pm.task_to_run}_{results_id}.csv"
     if not pm.parameters_filepath:
-        pm.parameters_filepath = f"{dir}parameters_{pm.stim_name}_{pm.task_to_run}_{results_id}_{dt_string}.pkl"
+        pm.parameters_filepath = f"{dir}parameters_{pm.stim_name}_{pm.task_to_run}_{results_id}.pkl"
 
     start_time = time.perf_counter()
     # runs experiment
@@ -130,13 +130,17 @@ def main():
             "language": 'english',
             "run_exp": True,
             "analyze_results": True,
-            "results_filepath": "", # "../data/model_output/_05_09_2023_12-39-58/simulation_Provo_Corpus_continuous_reading__0.1__05_09_2023_12-39-58.csv",
-            "parameters_filepath": "", # "../data/model_output/_05_09_2023_12-39-58/parameters_Provo_Corpus_continuous_reading__0.1__05_09_2023_12-39-58.pkl",
+            "results_filepath": "",
+            "parameters_filepath": "",
+            # "results_filepath": ["../data/model_output/_08_09_2023_12-05-59/simulation_Provo_Corpus_continuous_reading_cloze_0.5__08_09_2023_12-05-59.csv",
+            #                      "../data/model_output/_08_09_2023_12-05-59/simulation_Provo_Corpus_continuous_reading_llama_0.5__08_09_2023_12-05-59.csv"],
+            # "parameters_filepath": ["../data/model_output/_08_09_2023_12-05-59/parameters_Provo_Corpus_continuous_reading_cloze_0.5__08_09_2023_12-05-59.pkl",
+            #                         "../data/model_output/_08_09_2023_12-05-59/parameters_Provo_Corpus_continuous_reading_llama_0.5__08_09_2023_12-05-59.pkl"],
             "eye_tracking_filepath": '../data/raw/Provo_Corpus-Eyetracking_Data.csv',
             "results_identifier": 'prediction_flag',
             "experiment_parameters_filepath": 'experiment_parameters.json',
             "optimize": False,
-            "print_stim": False,
+            "print_process": True,
             "plotting": False
         }
 

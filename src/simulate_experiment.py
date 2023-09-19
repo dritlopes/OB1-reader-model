@@ -15,7 +15,7 @@ from reading_helper_functions import get_threshold, string_to_open_ngrams, \
     get_blankscreen_stimulus, check_predictability
 
 logger = logging.getLogger(__name__)
-print = logger.info
+# print = logger.info
 
 def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index,lexicon_thresholds,lexicon,pred_dict,freq_values,verbose=True):
 
@@ -29,7 +29,7 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
     # initialize eye position
     eye_position = None
     # initialise attention window size
-    attend_width = pm.attend_width
+    attend_width = pm.max_attend_width
     # total number of tokens in input
     total_n_words = len(tokens)
     # word activity for word in lexicon
@@ -68,6 +68,7 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
 
         if verbose:
             print(f'---Fixation {fixation_counter} at position {fixation}---')
+        logger.info(f'---Fixation {fixation_counter} at position {fixation}---')
 
         fixation_data = defaultdict(list)
 
@@ -99,6 +100,7 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
         fixation_data['stimulus'] = stimulus
         fixation_data['eye_position'] = eye_position
         if verbose: print(f"Stimulus: {stimulus}\nEye position: {eye_position}")
+        logger.info(f"Stimulus: {stimulus}\nEye position: {eye_position}")
 
         # ---------------------- Update attention width ---------------------
         # update attention width according to whether there was a regression in the last fixation,
@@ -123,6 +125,7 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
         #print('Entering cycle loops to define word activity...')
         if verbose:
             print(f"fix on: {tokens[fixation]}  attent. width: {attend_width}   fixwrd thresh. {pm.max_threshold}")
+        logger.info(f"fix on: {tokens[fixation]}  attent. width: {attend_width}   fixwrd thresh. {pm.max_threshold}")
         # str(round(lexicon_thresholds[tokens_to_lexicon_indices[fixation]],3))
         shift = False
         n_cycles = 0
@@ -140,6 +143,7 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
         fixation_data['total_ngram_activity'] = total_ngram_activity
         if verbose:
             print(f"  input to fixwrd at first cycle: {round(word_input[tokens_to_lexicon_indices[fixation]], 3)}")
+        logger.info(f"  input to fixwrd at first cycle: {round(word_input[tokens_to_lexicon_indices[fixation]], 3)}")
 
         # Counter n_cycles_since_attent_shift is 0 until attention shift (saccade program initiation),
         # then starts counting to 5 (because a saccade program takes 5 cycles, or 125ms.)
@@ -184,7 +188,7 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
 
             if verbose:
                 print(f'CYCLE {n_cycles}    activ @fix {round(foveal_word_activity, 3)} inhib  #@fix {round(lexicon_word_inhibition[foveal_word_index], 6)}')
-
+            logger.info(f'CYCLE {n_cycles}    activ @fix {round(foveal_word_activity, 3)} inhib  #@fix {round(lexicon_word_inhibition[foveal_word_index], 6)}')
             # ---------------------- Match words in lexicon to slots in input ---------------------
             # word recognition, by checking matching active wrds to slots
             recognized_word_at_position, lexicon_word_activity, recognition_in_stimulus = \
@@ -228,6 +232,10 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                                                                                  verbose)
                     updated_positions.append(position)
 
+                    # predictability regulation of attention position
+
+
+
             # ---------------------- Make saccade decisions ---------------------
             # word selection and attention shift
             if not shift:
@@ -263,6 +271,7 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                     fixation_data['foveal_word_activity_at_shift'] = fixation_data['foveal_word_activity_per_cycle'][-1]
                     if verbose:
                         print(f'attentpos {attention_position}')
+                    logger.info(f'attentpos {attention_position}')
                     # AL: attention position is None if at the end of the text and saccade is not refixation nor regression, so do not compute new words input
                     if attention_position:
                         # AL: recompute word input, using ngram excitation and inhibition, because attentshift changes bigram input
@@ -279,7 +288,7 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                                                                                                      n_cycles)
                         attention_position = np.round(attention_position)
                     if verbose: print(f"  input after attentshift: {round(word_input[tokens_to_lexicon_indices[fixation]], 3)}")
-
+                    logger.info(f"  input after attentshift: {round(word_input[tokens_to_lexicon_indices[fixation]], 3)}")
             if shift:
                 n_cycles_since_attent_shift += 1 # ...count cycles since attention shift
 
@@ -300,24 +309,32 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
 
         if verbose:
             print(f"Fixation duration: {fixation_duration} ms.")
+        logger.info(f"Fixation duration: {fixation_duration} ms.")
 
         if recognized_word_at_position[fixation]:
             fixation_data['recognized_word_at_foveal_position'] = recognized_word_at_position[fixation]
             if verbose:
                 if recognized_word_at_position[fixation] == tokens[fixation]:
-                    print("Correct word recognized at fixation!")
+                    if verbose:
+                        print("Correct word recognized at fixation!")
+                    logger.info("Correct word recognized at fixation!")
                 else:
-                    print(f"Wrong word recognized at fixation! (Recognized: {recognized_word_at_position[fixation]})")
+                    if verbose:
+                        print(f"Wrong word recognized at fixation! (Recognized: {recognized_word_at_position[fixation]})")
+                    logger.info(f"Wrong word recognized at fixation! (Recognized: {recognized_word_at_position[fixation]})")
         else:
             fixation_data['recognized_word_at_foveal_position'] = ""
             if verbose:
                 print("No word was recognized at fixation position")
                 print(f"Word with highest activation: {lexicon[np.argmax(lexicon_word_activity)]}")
+            logger.info("No word was recognized at fixation position")
+            logger.info(f"Word with highest activation: {lexicon[np.argmax(lexicon_word_activity)]}")
 
         # add fixation dict to list of dicts
         all_data[fixation_counter] = fixation_data
         if verbose:
             print(recognized_word_at_position) #fixation_data)
+        logger.info(recognized_word_at_position)
 
         fixation_counter += 1
 
@@ -346,9 +363,10 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
             end_of_text = True
             continue
         else:
-            if verbose:
-                if saccade_info['saccade_type']:
+            if saccade_info['saccade_type']:
+                if verbose:
                     print(saccade_symbols[saccade_info['saccade_type']])
+                logger.info(saccade_symbols[saccade_info['saccade_type']])
 
     return all_data
 
@@ -495,7 +513,10 @@ def word_recognition(pm,word_inhibition_matrix,lexicon_word_ngrams,lexicon_word_
 
 def simulate_experiment(pm):
 
-    print('\nPreparing simulation(s)...')
+    verbose = pm.print_process
+
+    if verbose: print('\nPreparing simulation(s)...')
+    logger.info('\nPreparing simulation(s)...')
     tokens = [token for stimulus in pm.stim_all for token in stimulus.split(' ') if token != '']
 
     if pm.is_priming_task:
@@ -509,23 +530,27 @@ def simulate_experiment(pm):
     lexicon = list(set(tokens) | set(word_frequencies.keys()))
     lexicon = [pre_process_string(word) for word in lexicon]
 
-    print('LONG or SHORT WORDS')
+    if verbose: print('LONG or SHORT WORDS')
     logger.info('LONG or SHORT WORDS')
     for token in set(tokens):
         if len(token) > 10 or len(token) == 1:
             print(f'{token}, len: {len(token)}, count: {tokens.count(token)}')
-    print('\nLOW-FREQUENCY WORDS')
+    if verbose: print('\nLOW-FREQUENCY WORDS')
+    logger.info('\nLOW-FREQUENCY WORDS')
     for token in set(tokens):
         if token in word_frequencies.keys():
             if word_frequencies[token] <= 1.5:
-                print(f'{token}, freq: {word_frequencies[token]}, count: {tokens.count(token)}')
+                if verbose: print(f'{token}, freq: {word_frequencies[token]}, count: {tokens.count(token)}')
+                logger.info(f'{token}, freq: {word_frequencies[token]}, count: {tokens.count(token)}')
 
     # write out lexicon for consulting purposes
     lexicon_filename = '../data/processed/lexicon.pkl'
     with open(lexicon_filename, "wb") as f:
         pickle.dump(lexicon, f)
 
-    print('\nSetting word recognition thresholds...')
+    if verbose:
+        print('\nSetting word recognition thresholds...')
+    logger.info('\nSetting word recognition thresholds...')
     # define word recognition thresholds
     word_thresh_dict = {}
     for word in lexicon:
@@ -542,7 +567,8 @@ def simulate_experiment(pm):
     for i, word in enumerate(tokens):
         tokens_to_lexicon_indices[i] = lexicon.index(word)
 
-    print('Finding ngrams from lexicon...')
+    if verbose: print('Finding ngrams from lexicon...')
+    logger.info('Finding ngrams from lexicon...')
     # lexicon bigram dict
     lexicon_word_ngrams = {}
     lexicon_word_index = {}
@@ -552,10 +578,12 @@ def simulate_experiment(pm):
         lexicon_word_ngrams[word] = all_word_ngrams
         lexicon_word_index[word] = i
 
-    print('Computing word-to-word inhibition matrix...')
+    if verbose: print('Computing word-to-word inhibition matrix...')
+    logger.info('Computing word-to-word inhibition matrix...')
     # set up word-to-word inhibition matrix
     word_inhibition_matrix = set_up_inhibition_matrix(pm, lexicon, lexicon_word_ngrams)
-    print("Inhibition grid ready.")
+    if verbose: print("Inhibition grid ready.")
+    logger.info("Inhibition grid ready.")
     # print("Inhib from the to these:", word_inhibition_matrix[lexicon.index('these'),lexicon.index('the')])
 
     # recognition threshold for each word in lexicon
@@ -565,9 +593,11 @@ def simulate_experiment(pm):
         for i, word in enumerate(lexicon):
             lexicon_thresholds[i] = word_thresh_dict[word]
 
-    print("")
-    print("BEGIN SIMULATION(S)")
-    print("")
+    if verbose:
+        print("")
+        print("BEGIN SIMULATION(S)")
+        print("")
+    logger.info("BEGIN SIMULATION(S)")
 
     # how many trials/texts from corpus/data should be used
     if pm.n_trials == 0 or pm.n_trials > len(pm.stim_all):
@@ -578,7 +608,8 @@ def simulate_experiment(pm):
 
     for sim_number in range(pm.number_of_simulations):
 
-        print(f"SIMULATION {sim_number}")
+        if verbose: print(f"SIMULATION {sim_number}")
+        logger.info(f"SIMULATION {sim_number}")
 
         if pm.task_to_run == 'continuous_reading':
 
@@ -608,7 +639,7 @@ def simulate_experiment(pm):
                                     lexicon,
                                     predictions_in_text,
                                     word_frequencies,
-                                    verbose=True)
+                                    verbose=verbose)
 
                 texts_simulations[i] = text_data
 
@@ -629,6 +660,7 @@ def simulate_experiment(pm):
                                         lexicon,
                                         word_frequencies)
 
-    print(f'THE END')
+    if verbose: print(f'THE END')
+    logger.info(f'THE END')
 
     return all_data

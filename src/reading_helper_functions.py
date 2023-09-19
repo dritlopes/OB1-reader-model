@@ -83,6 +83,20 @@ def update_threshold(word_position, word, word_threshold, max_predictability, pr
 
     return word_threshold
 
+def check_predictability(recognized_word_at_position, fixation, tokens, updated_positions):
+
+    position = None
+    # update next word only if word at fixation has been recognized correctly
+    if recognized_word_at_position[fixation] == tokens[fixation]:
+        # and next word has not been recognized yet, nor has been already updated
+        if not recognized_word_at_position[fixation + 1] and fixation + 1 not in updated_positions:
+            position = fixation + 1
+        # if n+1 has already been recognized or updated, update n+2 word if it exists and it has not been updated yet
+        elif fixation < len(tokens) - 2 and recognized_word_at_position[fixation + 1] == tokens[fixation + 1] and fixation + 2 not in updated_positions:
+            position = fixation + 2
+
+    return position
+
 def update_lexicon_threshold(recognized_word_at_position,fixation,tokens,updated_thresh_positions,lexicon_thresholds,wordpred_p,pred_values,tokens_to_lexicon_indices,lexicon):
 
     # # AL: update threshold of each predicted word
@@ -115,20 +129,6 @@ def update_lexicon_threshold(recognized_word_at_position,fixation,tokens,updated
         updated_thresh_positions.append(position)
 
     return updated_thresh_positions, lexicon_thresholds
-
-def check_predictability(recognized_word_at_position, fixation, tokens, updated_positions):
-
-    position = None
-    # update next word only if word at fixation has been recognized correctly
-    if recognized_word_at_position[fixation] == tokens[fixation]:
-        # and next word has not been recognized yet, nor has been already updated
-        if not recognized_word_at_position[fixation + 1] and fixation + 1 not in updated_positions:
-            position = fixation + 1
-        # if n+1 has already been recognized or updated, update n+2 word if it exists and it has not been updated yet
-        elif fixation < len(tokens) - 2 and recognized_word_at_position[fixation + 1] == tokens[fixation + 1] and fixation + 2 not in updated_positions:
-            position = fixation + 2
-
-    return position
 
 def is_similar_word_length(len1, len2, len_sim_constant):
 
@@ -285,10 +285,10 @@ def calc_monogram_attention_sum(position_start, position_end, eye_position, atte
     sum_attention_letters = 0
 
     # AL: make sure letters to the left of fixated word are not included
-    if foveal_word: position_start = eye_position + 1
+    if foveal_word:
+        position_start = eye_position + 1
 
     for letter_location in range(position_start, position_end+1):
-        # print(letter_location)
         monogram_locations_weight_multiplier = 0.5
         if foveal_word:
             if letter_location == position_end:
@@ -302,8 +302,12 @@ def calc_monogram_attention_sum(position_start, position_end, eye_position, atte
         # print(attention_eccentricity, eye_eccentricity)
         attention = get_attention_skewed(attend_width, attention_eccentricity, attention_skew)
         visual_acuity = calc_acuity(eye_eccentricity, let_per_deg)
-        # print(attention,visual_acuity)
         sum_attention_letters += (attention * visual_acuity) * monogram_locations_weight_multiplier
+        print(f'     letter within-word position: {letter_location}, '
+              f'ecc: {attention_eccentricity}, '
+              f'att-based input: {attention}, '
+              f'visual acc {visual_acuity}, '
+              f'visual input: {(attention * visual_acuity) * monogram_locations_weight_multiplier}')
 
     return sum_attention_letters
 
@@ -312,9 +316,13 @@ def calc_word_attention_right(word_edges, eye_position, attention_position, atte
     # MM: calculate list of attention wgts for all words in stimulus to right of fix.
     word_attention_right = []
     attention_position += round(salience_position*attend_width)
-
+    print('Calculating visual input for next attention position...')
     for i, edges in word_edges.items():
-
+        print(f'Word position: {i}')
+        print(f'att width: {attend_width}, '
+              f'salience: {salience_position}, '
+              f'att position: {attention_position}, '
+              f'att skew: {attention_skew}, ')
         # if n or n + x (but not n - x), so only fixated word or words to the right
         if i >= fixated_position_in_stimulus:
             # print(i, edges)
@@ -334,6 +342,8 @@ def calc_word_attention_right(word_edges, eye_position, attention_position, atte
             # print('word position and visual salience: ',i,crt_word_monogram_attention_sum)
             word_attention_right.append(crt_word_monogram_attention_sum)
             # print(f'visual salience of {i} to the right of fixation: {crt_word_monogram_attention_sum}')
+            print(f'    word visual input: {crt_word_monogram_attention_sum}')
+
     return word_attention_right
 
 def calc_saccade_error(saccade_distance, optimal_distance, saccErr_scaler, saccErr_sigma, saccErr_sigma_scaler,use_saccade_error):

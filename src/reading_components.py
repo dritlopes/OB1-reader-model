@@ -8,7 +8,6 @@ from reading_helper_functions import string_to_open_ngrams, cal_ngram_exc_input,
 import logging
 
 logger = logging.getLogger(__name__)
-print = logger.info
 
 def compute_stimulus(fixation, tokens):
 
@@ -218,6 +217,7 @@ def match_active_words_to_input_slots(order_match_check, stimulus, recognized_wo
                 recognition_in_stimulus.append(word_index)
                 if verbose:
                     print(f'word in input: {word_searched}      one w. highest act: {highest_word}')
+                logger.info(f'word in input: {word_searched}      one w. highest act: {highest_word}')
                 # The winner is matched to the slot,
                 # and its activity is reset to minimum to not have it matched to other words
                 recognized_word_at_position[word_index] = highest_word
@@ -299,6 +299,7 @@ def activate_predicted_upcoming_word(position, target_word, lexicon_word_activit
                 if verbose:
                     print(
                     f'Word {token} received pre-activation {round(pred * pred_weight,3)} in position of text word {target_word} ({round(lexicon_word_activity[i],3)} -> {round(lexicon_word_activity[i] + pred * pred_weight,3)})')
+                logger.info(f'Word {token} received pre-activation {round(pred * pred_weight,3)} in position of text word {target_word} ({round(lexicon_word_activity[i],3)} -> {round(lexicon_word_activity[i] + pred * pred_weight,3)})')
                 # print(f'act before: {lexicon_word_activity[i]}')
                 lexicon_word_activity[i] += pred * pred_weight
                 # print(f'act after: {lexicon_word_activity[i]}')
@@ -311,7 +312,7 @@ def activate_predicted_upcoming_word(position, target_word, lexicon_word_activit
 def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_position_in_stimulus,regression_flag,recognized_word_at_position,lexicon_word_activity,eye_position,fixation_counter,attention_position,attend_width,fix_lexicon_index,pm):
 
     """
-    Define where attention should be moved to next based on recognition of words in current stimulus and the visual
+    Define where attention should be moved next based on recognition of words in current stimulus and the visual
     salience of the words to the right of fixation.
     :return: the next attention position as the index of the letter in the word programmed to be fixated next,
     and the updated saccade info based on the next attention position.
