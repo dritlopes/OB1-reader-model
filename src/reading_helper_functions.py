@@ -191,11 +191,11 @@ def get_attention_skewed(attentionWidth, attention_eccentricity, attention_skew)
     if attention_eccentricity < 0:
         # Attention left
         attention = 1.0/(attentionWidth)*math.exp(-(pow(abs(attention_eccentricity), 2)) /
-                                                  (2*pow(attentionWidth/attention_skew, 2))) + 0.25
+                                                  (2*pow(attentionWidth/attention_skew, 2))) + 0.1
     else:
         # Attention right
         attention = 1.0/(attentionWidth)*math.exp(-(pow(abs(attention_eccentricity), 2)) /
-                                                  (2*pow(attentionWidth, 2))) + 0.25
+                                                  (2*pow(attentionWidth, 2))) + 0.1
     return attention
 
 def calc_acuity(eye_eccentricity, letPerDeg):
@@ -282,6 +282,7 @@ def get_midword_position_for_surrounding_word(word_position, word_edges, fixated
 def calc_monogram_attention_sum(position_start, position_end, eye_position, attention_position, attend_width, attention_skew, let_per_deg, foveal_word):
 
     # this is only used to calculate where to move next when forward saccade
+    # MM: turns out this can be seriously simplified: the weightmultiplier code can go, and the eccentricity effect.
     sum_attention_letters = 0
 
     # AL: make sure letters to the left of fixated word are not included
@@ -289,25 +290,25 @@ def calc_monogram_attention_sum(position_start, position_end, eye_position, atte
         position_start = eye_position + 1
 
     for letter_location in range(position_start, position_end+1):
-        monogram_locations_weight_multiplier = 0.5
-        if foveal_word:
-            if letter_location == position_end:
-                monogram_locations_weight_multiplier = 1. # 2.
-        elif letter_location in [position_start, position_end]:
-            monogram_locations_weight_multiplier = 1. # 2.
+        #monogram_locations_weight_multiplier = 1  #was .5. Changed to 1. What happens when attentwgt not influenced by edges (which increases wgt of small words)
+        #if foveal_word:
+        #    if letter_location == position_end:
+        #        monogram_locations_weight_multiplier = 1. # 2.
+        #elif letter_location in [position_start, position_end]:
+        #    monogram_locations_weight_multiplier = 1. # 2.
 
         # Monogram activity depends on distance of monogram letters to the centre of attention and fixation
         attention_eccentricity = letter_location - attention_position
-        eye_eccentricity = abs(letter_location - eye_position)
+        # eye_eccentricity = abs(letter_location - eye_position)
         # print(attention_eccentricity, eye_eccentricity)
         attention = get_attention_skewed(attend_width, attention_eccentricity, attention_skew)
-        visual_acuity = calc_acuity(eye_eccentricity, let_per_deg)
-        sum_attention_letters += (attention * visual_acuity) * monogram_locations_weight_multiplier
-        print(f'     letter within-word position: {letter_location}, '
-              f'ecc: {attention_eccentricity}, '
-              f'att-based input: {attention}, '
-              f'visual acc {visual_acuity}, '
-              f'visual input: {(attention * visual_acuity) * monogram_locations_weight_multiplier}')
+        #visual_acuity = 1 # calc_acuity(eye_eccentricity, let_per_deg)
+        sum_attention_letters += attention #* visual_acuity) * monogram_locations_weight_multiplier
+        #print(f'     letter within-word position: {letter_location}, '
+        #      f'ecc: {attention_eccentricity}, '
+        #      f'att-based input: {attention}, '
+        #      f'visual acc {visual_acuity}, '
+        #      f'visual input: {(attention * visual_acuity) * monogram_locations_weight_multiplier}')
 
     return sum_attention_letters
 

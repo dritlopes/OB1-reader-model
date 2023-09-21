@@ -1,6 +1,6 @@
 import numpy as np
-import torch
-from torch import nn
+#import torch
+#from torch import nn
 import warnings
 from reading_helper_functions import string_to_open_ngrams, cal_ngram_exc_input, is_similar_word_length, \
     get_midword_position_for_surrounding_word, calc_word_attention_right, calc_saccade_error,\

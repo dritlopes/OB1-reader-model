@@ -3,8 +3,7 @@
     {
       "prediction_flag": "",
       "number_of_simulations": 1,
-      "n_trials": 1,
-      "max_attend_width": 10
+      "n_trials": 5
     }
   ]
 }
