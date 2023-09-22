@@ -37,6 +37,10 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
     # positions in text whose thresholds/pre-activation have already been updated
     # avoid updating it every time position is in stimulus
     updated_positions = []
+    # keep track whether prediction was made for next word to fixation
+    predicted = False
+    # keep track of the highest prediction for each position in the text
+    highest_predictions = []
     # history of regressions, set to true at a certain position in the text when a regression is performed to that word
     regression_flag = np.zeros(total_n_words, dtype=bool)
     # recognized word at position, which word received the highest activation in each position
@@ -223,18 +227,16 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                 if position:
                     # avoid error because of missing word in provo cloze data
                     if not (pm.prediction_flag == 'cloze' and 'provo' in pm.stim_name.lower() and position == 50 and text_id == 17):
-                        lexicon_word_activity = activate_predicted_upcoming_word(position,
-                                                                                 tokens[position],
-                                                                                 lexicon_word_activity,
-                                                                                 lexicon,
-                                                                                 pred_dict,
-                                                                                 pm.pred_weight,
-                                                                                 verbose)
+                        lexicon_word_activity, predicted, highest_predictions = activate_predicted_upcoming_word(position,
+                                                                                                                 tokens[position],
+                                                                                                                 lexicon_word_activity,
+                                                                                                                 lexicon,
+                                                                                                                 pred_dict,
+                                                                                                                 pm.pred_weight,
+                                                                                                                 predicted,
+                                                                                                                 highest_predictions,
+                                                                                                                 verbose)
                     updated_positions.append(position)
-
-                    # predictability regulation of attention position
-
-
 
             # ---------------------- Make saccade decisions ---------------------
             # word selection and attention shift
@@ -267,7 +269,10 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                                                                         attention_position,
                                                                         attend_width,
                                                                         foveal_word_index,
+                                                                        predicted,
+                                                                        highest_predictions,
                                                                         pm)
+                    predicted = False
                     fixation_data['foveal_word_activity_at_shift'] = fixation_data['foveal_word_activity_per_cycle'][-1]
                     if verbose:
                         print(f'attentpos {attention_position}')

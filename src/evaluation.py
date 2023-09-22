@@ -63,6 +63,19 @@ def pre_process_eye_tracking(eye_tracking: pd.DataFrame, eye_tracking_filepath: 
                         else:
                             warnings.warn(f'Position {word_id}, "{word}", in text {text} not found in eye tracking data from participant {participant}')
 
+        # only consider first fix and gaze duration from firs-pass fixations
+        first_fix, gaze_duration = [], []
+        for word, hist in eye_tracking.groupby(['participant_id', 'text_id', 'word_id']):
+            # if word was skipped at first-pass, then fixations are not at first-pass
+            if hist['skip'].tolist()[0] == 1:
+                first_fix.append(None)
+                gaze_duration.append(None)
+            else:
+                first_fix.append(hist['first_fix_duration'].tolist()[0])
+                gaze_duration.append(hist['gaze_duration'].tolist()[0])
+        eye_tracking['first_fix_duration'] = first_fix
+        eye_tracking['gaze_duration'] = gaze_duration
+
         # add single fix
         single_fix, single_fix_dur = [],[]
         # determine which words were fixated only once by each participant
@@ -157,10 +170,11 @@ def get_skipped_words(first_pass:pd.DataFrame, words_in_text:defaultdict):
                 skipped_words['text_id'].append(text_id)
                 skipped_words['word_id'].append(word_id)
                 skipped_words['word'].append(word)
-                if word_id not in list(text_hist['word_id'].unique()):
-                    skipped_words['skip'].append(1)
-                else:
-                    skipped_words['skip'].append(0)
+                skipped_words['skip'].append(1)
+                # if word_id not in list(text_hist['word_id'].unique()):
+                #     skipped_words['skip'].append(1)
+                # else:
+                #     skipped_words['skip'].append(0)
 
     skipped_added = pd.DataFrame.from_dict(skipped_words)
 
@@ -349,18 +363,16 @@ def compute_error(measures, true, pred, normalize=True):
 
     for measure in measures:
         # excluding words with nan value, e.g. skipped words of prob 1. Should words that are always skipped be included in the equation?
-        # print(true[measure])
-        # print(pred[measure])
         values = drop_nan_values(true[measure], pred[measure])
         assert len(values['pred']) > 0, print(measure, values['pred'])
         assert len(values['pred']) == len(values['true']), print(measure, len(values['pred']), len(values['true']))
         norm_sim, norm_true, mean2error = compute_root_mean_squared_error(values['true'], values['pred'], normalize)
         mean2errors['eye_tracking_measure'].append(measure)
-        mean2errors['true_mean'].append(np.round(np.mean(values['true']), 3))
+        mean2errors['true_mean'].append(np.round(np.nanmean(values['true']), 3))
         mean2errors['min_true_mean'].append(round(min(values['true']),3))
         mean2errors['max_true_mean'].append(round(max(values['true']),3))
         mean2errors['norm_true_mean'].append(np.round(np.mean(norm_true),3))
-        mean2errors['simulated_mean'].append(np.round(np.mean(values['pred']), 3))
+        mean2errors['simulated_mean'].append(np.round(np.nanmean(values['pred']), 3))
         mean2errors['min_simulated_mean'].append(round(min(values['pred']),3))
         mean2errors['max_simulated_mean'].append(round(max(values['pred']),3))
         mean2errors['norm_simulated_mean'].append(np.round(np.mean(norm_sim),3))
@@ -631,6 +643,8 @@ def evaluate_output (parameters_list: list, verbose=True):
             if 'provo' in parameters.eye_tracking_filepath.lower():
                 # exclude first word of every passage (not in eye tracking -PROVO- data either)
                 simulation_output = simulation_output_all[simulation_output_all['word_id'] != 0]
+                # remove outliers, according to PROVO eye-tracking corpus: fixations > 80ms and < 800ms
+                simulation_output = simulation_output[(simulation_output['fixation_duration'] > 80) & (simulation_output['fixation_duration'] < 800)]
 
             # get word-level eye-movement measures in human data
             processed_eye_tracking_path = parameters.eye_tracking_filepath.replace('-Eyetracking_Data', '_eye_tracking').replace('raw','processed')

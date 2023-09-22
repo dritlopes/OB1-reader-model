@@ -285,7 +285,7 @@ def semantic_processing(text, tokenizer, language_model, prediction_flag, top_k 
 
     return pred_info
 
-def activate_predicted_upcoming_word(position, target_word, lexicon_word_activity, lexicon, pred_dict, pred_weight, verbose):
+def activate_predicted_upcoming_word(position, target_word, lexicon_word_activity, lexicon, pred_dict, pred_weight, pred_bool, highest_pred, verbose):
 
     try:
         predicted = pred_dict[str(position)]
@@ -293,23 +293,27 @@ def activate_predicted_upcoming_word(position, target_word, lexicon_word_activit
         if predicted['target'] != target_word and verbose:
             warnings.warn(f'Target word in predictability map "{predicted["target"]}" not the same as target word in model stimuli "{target_word}", position {position}')
 
+        pred_values = []
         for token, pred in predicted['predictions'].items():
             if token in lexicon:
+                pred_bool = True
+                pred_values.append(pred)
                 i = lexicon.index(token)
                 if verbose:
-                    print(
-                    f'Word {token} received pre-activation {round(pred * pred_weight,3)} in position of text word {target_word} ({round(lexicon_word_activity[i],3)} -> {round(lexicon_word_activity[i] + pred * pred_weight,3)})')
+                    print(f'Word {token} received pre-activation {round(pred * pred_weight,3)} in position of text word {target_word} ({round(lexicon_word_activity[i],3)} -> {round(lexicon_word_activity[i] + pred * pred_weight,3)})')
                 logger.info(f'Word {token} received pre-activation {round(pred * pred_weight,3)} in position of text word {target_word} ({round(lexicon_word_activity[i],3)} -> {round(lexicon_word_activity[i] + pred * pred_weight,3)})')
                 # print(f'act before: {lexicon_word_activity[i]}')
                 lexicon_word_activity[i] += pred * pred_weight
                 # print(f'act after: {lexicon_word_activity[i]}')
+        if len(pred_values) > 0:
+            highest_pred.append(pred_values[0])
 
     except KeyError:
         print(f'Position {position} not found in predictability map')
 
-    return lexicon_word_activity
+    return lexicon_word_activity, pred_bool, highest_pred
 
-def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_position_in_stimulus,regression_flag,recognized_word_at_position,lexicon_word_activity,eye_position,fixation_counter,attention_position,attend_width,fix_lexicon_index,pm):
+def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_position_in_stimulus,regression_flag,recognized_word_at_position,lexicon_word_activity,eye_position,fixation_counter,attention_position,attend_width,fix_lexicon_index,predicted,highest_predicted,pm):
 
     """
     Define where attention should be moved next based on recognition of words in current stimulus and the visual
@@ -333,7 +337,7 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
     # refixation: refixate if the foveal word is not recognized but is still being processed
     elif (not recognized_word_at_position[fixation]) and (lexicon_word_activity[fix_lexicon_index] > 0):
         # # AL: only allows 3 consecutive refixations on the same word to avoid infinitely refixating if no word reaches threshold recognition at a given position
-        refixate = check_previous_refixations_at_position(all_data,fixation,fixation_counter,max_n_refix=3)
+        refixate = check_previous_refixations_at_position(all_data, fixation, fixation_counter, max_n_refix=3)
         if refixate:
             word_reminder_length = word_edges[fixated_position_in_stimulus][1] - eye_position
             if word_reminder_length > 0:
@@ -351,7 +355,9 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
                                                          pm.salience_position,
                                                          pm.attention_skew,
                                                          pm.letPerDeg,
-                                                         fixated_position_in_stimulus)
+                                                         fixated_position_in_stimulus,
+                                                         predicted,
+                                                         highest_predicted)
         next_fixation = word_attention_right.index(max(word_attention_right))
 
     # AL: Calculate next attention position based on next fixation estimate = 0: refixate, 1: forward, 2: wordskip, -1: regression
