@@ -170,11 +170,10 @@ def get_skipped_words(first_pass:pd.DataFrame, words_in_text:defaultdict):
                 skipped_words['text_id'].append(text_id)
                 skipped_words['word_id'].append(word_id)
                 skipped_words['word'].append(word)
-                skipped_words['skip'].append(1)
-                # if word_id not in list(text_hist['word_id'].unique()):
-                #     skipped_words['skip'].append(1)
-                # else:
-                #     skipped_words['skip'].append(0)
+                if word_id not in list(text_hist['word_id'].unique()):
+                    skipped_words['skip'].append(1)
+                else:
+                    skipped_words['skip'].append(0)
 
     skipped_added = pd.DataFrame.from_dict(skipped_words)
 
