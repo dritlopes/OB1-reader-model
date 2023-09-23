@@ -180,7 +180,7 @@ def return_task_params(task_attributes):
     #min_overlap = 0 # was 2 # min overlap for words to inhibit each other. MM: unnecessary, can be deleted later
 
     # threshold parameters
-    max_threshold = 0.38 # mm: changed because max activity changed from 1.3 to 1
+    max_threshold = 0.4  # mm: changed because max activity changed from 1.3 to 1
     freq_weight = 0.1 # NV: difference between max and min threshold # MM: words not in corpus have no freq, repaired by making freq less important
     word_length_similarity_constant = 0.15 # NV: determines how similar the length of 2 words must be for them to be recognised as 'similar word length'
     frequency_flag = True  # use word freq in threshold
@@ -196,11 +196,11 @@ def return_task_params(task_attributes):
 
     # attention
     attend_width = 5 # 5.0 for natural reading # 8.0  # NV: was set to 15 for flanker, 20 for sentence and 3 for transposed
-    max_attend_width = 9.0  # 5 in paper; MM: used in reading sim where attend_with is dynamic.
+    max_attend_width = 7.0  # 5 in paper; MM: used in reading sim where attend_with is dynamic.
     min_attend_width = 3.0
     attention_skew = 4 # 1 equals symmetrical distribution # 4 (paper)
     letPerDeg = .3
-    refix_size = 0.2
+    refix_size = 0.2 #during refix, how much do we jump?
     salience_position = 2  # 5 (optimal) # 1.29 (paper)
 
     # saccade

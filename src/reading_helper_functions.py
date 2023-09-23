@@ -156,9 +156,9 @@ def build_word_inhibition_matrix(lexicon,lexicon_word_ngrams,pm,matrix_filepath,
             # AL: lexicon_word_ngrams already contains all ngrams (bigrams and included monograms)
             ngram_common = list(set(lexicon_word_ngrams[word1]).intersection(set(lexicon_word_ngrams[word2])))
             n_total_overlap = len(ngram_common)
-            # MM: now inhib set as proportion of overlapping bigrams (instead of nr overlap)
-            word_overlap_matrix[word_1_index, word_2_index] = (n_total_overlap / (len(lexicon_word_ngrams[word1]))) * length_sim
-            word_overlap_matrix[word_2_index, word_1_index] = (n_total_overlap / (len(lexicon_word_ngrams[word2]))) * length_sim
+            # MM: now inhib set as proportion of overlapping bigrams (instead of nr overlap); +1 to help short words
+            word_overlap_matrix[word_1_index, word_2_index] = (n_total_overlap / (len(lexicon_word_ngrams[word1])+2)) * length_sim
+            word_overlap_matrix[word_2_index, word_1_index] = (n_total_overlap / (len(lexicon_word_ngrams[word2])+2)) * length_sim
             #print("word1 ", word1, "word2 ", word2, "overlap ", n_total_overlap, "len w1 ", len(lexicon_word_ngrams[word1]))
             #print("inhib one way", word_overlap_matrix[word_1_index, word_2_index])
 
@@ -191,11 +191,11 @@ def get_attention_skewed(attentionWidth, attention_eccentricity, attention_skew)
     if attention_eccentricity < 0:
         # Attention left
         attention = 1.0/(attentionWidth)*math.exp(-(pow(abs(attention_eccentricity), 2)) /
-                                                  (2*pow(attentionWidth/attention_skew, 2))) + 0.1
+                                                  (2*pow(attentionWidth/attention_skew, 2))) + 0.15
     else:
         # Attention right
         attention = 1.0/(attentionWidth)*math.exp(-(pow(abs(attention_eccentricity), 2)) /
-                                                  (2*pow(attentionWidth, 2))) + 0.1
+                                                  (2*pow(attentionWidth, 2))) + 0.15
     return attention
 
 def calc_acuity(eye_eccentricity, letPerDeg):

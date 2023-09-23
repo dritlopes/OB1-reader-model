@@ -109,7 +109,7 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
             # set regression flag to know that a regression has been realized towards this position
             regression_flag[fixation] = True
             # narrow attention width by 2 letters in the case of regressions
-            attend_width = max(attend_width - 2.0, pm.min_attend_width)
+            attend_width = max(attend_width - 1.0, pm.min_attend_width)
         else:
             # widen attention by 0.5 letters in forward saccades
             attend_width = min(attend_width + 0.5, pm.max_attend_width)
@@ -186,8 +186,8 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
             total_activity = sum(lexicon_word_activity)
             fixation_data['lexicon_activity_per_cycle'].append(total_activity)
 
-            if verbose:
-                print(f'CYCLE {n_cycles}    activ @fix {round(foveal_word_activity, 3)} inhib  #@fix {round(lexicon_word_inhibition[foveal_word_index], 6)}')
+            #if verbose:
+            #    print(f'CYCLE {n_cycles}    activ @fix {round(foveal_word_activity, 3)} inhib  #@fix {round(lexicon_word_inhibition[foveal_word_index], 6)}')
             logger.info(f'CYCLE {n_cycles}    activ @fix {round(foveal_word_activity, 3)} inhib  #@fix {round(lexicon_word_inhibition[foveal_word_index], 6)}')
             # ---------------------- Match words in lexicon to slots in input ---------------------
             # word recognition, by checking matching active wrds to slots

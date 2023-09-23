@@ -2,7 +2,7 @@
   "parameters" : [
     {
       "prediction_flag": "",
-      "number_of_simulations": 1,
+      "number_of_simulations": 2,
       "n_trials": 5
     }
   ]
