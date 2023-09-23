@@ -321,25 +321,26 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
     # Define target of next fixation relative to fixated word n (i.e. 0=next fix on word n, -1=fix on n-1, etc). Default is 1 (= to word n+1)
     next_fixation = 1
     refix_size = pm.refix_size
-    word_remainder_length = word_edges[fixated_position_in_stimulus][1] - eye_position
-    # AL: only allows 3 consecutive refixations on the same word to avoid infinitely refixating if no word reaches threshold recognition at a given position
-    refixate = check_previous_refixations_at_position(all_data, fixation, fixation_counter, max_n_refix=3)
 
     # skip bc regression: if the current fixation was a regression and next word has been recognized, move eyes to n+2 to resume reading
-    #if regression_flag[fixation] and recognized_word_at_position[fixation + 1]:
-    #    next_fixation = 2
+    if regression_flag[fixation] and recognized_word_at_position[fixation + 1]:
+        next_fixation = 2
 
     # regression: check whether previous word was recognized or there was already a regression performed. If not: regress
-    if fixation > 1 and not recognized_word_at_position[fixation - 1] and not regression_flag[fixation - 1]:
+    elif fixation > 1 and not recognized_word_at_position[fixation - 1] and not regression_flag[fixation - 1]:
         next_fixation = -1
 
-    # refixation: if the foveal word is not recognized but is still being processed MM: but only if not>2 refix already, and if there's still enough word left to refixate
-    elif (not recognized_word_at_position[fixation]) and (lexicon_word_activity[fix_lexicon_index] > 0 and refixate and (word_remainder_length > np.round(word_remainder_length * refix_size))):
-        next_fixation = 0
-        if fixation_counter - 1 in all_data.keys():
-            if not all_data[fixation_counter - 1]['saccade_type'] == 'refixation':  # MM: @AL: do you know what is this for?
-                refix_size = np.round(word_remainder_length * refix_size)
-                print("This is refix w. len ", refix_size)
+    # refixation: refixate if the foveal word is not recognized but is still being processed
+    elif (not recognized_word_at_position[fixation]) and (lexicon_word_activity[fix_lexicon_index] > 0):
+        # # AL: only allows 3 consecutive refixations on the same word to avoid infinitely refixating if no word reaches threshold recognition at a given position
+        refixate = check_previous_refixations_at_position(all_data,fixation,fixation_counter,max_n_refix=3)
+        if refixate:
+            word_reminder_length = word_edges[fixated_position_in_stimulus][1] - eye_position
+            if word_reminder_length > 0:
+                next_fixation = 0
+                if fixation_counter - 1 in all_data.keys():
+                    if not all_data[fixation_counter - 1]['saccade_type'] == 'refixation':
+                        refix_size = np.round(word_reminder_length * refix_size)
 
     # forward saccade: perform normal forward saccade (unless at the last position in the text)
     elif fixation < (len(tokens) - 1):
