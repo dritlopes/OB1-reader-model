@@ -10,6 +10,7 @@ from utils import get_pred_dict, get_word_freq, pre_process_string
 import math
 import os
 import warnings
+from collections import Counter
 
 # ---------------- Simulation eye-movement measures ------------------
 def pre_process_eye_tracking(eye_tracking: pd.DataFrame, eye_tracking_filepath: str, stimuli):
@@ -672,6 +673,22 @@ def evaluate_output (parameters_list: list, verbose=True):
                 # save out averaged data
                 mean_true_eye_movements.to_csv(processed_mean_eye_tracking_path, sep='\t', index_label='id')
                 data_log[parameters.eye_tracking_filepath + '_mean'] = mean_true_eye_movements
+                # delete later: check how long the skips are (how many words are being skipped in one eye movement)
+                # skips = true_eye_movements['skip'].tolist()
+                # size = len(skips)
+                # idx_list = [idx + 1 for idx, val in enumerate(skips) if val == 0]
+                # skip_chunks = [skips[i: j] for i, j in
+                #                 zip([0] + idx_list, idx_list +
+                #                 ([size] if idx_list[-1] != size else []))]
+                # skip_chunks = [chunk for chunk in skip_chunks if chunk != [0]]
+                # skip_lengths = [len(chunk) - 1 for chunk in skip_chunks]
+                # count_skip_lengths = Counter(skip_lengths)
+                # total_sum = sum(count_skip_lengths.values())
+                # rate_skip_lengths = {key: round(value / total_sum, 3) for key, value in count_skip_lengths.items()}
+                # skip_df = pd.DataFrame.from_dict({'skip_length': rate_skip_lengths.keys(), 'skip_rate': rate_skip_lengths.values()})
+                # filepath = processed_mean_eye_tracking_path.replace('_mean', '_skip_length').replace('raw','processed')
+                # skip_df = skip_df.sort_values(by='skip_rate', ascending=False)
+                # skip_df.to_csv(filepath, sep='\t')
 
             # get word-level eye-movement measures in simulation data
             analysed_simulation_output_path = output_filepath.replace('model_output', 'analysed').replace('simulation_', f'simulation_eye_movements_')

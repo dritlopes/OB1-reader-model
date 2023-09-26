@@ -155,7 +155,8 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
 
             # AL: if a word has been recognized during this fixation and attention has not shifted yet,
             # recompute ngram activation such that ngram activation from matched words is removed until attention shifts
-            if recognition_in_stimulus and attention_position: # and not shift
+            if recognition_in_stimulus and attention_position != None: # and not shift
+
                 n_ngrams, total_ngram_activity, all_ngrams, word_input = compute_words_input(stimulus,
                                                                                              lexicon_word_ngrams,
                                                                                              eye_position,
@@ -190,8 +191,8 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
             total_activity = sum(lexicon_word_activity)
             fixation_data['lexicon_activity_per_cycle'].append(total_activity)
 
-            #if verbose:
-            #    print(f'CYCLE {n_cycles}    activ @fix {round(foveal_word_activity, 3)} inhib  #@fix {round(lexicon_word_inhibition[foveal_word_index], 6)}')
+            if verbose:
+               print(f'CYCLE {n_cycles}    activ @fix {round(foveal_word_activity, 3)} inhib  #@fix {round(lexicon_word_inhibition[foveal_word_index], 6)}')
             logger.info(f'CYCLE {n_cycles}    activ @fix {round(foveal_word_activity, 3)} inhib  #@fix {round(lexicon_word_inhibition[foveal_word_index], 6)}')
             # ---------------------- Match words in lexicon to slots in input ---------------------
             # word recognition, by checking matching active wrds to slots
@@ -277,8 +278,9 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                     if verbose:
                         print(f'attentpos {attention_position}')
                     logger.info(f'attentpos {attention_position}')
+
                     # AL: attention position is None if at the end of the text and saccade is not refixation nor regression, so do not compute new words input
-                    if attention_position:
+                    if attention_position != None:
                         # AL: recompute word input, using ngram excitation and inhibition, because attentshift changes bigram input
                         n_ngrams, total_ngram_activity, all_ngrams, word_input = compute_words_input(stimulus,
                                                                                                      lexicon_word_ngrams,
@@ -344,7 +346,9 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
         fixation_counter += 1
 
         # compute next eye position and thus next fixation
-        if attention_position:
+        print(f'att pos right before computing next eye position: {attention_position}')
+        if attention_position != None:
+
             fixation, eye_position, saccade_info = compute_next_eye_position(pm, attention_position, eye_position, fixation, fixated_position_in_stimulus, word_edges, saccade_info)
 
             # AL: Update saccade cause for next fixation
@@ -364,7 +368,7 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
         if fixation_data['foveal_word_index'] == total_n_words - 1 and saccade_info['saccade_type'] not in ['refixation', 'regression']:
             end_of_text = True
             continue
-        elif not attention_position:
+        elif attention_position == None:
             end_of_text = True
             continue
         else:

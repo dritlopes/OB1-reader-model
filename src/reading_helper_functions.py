@@ -271,11 +271,9 @@ def get_midword_position_for_surrounding_word(word_position, word_edges, fixated
 
     word_center_position = None
     word_position_in_stimulus = fixated_position_in_stimulus + word_position
-
-    # AL: make sure surrounding word is included in stimulus
     if word_position_in_stimulus in word_edges.keys():
         word_slice_length = word_edges[word_position_in_stimulus][1] - word_edges[word_position_in_stimulus][0] + 1
-        word_center_position = word_edges[word_position_in_stimulus][0] + round(word_slice_length/2.0) - 1
+        word_center_position = word_edges[word_position_in_stimulus][0] + math.ceil(word_slice_length/2.0) - 1
 
     return word_center_position
 
