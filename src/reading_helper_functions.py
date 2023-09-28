@@ -310,14 +310,14 @@ def calc_monogram_attention_sum(position_start, position_end, eye_position, atte
 
     return sum_attention_letters
 
-def calc_word_attention_right(word_edges, eye_position, attention_position, attend_width, salience_position, attention_skew, let_per_deg, fixated_position_in_stimulus, predicted, highest_predictions):
+def calc_word_attention_right(word_edges, fixation, eye_position, attention_position, attend_width, salience_position, attention_skew, let_per_deg, fixated_position_in_stimulus, highest_predictions):
 
     # MM: calculate list of attention wgts for all words in stimulus to right of fix.
     word_attention_right = []
     # attention_position += round(salience_position*attend_width)
     # predictability modulation of next attention position
-    if predicted:
-        attention_position += (1+highest_predictions[-1]) * round(salience_position * attend_width)
+    if fixation+1 in highest_predictions.keys():
+        attention_position += (1+highest_predictions[fixation+1]) * round(salience_position * attend_width)
         print(f'Predictability regulating attention position... highest predictability value: {highest_predictions[-1]}')
     else:
         attention_position += round(salience_position * attend_width)

@@ -101,7 +101,7 @@ def main():
         parser.add_argument('--eye_tracking_filepath', default=None, help='If analyzing results, where are the observed values which the model output should be compared with?')
         parser.add_argument('--experiment_parameters_filepath', default=None, help='If you want to run different model setups at once, provide set of parameters for each model/experiment condition')
         parser.add_argument('--optimize', default="False", help='Should the parameters be optimized using evolutionary algorithms?', choices=["True", "False"])
-        parser.add_argument('--print_stim', default="False", choices=["True", "False"])
+        parser.add_argument('--print_process', default="False", choices=["True", "False"])
         parser.add_argument('--plotting', default='False', choices=['True', 'False'])
 
         args = parser.parse_args()
@@ -119,7 +119,7 @@ def main():
             "eye_tracking_filepath": args.eye_tracking_filepath,
             "experiment_parameters_filepath": args.experiment_parameters_filepath,
             "optimize": eval(args.optimize),
-            "print_stim": eval(args.print_stim),
+            "print_process": eval(args.print_process),
             "plotting": eval(args.plotting)
         }
     else:
@@ -132,8 +132,8 @@ def main():
             "analyze_results": True,
             "results_filepath": "",
             "parameters_filepath": "",
-            # "results_filepath": ["../data/model_output/_08_09_2023_12-05-59/simulation_Provo_Corpus_continuous_reading_cloze_0.5__08_09_2023_12-05-59.csv"],
-            # "parameters_filepath": ["../data/model_output/_08_09_2023_12-05-59/parameters_Provo_Corpus_continuous_reading_cloze_0.5__08_09_2023_12-05-59.pkl"],
+            # "results_filepath": ["../data/model_output/_27_09_2023_16-23-20/simulation_Provo_Corpus_continuous_reading_cloze_0.1.csv"],
+            # "parameters_filepath": ["../data/model_output/_27_09_2023_16-23-20/parameters_Provo_Corpus_continuous_reading_cloze_0.1.pkl"],
             "eye_tracking_filepath": '../data/raw/Provo_Corpus-Eyetracking_Data.csv',
             "results_identifier": 'prediction_flag',
             "experiment_parameters_filepath": 'experiment_parameters.json',

@@ -78,21 +78,32 @@ def pre_process_eye_tracking(eye_tracking: pd.DataFrame, eye_tracking_filepath: 
         eye_tracking['gaze_duration'] = gaze_duration
 
         # add single fix
-        single_fix, single_fix_dur = [],[]
+        single_fix, single_fix_dur = [], []
         # determine which words were fixated only once by each participant
         for word, hist in eye_tracking.groupby(['participant_id', 'text_id', 'word_id']):
             # single fix is defined as: if gaze duration equals first fixation duration,
             # then word was fixated only once in first pass
             assert len(hist) == 1, print(f'Word id {word} appears more than once in eye-tracking data {hist}')
-            if hist['gaze_duration'].tolist()[0] == hist['first_fix_duration'].tolist()[0]:
-                single_fix.append(1)
-                single_fix_dur.append(hist['first_fix_duration'].tolist()[0])
+            # if word has been fixated at first pass (not nan value)
+            if not np.isnan(hist['gaze_duration'].tolist()[0]) and not np.isnan(hist['first_fix_duration'].tolist()[0]):
+                # if first fix and gaze duration are the same, word has been singly fixated in first pass
+                if hist['gaze_duration'].tolist()[0] == hist['first_fix_duration'].tolist()[0]:
+                    single_fix.append(1)
+                    single_fix_dur.append(hist['first_fix_duration'].tolist()[0])
+                # if not, word has been refixated in first pass
+                else:
+                    single_fix.append(0)
+                    single_fix_dur.append(None)
+            # if not fixated at first pass, single fix is None
             else:
-                single_fix.append(0)
+                single_fix.append(None)
                 single_fix_dur.append(None)
         # add binary single fix column
         eye_tracking['single_fix'] = single_fix
         eye_tracking['single_fix_duration'] = single_fix_dur
+
+        # convert total reading time = 0 to NaN so it does not get included in the averages
+        eye_tracking['total_reading_time'] = eye_tracking['total_reading_time'].apply(lambda x: None if x==0 else x)
 
         # add item level id (word id per participant)
         item_id = []
@@ -328,36 +339,36 @@ def drop_nan_values(true_values:pd.Series, simulated_values:pd.Series):
     return values
 
 # ---------------- Evaluation functions ------------------
-def compute_root_mean_squared_error(true_values:list, simulated_values:list, normalize):
+def compute_root_mean_squared_error(true_values:list, simulated_values:list):
 
     # root mean squared error measures the average difference between values predicted by the model
     # and the eye-tracking values. It provides an estimate of how well the model was able to predict the
     # eye-tracking value.
 
-    # diff = np.subtract(simulated_values, true_values)
+    diff = np.subtract(simulated_values, true_values)
     # if normalize:
     # # normalize difference: subtract the min difference from the difference and divide it by the difference between max and min differences
     #     diff = np.divide((np.subtract(diff, min(diff))), np.subtract(max(diff), min(diff)))
 
-    # another way: first normalize values with min-max scaler, then compute difference
-    norm_sim_values = np.divide((np.subtract(simulated_values, min(true_values))), np.subtract(max(true_values), min(true_values)))
-    norm_true_values = np.divide((np.subtract(true_values, min(true_values))), np.subtract(max(true_values), min(true_values)))
-    diff = np.subtract(norm_sim_values, norm_true_values)
+    # # another way: first normalize values with min-max scaler, then compute difference
+    # norm_sim_values = np.divide((np.subtract(simulated_values, min(true_values))), np.subtract(max(true_values), min(true_values)))
+    # norm_true_values = np.divide((np.subtract(true_values, min(true_values))), np.subtract(max(true_values), min(true_values)))
+    # norm_diff = np.subtract(norm_sim_values, norm_true_values)
 
     # or standardize values: subtract value by the mean and divide by standard deviation,
     # but Gaussian distribution is assumed
-    # norm_sim_values = np.divide(np.subtract(simulated_values, np.mean(true_values)), np.std(true_values))
-    # norm_true_values = np.divide(np.subtract(true_values, np.mean(true_values)), np.std(true_values))
-    # diff = np.subtract(norm_sim_values, norm_true_values)
+    norm_sim_values = np.divide(np.subtract(simulated_values, np.mean(true_values)), np.std(true_values))
+    norm_true_values = np.divide(np.subtract(true_values, np.mean(true_values)), np.std(true_values))
+    norm_diff = np.subtract(norm_sim_values, norm_true_values)
 
     # # standardize using median
     # norm_sim_values = np.divide(np.subtract(simulated_values, np.median(true_values)), np.median(np.absolute(true_values - np.median(true_values))))
     # norm_true_values = np.divide(np.subtract(true_values, np.median(true_values)), np.median(np.absolute(true_values - np.median(true_values))))
     # diff = np.subtract(norm_sim_values, norm_true_values)
 
-    return norm_sim_values, norm_true_values, math.sqrt(np.square(diff).mean())
+    return math.sqrt(np.square(diff).mean()), math.sqrt(np.square(norm_diff).mean()), norm_sim_values, norm_true_values,
 
-def compute_error(measures, true, pred, normalize=True):
+def compute_error(measures, true, pred):
 
     mean2errors = defaultdict(list)
 
@@ -366,29 +377,31 @@ def compute_error(measures, true, pred, normalize=True):
         values = drop_nan_values(true[measure], pred[measure])
         assert len(values['pred']) > 0, print(measure, values['pred'])
         assert len(values['pred']) == len(values['true']), print(measure, len(values['pred']), len(values['true']))
-        norm_sim, norm_true, mean2error = compute_root_mean_squared_error(values['true'], values['pred'], normalize)
+        mean2error, norm_mean2error, norm_sim, norm_true = compute_root_mean_squared_error(values['true'], values['pred'])
         mean2errors['eye_tracking_measure'].append(measure)
         mean2errors['true_mean'].append(np.round(np.nanmean(values['true']), 3))
+        mean2errors['norm_true_mean'].append(np.round(np.mean(norm_true), 3))
         mean2errors['min_true_mean'].append(round(min(values['true']),3))
         mean2errors['max_true_mean'].append(round(max(values['true']),3))
-        mean2errors['norm_true_mean'].append(np.round(np.mean(norm_true),3))
         mean2errors['min_simulated_mean'].append(round(min(values['pred']),3))
         mean2errors['max_simulated_mean'].append(round(max(values['pred']),3))
         mean2errors['norm_simulated_mean'].append(np.round(np.mean(norm_sim),3))
         mean2errors['simulated_mean'].append(np.round(np.nanmean(values['pred']), 3))
         mean2errors['mean_squared_error'].append(round(mean2error, 3))
+        mean2errors['norm_mean_squared_error'].append(round(norm_mean2error, 3))
 
-    average = np.mean(mean2errors['mean_squared_error'])
+    average_norm_error = np.mean(mean2errors['norm_mean_squared_error'])
     mean2errors['eye_tracking_measure'].append("MEAN")
     mean2errors['true_mean'].append(None)
+    mean2errors['norm_true_mean'].append(None)
     mean2errors['min_true_mean'].append(None)
     mean2errors['max_true_mean'].append(None)
-    mean2errors['norm_true_mean'].append(None)
     mean2errors['min_simulated_mean'].append(None)
     mean2errors['max_simulated_mean'].append(None)
     mean2errors['norm_simulated_mean'].append(None)
     mean2errors['simulated_mean'].append(None)
-    mean2errors['mean_squared_error'].append(average.round(3))
+    mean2errors['mean_squared_error'].append(None)
+    mean2errors['norm_mean_squared_error'].append(average_norm_error.round(3))
 
     mean2error_df = pd.DataFrame(mean2errors)
 
@@ -816,21 +829,21 @@ def evaluate_output (parameters_list: list, verbose=True):
             # stat tests
             # fit_mixed_effects(parameters, true_eye_movements, mean_predicted_eye_movements, output_filepath)
 
-    if data_log:
-        # test significance of difference in mean2error between conditions
-        measures = parameters_list[0].evaluation_measures
-        measures.append('MEAN')
-        for measure in measures:
-            sim_values1, sim_values2 = [], []
-            for data_name, data in data_log.items():
-                if 'error' in data_name and 'cloze' in data_name:
-                    sim_values1 = data[measure].tolist()
-                elif 'error' in data_name and 'llama' in data_name:
-                    sim_values2 = data[measure].tolist()
-            if len(sim_values1) > 0 and len(sim_values2) > 0:
-                filepath = parameters_list[0].results_filepath.replace('cloze','').replace('llama','')
-                filepath = filepath.replace('__', f'_{measure}_t-test_').replace('model_output', 'analysed')
-                test_difference(measure, sim_values1, sim_values2, filepath)
+    # if data_log:
+    #     # test significance of difference in mean2error between conditions
+    #     measures = parameters_list[0].evaluation_measures
+    #     measures.append('MEAN')
+    #     for measure in measures:
+    #         sim_values1, sim_values2 = [], []
+    #         for data_name, data in data_log.items():
+    #             if 'error' in data_name and 'cloze' in data_name:
+    #                 sim_values1 = data[measure].tolist()
+    #             elif 'error' in data_name and 'llama' in data_name:
+    #                 sim_values2 = data[measure].tolist()
+    #         if len(sim_values1) > 0 and len(sim_values2) > 0:
+    #             filepath = parameters_list[0].results_filepath.replace('cloze','').replace('llama','')
+    #             filepath = filepath.replace('__', f'_{measure}_t-test_').replace('model_output', 'analysed')
+    #             test_difference(measure, sim_values1, sim_values2, filepath)
 
     # # scale durations from eye-tracking data to be more aligned to OB1 durations which happens in cycles of 25ms
     # data_log = scale_human_durations(data_log, parameters_list)

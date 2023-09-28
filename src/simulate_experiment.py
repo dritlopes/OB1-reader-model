@@ -34,13 +34,11 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
     total_n_words = len(tokens)
     # word activity for word in lexicon
     lexicon_word_activity = np.zeros((len(lexicon)), dtype=float)
-    # positions in text whose thresholds/pre-activation have already been updated
-    # avoid updating it every time position is in stimulus
-    updated_positions = []
-    # keep track whether prediction was made for next word to fixation
+    # keep track whether a prediction was made at a given position (for pred-att mechanism)
     predicted = False
-    # keep track of the highest prediction for each position in the text
-    highest_predictions = []
+    # keep track of the highest prediction value for each position in the text
+    highest_predictions = dict()
+    updated_positions = []
     # history of regressions, set to true at a certain position in the text when a regression is performed to that word
     regression_flag = np.zeros(total_n_words, dtype=bool)
     # recognized word at position, which word received the highest activation in each position
@@ -63,9 +61,16 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                        'wordskip': ">>>>>>>>>>>>>>>>>>>>>>>>",
                        'refixation': '------------------------',
                        'regression': '<-<-<-<-<-<-<-<-<-<-<-<-'}
+
+    # mapping between token position in text and lexicon index
     tokens_to_lexicon_indices = np.zeros((total_n_words), dtype=int)
     for i, word in enumerate(tokens):
         tokens_to_lexicon_indices[i] = lexicon.index(word)
+
+    if pm.prediction_flag:
+        for i in enumerate(tokens):
+            if i in pred_dict.keys():
+                highest_predictions[i] = pred_dict[i].values().tolist()[0]
 
     # ---------------------- Start looping through fixations ---------------------
     while not end_of_text:
@@ -221,23 +226,39 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
             #                                                                             tokens_to_lexicon_indices,
             #                                                                             lexicon)
 
-            # after recognition, prediction-based activation of recognized word + 1
-            if recognized_word_at_position.any() and fixation < total_n_words-1 and pm.prediction_flag:
-                # check whether we should pre-activate and in relation to which position (n+1 or n+2)
-                position = check_predictability(recognized_word_at_position, fixation, tokens, updated_positions)
-                if position:
-                    # avoid error because of missing word in provo cloze data
-                    if not (pm.prediction_flag == 'cloze' and 'provo' in pm.stim_name.lower() and position == 50 and text_id == 17):
-                        lexicon_word_activity, predicted, highest_predictions = activate_predicted_upcoming_word(position,
-                                                                                                                 tokens[position],
-                                                                                                                 lexicon_word_activity,
-                                                                                                                 lexicon,
-                                                                                                                 pred_dict,
-                                                                                                                 pm.pred_weight,
-                                                                                                                 predicted,
-                                                                                                                 highest_predictions,
-                                                                                                                 verbose)
-                    updated_positions.append(position)
+            # # after recognition, prediction-based activation of recognized word + 1
+            # if recognized_word_at_position.any() and fixation < total_n_words-1 and pm.prediction_flag:
+            #     # check whether we should pre-activate and in relation to which position (n+1 or n+2)
+            #     position = check_predictability(recognized_word_at_position, fixation, tokens, updated_positions)
+            #     if position:
+            #         # avoid error because of missing word in provo cloze data
+            #         if not (pm.prediction_flag == 'cloze' and 'provo' in pm.stim_name.lower() and position == 50 and text_id == 17):
+            #             lexicon_word_activity, predicted = activate_predicted_upcoming_word(position,
+            #                                                                                  tokens[position],
+            #                                                                                  lexicon_word_activity,
+            #                                                                                  lexicon,
+            #                                                                                  pred_dict,
+            #                                                                                  pm.pred_weight,
+            #                                                                                  predicted,
+            #                                                                                  verbose)
+            #         updated_positions.append(position)
+
+            if fixation < total_n_words-1 and pm.prediction_flag:
+                # gradually pre-activate words in stimulus (pred weighted by pred of previous word)
+                for position in range(fixation+1, fixation+len(stimulus.split(' '))):
+                    if position > 0 and position < len(tokens):
+                        print(f'POSITION {position}')
+                        logger.info(f'POSITION {position}')
+                        lexicon_word_activity, predicted = activate_predicted_upcoming_word(position,
+                                                                                 tokens[position],
+                                                                                 fixation,
+                                                                                 lexicon_word_activity,
+                                                                                 lexicon,
+                                                                                 pred_dict,
+                                                                                 pm.pred_weight,
+                                                                                 recognized_word_at_position,
+                                                                                 predicted,
+                                                                                 verbose)
 
             # ---------------------- Make saccade decisions ---------------------
             # word selection and attention shift
@@ -273,8 +294,10 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                                                                         predicted,
                                                                         highest_predictions,
                                                                         pm)
-                    predicted = False
+
                     fixation_data['foveal_word_activity_at_shift'] = fixation_data['foveal_word_activity_per_cycle'][-1]
+                    predicted = False
+
                     if verbose:
                         print(f'attentpos {attention_position}')
                     logger.info(f'attentpos {attention_position}')
