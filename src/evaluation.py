@@ -372,10 +372,10 @@ def compute_error(measures, true, pred, normalize=True):
         mean2errors['min_true_mean'].append(round(min(values['true']),3))
         mean2errors['max_true_mean'].append(round(max(values['true']),3))
         mean2errors['norm_true_mean'].append(np.round(np.mean(norm_true),3))
-        mean2errors['simulated_mean'].append(np.round(np.nanmean(values['pred']), 3))
         mean2errors['min_simulated_mean'].append(round(min(values['pred']),3))
         mean2errors['max_simulated_mean'].append(round(max(values['pred']),3))
         mean2errors['norm_simulated_mean'].append(np.round(np.mean(norm_sim),3))
+        mean2errors['simulated_mean'].append(np.round(np.nanmean(values['pred']), 3))
         mean2errors['mean_squared_error'].append(round(mean2error, 3))
 
     average = np.mean(mean2errors['mean_squared_error'])
@@ -384,10 +384,10 @@ def compute_error(measures, true, pred, normalize=True):
     mean2errors['min_true_mean'].append(None)
     mean2errors['max_true_mean'].append(None)
     mean2errors['norm_true_mean'].append(None)
-    mean2errors['simulated_mean'].append(None)
     mean2errors['min_simulated_mean'].append(None)
     mean2errors['max_simulated_mean'].append(None)
     mean2errors['norm_simulated_mean'].append(None)
+    mean2errors['simulated_mean'].append(None)
     mean2errors['mean_squared_error'].append(average.round(3))
 
     mean2error_df = pd.DataFrame(mean2errors)

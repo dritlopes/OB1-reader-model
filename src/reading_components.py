@@ -219,7 +219,7 @@ def match_active_words_to_input_slots(order_match_check, stimulus, recognized_wo
                 highest_word = lexicon[highest]
                 recognition_in_stimulus.append(word_index)
                 if verbose:
-                    print(f'word in input: {word_searched}      one w. highest act: {highest_word}')
+                    print(f'word in input: {word_searched}      recogn. winner highest act: {highest_word}')
                 logger.info(f'word in input: {word_searched}      one w. highest act: {highest_word}')
                 # The winner is matched to the slot,
                 # and its activity is reset to minimum to not have it matched to other words

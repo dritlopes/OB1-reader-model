@@ -171,17 +171,17 @@ def return_task_params(task_attributes):
     # word activation
     bigram_to_word_excitation = 1.0 # inp. divded by #ngrams, so this param estimates excit per word [diff from paper] 1.65 for EmbeddedWords, 2.18 for classification and transposed
     bigram_to_word_inhibition = 0.0 # general inhibition on all words. The more active bigrams, the more general inhibition.
-    word_inhibition = -1.0 # -.0018 (paper)
+    word_inhibition = -2.5 # -.0018 (paper)
     min_activity = 0.0
     max_activity = 1.0 # 1.0
-    decay = -0.1 # -0.05 (paper) # AL: decay in word activation over time
-    discounted_Ngrams = 10 # MM: Max extra wgt bigrams do to edges in 4-letter wrd w. gap 3. Added to bigram count in compute_input formula to compensate
+    decay = -0.11 # -0.05 (paper) # AL: decay in word activation over time
+    discounted_Ngrams = 5 # MM: Max extra wgt bigrams do to edges in 4-letter wrd w. gap 3. Added to bigram count in compute_input formula to compensate
     bigram_gap = 2  # How many in btw letters still lead to bigram? 5 (optimal) or 2 (paper, though there 3 because of different definition)
     #min_overlap = 0 # was 2 # min overlap for words to inhibit each other. MM: unnecessary, can be deleted later
 
     # threshold parameters
-    max_threshold = 0.4  # mm: changed because max activity changed from 1.3 to 1
-    freq_weight = 0.1 # NV: difference between max and min threshold # MM: words not in corpus have no freq, repaired by making freq less important
+    max_threshold = 0.5  # mm: changed because max activity changed from 1.3 to 1
+    freq_weight = 0.10 # NV: difference between max and min threshold # MM: words not in corpus have no freq, repaired by making freq less important
     word_length_similarity_constant = 0.15 # NV: determines how similar the length of 2 words must be for them to be recognised as 'similar word length'
     frequency_flag = True  # use word freq in threshold
     # use_grammar_prob = False  # True for using grammar probabilities, False for using cloze, overwritten by uniform_pred
@@ -195,16 +195,16 @@ def return_task_params(task_attributes):
     pred_weight = 0.1 # scaling parameters in pre-activation formula
 
     # attention
-    attend_width = 5 # 5.0 for natural reading # 8.0  # NV: was set to 15 for flanker, 20 for sentence and 3 for transposed
+    attend_width = 5 # 5.0 for natural reading # NV: was set to 15 for flanker, 20 for sentence and 3 for transposed
     max_attend_width = 7.0  # 5 in paper; MM: used in reading sim where attend_with is dynamic.
     min_attend_width = 3.0
-    attention_skew = 4 # 1 equals symmetrical distribution # 4 (paper)
+    attention_skew = 3 # 1 equals symmetrical distribution # 4 (paper)
     letPerDeg = .3
     refix_size = 0.2 #during refix, how much do we jump?
-    salience_position = 2  # 5 (optimal) # 1.29 (paper)
+    salience_position = 1.25  # 5 (optimal) # 1.29 (paper)
 
     # saccade
-    sacc_optimal_distance = 8 # 9.99  # 3.1 # 7.0 # 8.0 (optimal) # 7.0 (paper)
+    sacc_optimal_distance = 7 # 8.0 (optimal) # 7.0 (paper)
     saccErr_scaler = 0.2  # to determine avg error for distance difference
     saccErr_sigma = 0.17  # basic sigma
     saccErr_sigma_scaler = 0.06  # effect of distance on sigma

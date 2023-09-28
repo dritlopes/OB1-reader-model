@@ -128,8 +128,8 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
         # ---------------------- Start processing of stimulus ---------------------
         #print('Entering cycle loops to define word activity...')
         if verbose:
-            print(f"fix on: {tokens[fixation]}  attent. width: {attend_width}   fixwrd thresh. {pm.max_threshold}")
-        logger.info(f"fix on: {tokens[fixation]}  attent. width: {attend_width}   fixwrd thresh. {pm.max_threshold}")
+            print(f"fix on: {tokens[fixation]}  attent. width: {attend_width}   fixwrd freq. {freq_values[tokens[fixation]]}")
+        logger.info(f"fix on: {tokens[fixation]}  attent. width: {attend_width}   fixwrd freq. {freq_values[tokens[fixation]]}")
         # str(round(lexicon_thresholds[tokens_to_lexicon_indices[fixation]],3))
         shift = False
         n_cycles = 0
@@ -539,18 +539,20 @@ def simulate_experiment(pm):
     lexicon = list(set(tokens) | set(word_frequencies.keys()))
     lexicon = [pre_process_string(word) for word in lexicon]
 
-    if verbose: print('LONG or SHORT WORDS')
-    logger.info('LONG or SHORT WORDS')
-    for token in set(tokens):
-        if len(token) > 10 or len(token) == 1:
-            print(f'{token}, len: {len(token)}, count: {tokens.count(token)}')
-    if verbose: print('\nLOW-FREQUENCY WORDS')
-    logger.info('\nLOW-FREQUENCY WORDS')
-    for token in set(tokens):
-        if token in word_frequencies.keys():
-            if word_frequencies[token] <= 1.5:
-                if verbose: print(f'{token}, freq: {word_frequencies[token]}, count: {tokens.count(token)}')
-                logger.info(f'{token}, freq: {word_frequencies[token]}, count: {tokens.count(token)}')
+    printwords=False
+    if printwords:
+        print('LONG or SHORT WORDS')
+        logger.info('LONG or SHORT WORDS')
+        for token in set(tokens):
+            if len(token) > 10 or len(token) == 1:
+                print(f'{token}, len: {len(token)}, count: {tokens.count(token)}')
+        if verbose: print('\nLOW-FREQUENCY WORDS')
+        logger.info('\nLOW-FREQUENCY WORDS')
+        for token in set(tokens):
+            if token in word_frequencies.keys():
+                if word_frequencies[token] <= 1.5:
+                    if verbose: print(f'{token}, freq: {word_frequencies[token]}, count: {tokens.count(token)}')
+                    logger.info(f'{token}, freq: {word_frequencies[token]}, count: {tokens.count(token)}')
 
     # write out lexicon for consulting purposes
     lexicon_filename = '../data/processed/lexicon.pkl'
