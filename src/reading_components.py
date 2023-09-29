@@ -391,12 +391,15 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
         # print(refixate)
         # if refixate:
         word_reminder_length = word_edges[fixated_position_in_stimulus][1] - eye_position
-        print('Refixating... Word reminder length: ', word_reminder_length)
+        if verbose:
+            print('Refixating... Word reminder length: ', word_reminder_length)
         if word_reminder_length > 0:
             next_fixation = 0
             if fixation_counter - 1 in all_data.keys():
                 if not all_data[fixation_counter - 1]['saccade_type'] == 'refixation':
                     refix_size = np.round(word_reminder_length * refix_size)
+                    if verbose:
+                        print('refix size: ', refix_size)
 
     # forward saccade: perform normal forward saccade (unless at the last position in the text)
     elif fixation < (len(tokens) - 1):
