@@ -317,17 +317,17 @@ def calc_word_attention_right(word_edges, fixation, eye_position, attention_posi
 
     # MM: calculate list of attention wgts for all words in stimulus to right of fix.
     word_attention_right = []
-    # attention_position += round(salience_position*attend_width)
-    # predictability modulation of next attention position
-    if fixation+1 in highest_predictions.keys():
-        attention_position += (1+highest_predictions[fixation+1]) * round(salience_position * attend_width)
-        if verbose:
-            print(f'Predictability regulating attention position... highest predictability value: {highest_predictions[-1]}')
-        logger.info(f'Predictability regulating attention position... highest predictability value: {highest_predictions[-1]}')
-    else:
-        attention_position += round(salience_position * attend_width)
-    if verbose:
-        print('Calculating visual input for next attention position...')
+    attention_position += round(salience_position*attend_width)
+    # # predictability modulation of next attention position
+    # if fixation+1 in highest_predictions.keys():
+    #     attention_position += (1+highest_predictions[fixation+1]) * round(salience_position * attend_width)
+    #     if verbose:
+    #         print(f'Predictability regulating attention position... highest predictability value: {highest_predictions[-1]}')
+    #     logger.info(f'Predictability regulating attention position... highest predictability value: {highest_predictions[-1]}')
+    # else:
+    #     attention_position += round(salience_position * attend_width)
+    # if verbose:
+    #     print('Calculating visual input for next attention position...')
     logger.info('Calculating visual input for next attention position...')
     for i, edges in word_edges.items():
         if verbose:

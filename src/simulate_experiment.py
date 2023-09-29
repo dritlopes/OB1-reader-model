@@ -251,7 +251,7 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                 # gradually pre-activate words in stimulus (pred weighted by pred of previous word)
                 for position in range(fixation+1, fixation+len(stimulus.split(' '))):
                     if position > 0 and position < len(tokens):
-                        print(f'POSITION {position}')
+                        if verbose: print(f'POSITION {position}')
                         logger.info(f'POSITION {position}')
                         lexicon_word_activity, predicted = activate_predicted_upcoming_word(position,
                                                                                  tokens[position],
