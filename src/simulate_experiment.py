@@ -29,7 +29,7 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
     # initialize eye position
     eye_position = None
     # initialise attention window size
-    attend_width = pm.max_attend_width
+    attend_width = pm.attend_width
     # total number of tokens in input
     total_n_words = len(tokens)
     # word activity for word in lexicon
@@ -133,8 +133,12 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
         # ---------------------- Start processing of stimulus ---------------------
         #print('Entering cycle loops to define word activity...')
         if verbose:
-            print(f"fix on: {tokens[fixation]}  attent. width: {attend_width}   fixwrd freq. {freq_values[tokens[fixation]]}")
-        logger.info(f"fix on: {tokens[fixation]}  attent. width: {attend_width}   fixwrd freq. {freq_values[tokens[fixation]]}")
+            print(f"fix on: {tokens[fixation]}  attent. width: {attend_width}")
+            if tokens[fixation] in freq_values.keys():
+                print(f'   fixwrd freq. {freq_values[tokens[fixation]]}')
+        logger.info(f"fix on: {tokens[fixation]}  attent. width: {attend_width}")
+        if tokens[fixation] in freq_values.keys():
+            logger.info(f'   fixwrd freq. {freq_values[tokens[fixation]]}')
         # str(round(lexicon_thresholds[tokens_to_lexicon_indices[fixation]],3))
         shift = False
         n_cycles = 0
@@ -291,9 +295,9 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                                                                         attention_position,
                                                                         attend_width,
                                                                         foveal_word_index,
-                                                                        predicted,
                                                                         highest_predictions,
-                                                                        pm)
+                                                                        pm,
+                                                                        verbose)
 
                     fixation_data['foveal_word_activity_at_shift'] = fixation_data['foveal_word_activity_per_cycle'][-1]
                     predicted = False
@@ -369,10 +373,13 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
         fixation_counter += 1
 
         # compute next eye position and thus next fixation
-        print(f'att pos right before computing next eye position: {attention_position}')
+        if verbose:
+            print(f'att pos right before computing next eye position: {attention_position}')
+        logger.info(f'att pos right before computing next eye position: {attention_position}')
+
         if attention_position != None:
 
-            fixation, eye_position, saccade_info = compute_next_eye_position(pm, attention_position, eye_position, fixation, fixated_position_in_stimulus, word_edges, saccade_info)
+            fixation, eye_position, saccade_info = compute_next_eye_position(pm, attention_position, eye_position, fixation, fixated_position_in_stimulus, word_edges, saccade_info, verbose)
 
             # AL: Update saccade cause for next fixation
             if saccade_info['saccade_type'] == 'wordskip':

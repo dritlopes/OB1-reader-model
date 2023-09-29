@@ -3,6 +3,9 @@ import pickle
 import os
 import math
 import re
+import logging
+
+logger = logging.getLogger(__name__)
 
 def get_stimulus_edge_positions(stimulus):
 
@@ -185,46 +188,6 @@ def get_blankscreen_stimulus(blankscreen_type):
 
     return stimulus
 
-def get_attention_skewed(attentionWidth, attention_eccentricity, attention_skew):
-
-    # Remember to remove the abs with calc functions
-    if attention_eccentricity < 0:
-        # Attention left
-        attention = 1.0/(attentionWidth)*math.exp(-(pow(abs(attention_eccentricity), 2)) /
-                                                  (2*pow(attentionWidth/attention_skew, 2))) + 0.2
-    else:
-        # Attention right
-        attention = 1.0/(attentionWidth)*math.exp(-(pow(abs(attention_eccentricity), 2)) /
-                                                  (2*pow(attentionWidth, 2))) + 0.2
-    return attention
-
-def calc_acuity(eye_eccentricity, letPerDeg):
-
-    # Parameters from Harvey & Dumoulin (2007); 35.55556 is to make acuity at 0 degs eq. to 1
-    return (1/35.555556)/(0.018*(eye_eccentricity*letPerDeg+1/0.64))
-
-def cal_ngram_exc_input(ngram_location, ngram_weight, eye_position, attention_position, attend_width, let_per_deg, attention_skew):
-
-    total_exc_input = 1
-
-    # ngram activity depends on distance of ngram letters to the centre of attention and fixation, and left/right is skewed using negative/positve att_ecc
-    for letter_position in ngram_location:
-        attention_eccentricity = letter_position - attention_position
-        eye_eccentricity = abs(letter_position - eye_position)
-        attention = get_attention_skewed(attend_width, attention_eccentricity, attention_skew)
-        visual_accuity = calc_acuity(eye_eccentricity, let_per_deg)
-        exc_input = attention * visual_accuity
-        total_exc_input = total_exc_input * exc_input
-
-    # AL: if ngram contains more than one letter, total excitatory input is squared
-    if len(ngram_location) > 1:
-        total_exc_input = math.sqrt(total_exc_input)
-
-    # AL: excitation is regulated by ngram location. Ngrams at the word edges have a higher excitatory input.
-    total_exc_input = total_exc_input * ngram_weight
-
-    return total_exc_input
-
 def define_slot_matching_order(n_words_in_stim, fixated_position_stimulus, attend_width):
 
     # Slot-matching mechanism
@@ -277,6 +240,46 @@ def get_midword_position_for_surrounding_word(word_position, word_edges, fixated
 
     return word_center_position
 
+def get_attention_skewed(attentionWidth, attention_eccentricity, attention_skew):
+
+    # Remember to remove the abs with calc functions
+    if attention_eccentricity < 0:
+        # Attention left
+        attention = 1.0/(attentionWidth)*math.exp(-(pow(abs(attention_eccentricity), 2)) /
+                                                  (2*pow(attentionWidth/attention_skew, 2))) + 0.20
+    else:
+        # Attention right
+        attention = 1.0/(attentionWidth)*math.exp(-(pow(abs(attention_eccentricity), 2)) /
+                                                  (2*pow(attentionWidth, 2))) + 0.20
+    return attention
+
+def calc_acuity(eye_eccentricity, letPerDeg):
+
+    # Parameters from Harvey & Dumoulin (2007); 35.55556 is to make acuity at 0 degs eq. to 1
+    return (1/35.555556)/(0.018*(eye_eccentricity*letPerDeg+1/0.64))
+
+def cal_ngram_exc_input(ngram_location, ngram_weight, eye_position, attention_position, attend_width, let_per_deg, attention_skew):
+
+    total_exc_input = 1
+
+    # ngram activity depends on distance of ngram letters to the centre of attention and fixation, and left/right is skewed using negative/positve att_ecc
+    for letter_position in ngram_location:
+        attention_eccentricity = letter_position - attention_position
+        eye_eccentricity = abs(letter_position - eye_position)
+        attention = get_attention_skewed(attend_width, attention_eccentricity, attention_skew)
+        visual_accuity = calc_acuity(eye_eccentricity, let_per_deg)
+        exc_input = attention * visual_accuity
+        total_exc_input = total_exc_input * exc_input
+
+    # AL: if ngram contains more than one letter, total excitatory input is squared
+    if len(ngram_location) > 1:
+        total_exc_input = math.sqrt(total_exc_input)
+
+    # AL: excitation is regulated by ngram location. Ngrams at the word edges have a higher excitatory input.
+    total_exc_input = total_exc_input * ngram_weight
+
+    return total_exc_input
+
 def calc_monogram_attention_sum(position_start, position_end, eye_position, attention_position, attend_width, attention_skew, let_per_deg, foveal_word):
 
     # this is only used to calculate where to move next when forward saccade
@@ -310,7 +313,7 @@ def calc_monogram_attention_sum(position_start, position_end, eye_position, atte
 
     return sum_attention_letters
 
-def calc_word_attention_right(word_edges, fixation, eye_position, attention_position, attend_width, salience_position, attention_skew, let_per_deg, fixated_position_in_stimulus, highest_predictions):
+def calc_word_attention_right(word_edges, fixation, eye_position, attention_position, attend_width, salience_position, attention_skew, let_per_deg, fixated_position_in_stimulus, highest_predictions, verbose):
 
     # MM: calculate list of attention wgts for all words in stimulus to right of fix.
     word_attention_right = []
@@ -318,16 +321,26 @@ def calc_word_attention_right(word_edges, fixation, eye_position, attention_posi
     # predictability modulation of next attention position
     if fixation+1 in highest_predictions.keys():
         attention_position += (1+highest_predictions[fixation+1]) * round(salience_position * attend_width)
-        print(f'Predictability regulating attention position... highest predictability value: {highest_predictions[-1]}')
+        if verbose:
+            print(f'Predictability regulating attention position... highest predictability value: {highest_predictions[-1]}')
+        logger.info(f'Predictability regulating attention position... highest predictability value: {highest_predictions[-1]}')
     else:
         attention_position += round(salience_position * attend_width)
-    print('Calculating visual input for next attention position...')
+    if verbose:
+        print('Calculating visual input for next attention position...')
+    logger.info('Calculating visual input for next attention position...')
     for i, edges in word_edges.items():
-        print(f'Word position: {i}')
-        print(f'att width: {attend_width}, '
-              f'salience: {salience_position}, '
-              f'att position: {attention_position}, '
-              f'att skew: {attention_skew}, ')
+        if verbose:
+            print(f'Word position: {i}')
+            print(f'att width: {attend_width}, '
+                  f'salience: {salience_position}, '
+                  f'att position: {attention_position}, '
+                  f'att skew: {attention_skew}, ')
+        logger.info(f'Word position: {i}')
+        logger.info(f'att width: {attend_width}, '
+                  f'salience: {salience_position}, '
+                  f'att position: {attention_position}, '
+                  f'att skew: {attention_skew}, ')
         # if n or n + x (but not n - x), so only fixated word or words to the right
         if i >= fixated_position_in_stimulus:
             # print(i, edges)
@@ -347,7 +360,9 @@ def calc_word_attention_right(word_edges, fixation, eye_position, attention_posi
             # print('word position and visual salience: ',i,crt_word_monogram_attention_sum)
             word_attention_right.append(crt_word_monogram_attention_sum)
             # print(f'visual salience of {i} to the right of fixation: {crt_word_monogram_attention_sum}')
-            print(f'    word visual input: {crt_word_monogram_attention_sum}')
+            if verbose:
+                print(f'    word visual input: {crt_word_monogram_attention_sum}')
+            logger.info(f'    word visual input: {crt_word_monogram_attention_sum}')
 
     return word_attention_right
 

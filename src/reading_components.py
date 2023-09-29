@@ -359,7 +359,7 @@ def activate_predicted_upcoming_word(position, target_word, fixation, lexicon_wo
 
     return lexicon_word_activity, pred_bool
 
-def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_position_in_stimulus,regression_flag,recognized_word_at_position,lexicon_word_activity,eye_position,fixation_counter,attention_position,attend_width,fix_lexicon_index,predicted,highest_predictions,pm):
+def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_position_in_stimulus,regression_flag,recognized_word_at_position,lexicon_word_activity,eye_position,fixation_counter,attention_position,attend_width,fix_lexicon_index,highest_predictions,pm,verbose):
 
     """
     Define where attention should be moved next based on recognition of words in current stimulus and the visual
@@ -372,13 +372,17 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
     next_fixation = 1
     refix_size = pm.refix_size
 
-    # skip bc regression: if the current fixation was a regression and next word has been recognized, move eyes to n+2 to resume reading
-    if regression_flag[fixation] and recognized_word_at_position[fixation + 1]:
-        next_fixation = 2
-
     # regression: check whether previous word was recognized or there was already a regression performed. If not: regress
-    elif fixation > 0 and not recognized_word_at_position[fixation - 1] and not regression_flag[fixation - 1]:
+    if fixation > 0 and not recognized_word_at_position[fixation - 1] and not regression_flag[fixation - 1]:
         next_fixation = -1
+
+    # skip bc regression: if the current fixation was a regression
+    elif regression_flag[fixation]:
+        # go to the nearest non-recognized word to the right within stimulus
+        for i in [1, 2]:
+            if fixation + i < len(tokens):
+                if recognized_word_at_position[fixation + i]:
+                    next_fixation = i + 1
 
     # refixation: refixate if the foveal word is not recognized but is still being processed
     elif (not recognized_word_at_position[fixation]) and (lexicon_word_activity[fix_lexicon_index] > 0):
@@ -387,6 +391,7 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
         # print(refixate)
         # if refixate:
         word_reminder_length = word_edges[fixated_position_in_stimulus][1] - eye_position
+        print('Refixating... Word reminder length: ', word_reminder_length)
         if word_reminder_length > 0:
             next_fixation = 0
             if fixation_counter - 1 in all_data.keys():
@@ -404,9 +409,12 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
                                                          pm.attention_skew,
                                                          pm.letPerDeg,
                                                          fixated_position_in_stimulus,
-                                                         highest_predictions)
+                                                         highest_predictions,
+                                                         verbose)
         next_fixation = word_attention_right.index(max(word_attention_right))
-    print(f'next fixation: {next_fixation}')
+    if verbose:
+        print(f'next fixation: {next_fixation}')
+    logger.info(f'next fixation: {next_fixation}')
     # AL: Calculate next attention position based on next fixation estimate = 0: refixate, 1: forward, 2: wordskip, -1: regression
     if next_fixation == 0:
         # MM: if we're refixating same word because it has highest attentwgt AL: or not being recognized whilst processed
@@ -419,7 +427,7 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
 
     return attention_position
 
-def compute_next_eye_position(pm, attention_position, eye_position, fixation, fixated_position_in_stimulus, word_edges, saccade_info):
+def compute_next_eye_position(pm, attention_position, eye_position, fixation, fixated_position_in_stimulus, word_edges, saccade_info, verbose):
 
     """
     This function computes next eye position and next offset from word center using saccade distance
@@ -430,7 +438,9 @@ def compute_next_eye_position(pm, attention_position, eye_position, fixation, fi
 
     # saccade distance is next attention position minus the current eye position
     saccade_distance = attention_position - eye_position
-    print(f'saccade distance: {saccade_distance}')
+    if verbose:
+        print(f'saccade distance: {saccade_distance}')
+    logger.info(f'saccade distance: {saccade_distance}')
 
     # normal random error based on difference with optimal saccade distance
     saccade_error = calc_saccade_error(saccade_distance,
@@ -442,7 +452,9 @@ def compute_next_eye_position(pm, attention_position, eye_position, fixation, fi
 
 
     saccade_distance = saccade_distance + saccade_error
-    print(f'saccade error: {saccade_error}')
+    if verbose:
+        print(f'saccade error: {saccade_error}')
+    logger.info(f'saccade error: {saccade_error}')
 
     # offset_from_word_center = saccade_info['offset from word center'] + saccade_error
     saccade_info['saccade_distance'] = float(saccade_distance)
@@ -454,7 +466,9 @@ def compute_next_eye_position(pm, attention_position, eye_position, fixation, fi
         eye_position = int(math.floor(eye_position + saccade_distance))
     else:
         eye_position = int(math.ceil(eye_position + saccade_distance))
-    print(f'next eye position: {eye_position}')
+    if verbose:
+        print(f'next eye position: {eye_position}')
+    logger.info(f'next eye position: {eye_position}')
 
     # determine next fixation depending on next eye position
     fixation_saccade_map = {0: 'refixation',
