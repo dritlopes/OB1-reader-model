@@ -1,9 +1,10 @@
 {
   "parameters" : [
     {
-      "prediction_flag": "",
-      "number_of_simulations": 5,
-      "n_trials": 1
+      "prediction_flag": "cloze",
+      "number_of_simulations": 1,
+      "n_trials": 5,
+      "pred_weight": 0.1
     }
   ]
 }
