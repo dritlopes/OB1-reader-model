@@ -85,7 +85,7 @@ def simulate_reading(global_parameters):
 
 def main():
 
-    useparser=True
+    useparser=False
     if useparser:
         parser = argparse.ArgumentParser()
         parser.add_argument('stimuli_filepath')
@@ -138,7 +138,7 @@ def main():
             "results_identifier": 'prediction_flag',
             "experiment_parameters_filepath": 'experiment_parameters.json',
             "optimize": False,
-            "print_process": True,
+            "print_process": False,
             "plotting": False
         }
 
