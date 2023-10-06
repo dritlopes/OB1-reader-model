@@ -316,7 +316,6 @@ def semantic_processing(text, tokenizer, language_model, prediction_flag, top_k 
 def activate_predicted_upcoming_word(position, target_word, fixation, lexicon_word_activity, lexicon, pred_dict, pred_weight, recognized_word_at_position, pred_bool, verbose):
 
     if str(position) in pred_dict.keys():
-
         predicted = pred_dict[str(position)]
 
         if predicted['target'] != target_word and verbose:
@@ -325,11 +324,10 @@ def activate_predicted_upcoming_word(position, target_word, fixation, lexicon_wo
         for token, pred in predicted['predictions'].items():
 
             if token in lexicon:
-
                 i = lexicon.index(token)
-
                 pred_previous_word = 0
                 # determine the predictability of the previous text word to weight predictability of position
+
                 if recognized_word_at_position[position - 1]:
                     pred_previous_word = 1
                 # if previous word has not been recognized yet
@@ -344,18 +342,25 @@ def activate_predicted_upcoming_word(position, target_word, fixation, lexicon_wo
                                 pred_previous_word = pred_dict[str(position-1)]['predictions'][pred_dict[str(position-1)]['target']]
 
                 # weight predictability with predictability (certainty) of previous text word
-                pre_act = (pred * pred_previous_word * pred_weight)
-                lexicon_word_activity[i] += pre_act
+                if pred_previous_word:
+                    pre_act = (pred * pred_previous_word * pred_weight)
+                    lexicon_word_activity[i] += pre_act
 
-                if position == fixation + 1 and pre_act > 0:
-                    pred_bool = True
+                    if position == fixation + 1 and pre_act > 0:
+                        pred_bool = True
 
-                if verbose:
-                    print(f'Word "{token}" received pre-activation <{round(pre_act,3)} ({pred} * {pred_previous_word} * {pred_weight})> in position of text word "{target_word}" ({round(lexicon_word_activity[i],3)} -> {round(lexicon_word_activity[i] + pre_act,3)})')
-                logger.info(f'Word "{token}" received pre-activation <{round(pre_act,3)} ({pred} * {pred_previous_word} * {pred_weight})> in position of text word "{target_word}" ({round(lexicon_word_activity[i],3)} -> {round(lexicon_word_activity[i] + pre_act,3)})')
+                    if verbose:
+                        print(f'Word "{token}" received pre-activation <{round(pre_act,3)} ({pred} * {pred_previous_word} * {pred_weight})> in position of text word "{target_word}" ({round(lexicon_word_activity[i],3)} -> {round(lexicon_word_activity[i] + pre_act,3)})')
+                    logger.info(f'Word "{token}" received pre-activation <{round(pre_act,3)} ({pred} * {pred_previous_word} * {pred_weight})> in position of text word "{target_word}" ({round(lexicon_word_activity[i],3)} -> {round(lexicon_word_activity[i] + pre_act,3)})')
 
+                else:
+                    logger.info(f'Word "{token} was not pre-activated ({pred} * {pred_previous_word} * {pred_weight}) in position of text word "{target_word}"')
+                    if verbose:
+                        print(f'Word "{token} was not pre-activated ({pred} * {pred_previous_word} * {pred_weight}) in position of text word "{target_word}"')
     else:
-        print(f'Position {position} not found in predictability map')
+        if verbose:
+            print(f'Position {position} not found in predictability map')
+        logger.info(f'Position {position} not found in predictability map')
 
     return lexicon_word_activity, pred_bool
 

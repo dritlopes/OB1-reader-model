@@ -253,16 +253,17 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                     if position > 0 and position < len(tokens):
                         if verbose: print(f'POSITION {position}')
                         logger.info(f'POSITION {position}')
-                        lexicon_word_activity, predicted = activate_predicted_upcoming_word(position,
-                                                                                 tokens[position],
-                                                                                 fixation,
-                                                                                 lexicon_word_activity,
-                                                                                 lexicon,
-                                                                                 pred_dict,
-                                                                                 pm.pred_weight,
-                                                                                 recognized_word_at_position,
-                                                                                 predicted,
-                                                                                 verbose)
+                        if not recognized_word_at_position[position]:
+                            lexicon_word_activity, predicted = activate_predicted_upcoming_word(position,
+                                                                                                tokens[position],
+                                                                                                fixation,
+                                                                                                lexicon_word_activity,
+                                                                                                lexicon,
+                                                                                                pred_dict,
+                                                                                                pm.pred_weight,
+                                                                                                recognized_word_at_position,
+                                                                                                predicted,
+                                                                                                verbose)
 
             # ---------------------- Make saccade decisions ---------------------
             # word selection and attention shift

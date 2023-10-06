@@ -326,8 +326,8 @@ def calc_word_attention_right(word_edges, fixation, eye_position, attention_posi
     #     logger.info(f'Predictability regulating attention position... highest predictability value: {highest_predictions[-1]}')
     # else:
     #     attention_position += round(salience_position * attend_width)
-    # if verbose:
-    #     print('Calculating visual input for next attention position...')
+    if verbose:
+        print('Calculating visual input for next attention position...')
     logger.info('Calculating visual input for next attention position...')
     for i, edges in word_edges.items():
         if verbose:

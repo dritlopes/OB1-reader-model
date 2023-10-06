@@ -154,7 +154,6 @@ def get_first_pass_fixations(simulation_df:pd.DataFrame):
                                 first_pass_indices.append(i)
 
     first_pass = simulation_df.filter(items=first_pass_indices, axis=0)
-    # first_pass.to_csv('../results/first_pass.csv')
 
     return first_pass
 
@@ -284,7 +283,8 @@ def aggregate_fixations_per_word(simulation_output, first_pass, stimuli, measure
                 measure_value = np.nan
                 item_info = f"simulation_id=={simulation_id} & text_id=={item[0]} & word_id=={item[1]}"
                 cell = results_per_word[measure].query(item_info)[measure]
-                if len(cell) > 0: measure_value = cell.item()
+                if len(cell) > 0:
+                    measure_value = cell.item()
                 result_columns[measure].append(measure_value)
 
     results = pd.DataFrame(result_columns)
@@ -379,14 +379,14 @@ def compute_error(measures, true, pred):
         assert len(values['pred']) == len(values['true']), print(measure, len(values['pred']), len(values['true']))
         mean2error, norm_mean2error, norm_sim, norm_true = compute_root_mean_squared_error(values['true'], values['pred'])
         mean2errors['eye_tracking_measure'].append(measure)
-        mean2errors['true_mean'].append(np.round(np.nanmean(values['true']), 3))
+        mean2errors['true_mean'].append(np.round(np.nanmean(true[measure]), 3))
         mean2errors['norm_true_mean'].append(np.round(np.mean(norm_true), 3))
-        mean2errors['min_true_mean'].append(round(min(values['true']),3))
-        mean2errors['max_true_mean'].append(round(max(values['true']),3))
-        mean2errors['min_simulated_mean'].append(round(min(values['pred']),3))
-        mean2errors['max_simulated_mean'].append(round(max(values['pred']),3))
+        mean2errors['min_true_mean'].append(np.round(np.nanmin(true[measure]),3))
+        mean2errors['max_true_mean'].append(np.round(np.nanmax(true[measure]),3))
+        mean2errors['min_simulated_mean'].append(np.round(np.nanmin(pred[measure]),3))
+        mean2errors['max_simulated_mean'].append(np.round(np.nanmax(pred[measure]),3))
         mean2errors['norm_simulated_mean'].append(np.round(np.mean(norm_sim),3))
-        mean2errors['simulated_mean'].append(np.round(np.nanmean(values['pred']), 3))
+        mean2errors['simulated_mean'].append(np.round(np.nanmean(pred[measure]), 3))
         mean2errors['mean_squared_error'].append(round(mean2error, 3))
         mean2errors['norm_mean_squared_error'].append(round(norm_mean2error, 3))
 

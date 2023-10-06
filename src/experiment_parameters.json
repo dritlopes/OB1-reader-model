@@ -3,7 +3,8 @@
     {
       "prediction_flag": "",
       "number_of_simulations": 10,
-      "n_trials": 28
+      "n_trials": 28,
+      "pred_weight": 0.1
     },
     {
       "prediction_flag": "cloze",
