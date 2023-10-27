@@ -4,8 +4,7 @@ import numpy as np
 import math
 import warnings
 from reading_helper_functions import string_to_open_ngrams, cal_ngram_exc_input, is_similar_word_length, \
-    get_midword_position_for_surrounding_word, calc_word_attention_right, calc_saccade_error,\
-    check_previous_refixations_at_position
+    get_midword_position_for_surrounding_word, calc_word_attention_right, calc_saccade_error
 import logging
 
 logger = logging.getLogger(__name__)
@@ -56,7 +55,7 @@ def compute_eye_position(stimulus, fixated_position_stimulus, eye_pos_in_fix_wor
 
     return int(np.round(eye_position))
 
-def compute_ngram_activity(stimulus, eye_position, attention_position, attend_width, letPerDeg, attention_skew, gap, shift, recognized, tokens, recognition_cycle, n_cycles):
+def compute_ngram_activity(stimulus, eye_position, attention_position, attend_width, letPerDeg, attention_skew, gap, recognized, tokens, recognition_cycle, n_cycles):
 
     """
     Initialize word activity based on ngram excitatory input.
@@ -64,16 +63,8 @@ def compute_ngram_activity(stimulus, eye_position, attention_position, attend_wi
     """
 
     unit_activations = {}
+    # define the word ngrams, its weights and their location within the word
     all_ngrams, all_weights, all_locations = string_to_open_ngrams(stimulus, gap)
-
-    # AL: if attention shifted and fixated word recognized, ngrams from fixated word do not provide activation
-    # AL: help avoid repetition problem, i.e. remaining activation from recognized word leads to
-    # same word filling in the next slot.
-    # fix_ngrams = []
-    # if not shift and recognized and tokens:
-    #     for i in recognized:
-    #         ngrams, weights, locations = string_to_open_ngrams(tokens[i], gap)
-    #         fix_ngrams.extend(ngrams)
     fix_ngrams = []
 
     if len(recognized) > 0 and len(tokens) > 0 and len(recognition_cycle) > 0 and n_cycles > -1:
@@ -89,7 +80,6 @@ def compute_ngram_activity(stimulus, eye_position, attention_position, attend_wi
         else:
             activation = cal_ngram_exc_input(location, weight, eye_position, attention_position,
                                              attend_width, letPerDeg, attention_skew)
-            # AL: weight activation by frequency and legnth
         # AL: a ngram that appears more than once in the simulus
         # will have the activation from the ngram in the position with highest activation
         if ngram in unit_activations.keys():
@@ -100,7 +90,7 @@ def compute_ngram_activity(stimulus, eye_position, attention_position, attend_wi
 
     return unit_activations
 
-def compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_position, attend_width, pm, freq_dict, shift=False, recognized=[], tokens=[], recognition_cycle=[], n_cycles=-1):
+def compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_position, attend_width, pm, freq_dict, recognized=[], tokens=[], recognition_cycle=[], n_cycles=-1):
 
     """
     Calculate activity for each word in the lexicon given the excitatory input from all ngrams in the stimulus.
@@ -117,13 +107,13 @@ def compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_p
     unit_activations = compute_ngram_activity(stimulus, eye_position,
                                               attention_position, attend_width, pm.letPerDeg,
                                               pm.attention_skew, pm.bigram_gap,
-                                              shift, recognized, tokens, recognition_cycle, n_cycles)
+                                              recognized, tokens, recognition_cycle, n_cycles)
     total_ngram_activity = sum(unit_activations.values())
     n_ngrams = len(unit_activations.keys())
 
     # compute word input according to ngram excitation and inhibition
     # all stimulus bigrams used, therefore the same bigram inhibition for each word of lexicon
-    # (excit is specific to word, inhib same for all)
+    # (ngram excit is specific to word, ngram inhib same for all)
     ngram_inhibition_input = sum(unit_activations.values()) * pm.bigram_to_word_inhibition
     for lexicon_ix, lexicon_word in enumerate(lexicon_word_ngrams.keys()):
         word_excitation_input = 0
@@ -185,7 +175,7 @@ def update_word_activity(lexicon_word_activity, word_overlap_matrix, pm, word_in
 def match_active_words_to_input_slots(order_match_check, stimulus, recognized_word_at_position, lexicon_word_activity, lexicon, min_activity, stimulus_position, len_sim_const, recognition_in_stimulus, max_threshold, verbose=True):
 
     """
-    Match active words to spatio-topic representation. Fill in the stops in the stimulus.
+    Match active words to spatio-topic representation. Fill in the slots in the stimulus.
     The winner is the word with the highest activity above recognition threshold and of similar length.
     :return: recognized_word_at_position is the updated array of recognized words in each text position,
     lexicon_word_activity is the updated array with activity of each word in the lexicon
@@ -313,9 +303,10 @@ def semantic_processing(text, tokenizer, language_model, prediction_flag, top_k 
 #
 #     return lexicon_word_activity, pred_bool
 
-def activate_predicted_upcoming_word(position, target_word, fixation, lexicon_word_activity, lexicon, pred_dict, pred_weight, recognized_word_at_position, pred_bool, verbose):
+def activate_predicted_upcoming_word(position, target_word, fixation, lexicon_word_activity, lexicon, pred_dict, pred_weight, recognized_word_at_position, pred_bool, entropy, verbose):
 
     if str(position) in pred_dict.keys():
+
         predicted = pred_dict[str(position)]
 
         if predicted['target'] != target_word and verbose:
@@ -340,9 +331,11 @@ def activate_predicted_upcoming_word(position, target_word, fixation, lexicon_wo
                             if position - 2 >= 0 and recognized_word_at_position[position - 2]:
                                 # weight pred by the pred value of the previous word that is > 0 and < 1
                                 pred_previous_word = pred_dict[str(position-1)]['predictions'][pred_dict[str(position-1)]['target']]
+                                # pred_previous_word = entropy[position-1]
 
                 # weight predictability with predictability (certainty) of previous text word
                 if pred_previous_word:
+                    # pre_act = (pred * pred_weight) / pred_previous_word
                     pre_act = (pred * pred_previous_word * pred_weight)
                     lexicon_word_activity[i] += pre_act
 
@@ -364,7 +357,7 @@ def activate_predicted_upcoming_word(position, target_word, fixation, lexicon_wo
 
     return lexicon_word_activity, pred_bool
 
-def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_position_in_stimulus,regression_flag,recognized_word_at_position,lexicon_word_activity,eye_position,fixation_counter,attention_position,attend_width,fix_lexicon_index,highest_predictions,pm,verbose):
+def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_position_in_stimulus,regression_flag,recognized_word_at_position,lexicon_word_activity,eye_position,fixation_counter,attention_position,attend_width,fix_lexicon_index,pm,verbose):
 
     """
     Define where attention should be moved next based on recognition of words in current stimulus and the visual
@@ -377,7 +370,7 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
     next_fixation = 1
     refix_size = pm.refix_size
 
-    # regression: check whether previous word was recognized or there was already a regression performed. If not: regress
+    # regression: check whetheri previous word was recognized or there was already a regression performed. If not: regress
     if fixation > 0 and not recognized_word_at_position[fixation - 1] and not regression_flag[fixation - 1]:
         next_fixation = -1
 
@@ -409,15 +402,12 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
     # forward saccade: perform normal forward saccade (unless at the last position in the text)
     elif fixation < (len(tokens) - 1):
         word_attention_right = calc_word_attention_right(word_edges,
-                                                         fixation,
                                                          eye_position,
                                                          attention_position,
                                                          attend_width,
                                                          pm.salience_position,
                                                          pm.attention_skew,
-                                                         pm.letPerDeg,
                                                          fixated_position_in_stimulus,
-                                                         highest_predictions,
                                                          verbose)
         next_fixation = word_attention_right.index(max(word_attention_right))
     if verbose:
@@ -438,9 +428,8 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
 def compute_next_eye_position(pm, attention_position, eye_position, fixation, fixated_position_in_stimulus, word_edges, saccade_info, verbose):
 
     """
-    This function computes next eye position and next offset from word center using saccade distance
+    This function computes next eye position using saccade distance
     (defined by next attention position and current eye position) plus a saccade error.
-    Importantly, it corrects the offset to prevent too short or too long saccades.
     :return: the next fixation, the next eye position and the updated saccade info
     """
 

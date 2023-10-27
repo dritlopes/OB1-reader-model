@@ -51,7 +51,7 @@ def string_to_open_ngrams(string,gap):
                     weight = weight * 2
                 bigram = letter+string[position+i]
                 all_ngrams.append(bigram)
-                all_locations.append([position,position+i])
+                all_locations.append([position, position+i])
                 all_weights.append(weight)
 
     return all_ngrams, all_weights, all_locations
@@ -150,8 +150,9 @@ def build_word_inhibition_matrix(lexicon,lexicon_word_ngrams,pm,matrix_filepath,
 
     for word_1_index in range(lexicon_size):    # MM: receiving unit, I think...
         # AL: make sure word1-word2, but not word2-word1 or word1-word1.
-        for word_2_index in range(word_1_index+1,lexicon_size):    # MM: sending unit, I think...
+        for word_2_index in range(word_1_index+1, lexicon_size):    # MM: sending unit, I think...
             word1, word2 = lexicon[word_1_index], lexicon[word_2_index]
+            # the degree of length similarity
             length_sim = 1 - (abs(len(word1)-len(word2))/max(len(word1),len(word2)))
             # if not is_similar_word_length(len(word1), len(word2), pm.word_length_similarity_constant):
             #     continue
@@ -159,7 +160,7 @@ def build_word_inhibition_matrix(lexicon,lexicon_word_ngrams,pm,matrix_filepath,
             # AL: lexicon_word_ngrams already contains all ngrams (bigrams and included monograms)
             ngram_common = list(set(lexicon_word_ngrams[word1]).intersection(set(lexicon_word_ngrams[word2])))
             n_total_overlap = len(ngram_common)
-            # MM: now inhib set as proportion of overlapping bigrams (instead of nr overlap); +1 to help short words
+            # MM: now inhib set as proportion of overlapping bigrams (instead of nr overlap);
             word_overlap_matrix[word_1_index, word_2_index] = (n_total_overlap / (len(lexicon_word_ngrams[word1]))) * length_sim
             word_overlap_matrix[word_2_index, word_1_index] = (n_total_overlap / (len(lexicon_word_ngrams[word2]))) * length_sim
             #print("word1 ", word1, "word2 ", word2, "overlap ", n_total_overlap, "len w1 ", len(lexicon_word_ngrams[word1]))
@@ -255,7 +256,8 @@ def get_attention_skewed(attentionWidth, attention_eccentricity, attention_skew)
 
 def calc_acuity(eye_eccentricity, letPerDeg):
 
-    # Parameters from Harvey & Dumoulin (2007); 35.55556 is to make acuity at 0 degs eq. to 1
+    # Parameters from l
+    # ; 35.55556 is to make acuity at 0 degs eq. to 1
     return (1/35.555556)/(0.018*(eye_eccentricity*letPerDeg+1/0.64))
 
 def cal_ngram_exc_input(ngram_location, ngram_weight, eye_position, attention_position, attend_width, let_per_deg, attention_skew):
@@ -280,7 +282,7 @@ def cal_ngram_exc_input(ngram_location, ngram_weight, eye_position, attention_po
 
     return total_exc_input
 
-def calc_monogram_attention_sum(position_start, position_end, eye_position, attention_position, attend_width, attention_skew, let_per_deg, foveal_word):
+def calc_monogram_attention_sum(position_start, position_end, eye_position, attention_position, attend_width, attention_skew, foveal_word):
 
     # this is only used to calculate where to move next when forward saccade
     # MM: turns out this can be seriously simplified: the weightmultiplier code can go, and the eccentricity effect.
@@ -301,7 +303,7 @@ def calc_monogram_attention_sum(position_start, position_end, eye_position, atte
         # Monogram activity depends on distance of monogram letters to the centre of attention and fixation
         attention_eccentricity = letter_location - attention_position
         # eye_eccentricity = abs(letter_location - eye_position)
-        # print(attention_eccentricity, eye_eccentricity)
+        # print(attention_eccentricity, eye_eccentricity)a
         attention = get_attention_skewed(attend_width, attention_eccentricity, attention_skew)
         #visual_acuity = 1 # calc_acuity(eye_eccentricity, let_per_deg)
         sum_attention_letters += attention #* visual_acuity) * monogram_locations_weight_multiplier
@@ -313,7 +315,7 @@ def calc_monogram_attention_sum(position_start, position_end, eye_position, atte
 
     return sum_attention_letters
 
-def calc_word_attention_right(word_edges, fixation, eye_position, attention_position, attend_width, salience_position, attention_skew, let_per_deg, fixated_position_in_stimulus, highest_predictions, verbose):
+def calc_word_attention_right(word_edges, eye_position, attention_position, attend_width, salience_position, attention_skew, fixated_position_in_stimulus, verbose):
 
     # MM: calculate list of attention wgts for all words in stimulus to right of fix.
     word_attention_right = []
@@ -329,6 +331,7 @@ def calc_word_attention_right(word_edges, fixation, eye_position, attention_posi
     if verbose:
         print('Calculating visual input for next attention position...')
     logger.info('Calculating visual input for next attention position...')
+
     for i, edges in word_edges.items():
         if verbose:
             print(f'Word position: {i}')
@@ -341,6 +344,7 @@ def calc_word_attention_right(word_edges, fixation, eye_position, attention_posi
                   f'salience: {salience_position}, '
                   f'att position: {attention_position}, '
                   f'att skew: {attention_skew}, ')
+
         # if n or n + x (but not n - x), so only fixated word or words to the right
         if i >= fixated_position_in_stimulus:
             # print(i, edges)
@@ -356,7 +360,7 @@ def calc_word_attention_right(word_edges, fixation, eye_position, attention_posi
                 # set attention wghts for (nonexisting) right part of fixated word to 0
                 crt_word_monogram_attention_sum = 0
             else:
-                crt_word_monogram_attention_sum = calc_monogram_attention_sum(word_start_edge, word_end_edge, eye_position, attention_position, attend_width, attention_skew, let_per_deg, foveal_word)
+                crt_word_monogram_attention_sum = calc_monogram_attention_sum(word_start_edge, word_end_edge, eye_position, attention_position, attend_width, attention_skew, foveal_word)
             # print('word position and visual salience: ',i,crt_word_monogram_attention_sum)
             word_attention_right.append(crt_word_monogram_attention_sum)
             # print(f'visual salience of {i} to the right of fixation: {crt_word_monogram_attention_sum}')
@@ -377,17 +381,13 @@ def calc_saccade_error(saccade_distance, optimal_distance, saccErr_scaler, saccE
     else:
         return 0.
 
-def check_previous_refixations_at_position(all_data, fixation, fixation_counter, max_n_refix):
+def compute_entropy(pred_dict):
 
-    # AL: mechanism to prevent infinite refixations in words that do not get sufficient activation to get recognized
-    # or are long and have higher atetntional input than surrounding words
-    refixate = False
-    # AL: if first fixation on text, no previous fixation to check, so refixation is allowed
-    if fixation_counter == 0: refixate = True
-    else:
-        for i in range(1,max_n_refix+1):
-            if fixation_counter - i in all_data.keys():
-                if all_data[fixation_counter - i]['saccade_type'] != 'refixation' and all_data[fixation_counter - i]['foveal_word_index'] == fixation:
-                    refixate = True
-                    break
-    return refixate
+    entropy_values = dict()
+
+    for position, predictions in pred_dict.items():
+        pred_values = np.array(list(predictions['predictions'].values()))
+        entropy = -np.sum(pred_values * np.log(pred_values))
+        entropy_values[int(position)] = entropy
+
+    return entropy_values

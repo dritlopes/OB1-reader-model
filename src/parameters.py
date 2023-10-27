@@ -165,7 +165,7 @@ def return_task_params(task_attributes):
     These parameters are set for experimentation and are established by the task_attributes object.
     """
 
-    cycle_size = 25 # milliseconds that one model cycle is supposed to last (brain time, not model time)
+    cycle_size = 20 # milliseconds that one model cycle is supposed to last (brain time, not model time)
     output_dir = time.time()
 
     # word activation
@@ -240,7 +240,7 @@ def return_task_params(task_attributes):
                             'gaze_duration',
                             'total_reading_time',
                             'regression_in']
-    fixed_factors = ['predictability','length','frequency']
+    fixed_factors = ['predictability']
 
     task_params = dict(locals())
     # NV: task_attributes is given as input, so would end up in the namespace if not removed.

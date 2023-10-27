@@ -12,12 +12,12 @@ from reading_components import compute_stimulus, compute_eye_position, compute_w
     activate_predicted_upcoming_word
 from reading_helper_functions import get_threshold, string_to_open_ngrams, \
     define_slot_matching_order, sample_from_norm_distribution, find_word_edges, update_lexicon_threshold,\
-    get_blankscreen_stimulus, check_predictability
+    get_blankscreen_stimulus, check_predictability, compute_entropy
 
 logger = logging.getLogger(__name__)
 # print = logger.info
 
-def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index,lexicon_thresholds,lexicon,pred_dict,freq_values,verbose=True):
+def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index,lexicon,pred_dict,freq_values,verbose=True):
 
     all_data = {}
     # set to true when end of text is reached
@@ -36,9 +36,8 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
     lexicon_word_activity = np.zeros((len(lexicon)), dtype=float)
     # keep track whether a prediction was made at a given position (for pred-att mechanism)
     predicted = False
-    # keep track of the highest prediction value for each position in the text
-    highest_predictions = dict()
-    updated_positions = []
+    # # keep track of the highest prediction value for each position in the text
+    # highest_predictions = dict()
     # history of regressions, set to true at a certain position in the text when a regression is performed to that word
     regression_flag = np.zeros(total_n_words, dtype=bool)
     # recognized word at position, which word received the highest activation in each position
@@ -51,12 +50,6 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                     'saccade_distance': 0,  # distance between current eye position and eye previous position
                     'saccade_error': 0,  # saccade noise to include overshooting
                     'saccade_cause': 0}  # for wordskip and refixation, extra info on cause of saccade
-                    #'saccade_type_by_error': False}  # if the saccade type was defined due to saccade error
-                    # if eye position is to be in a position other thanthat of the word middle,
-                    # offset will be negative/positive (left/right)
-                    # and will represent the number of letters to the new position.
-                    # Its value is reset before a new saccade is performed.
-                    #'offset from word center': 0}
     saccade_symbols = {'forward': ">->->->->->->->->->->->-",
                        'wordskip': ">>>>>>>>>>>>>>>>>>>>>>>>",
                        'refixation': '------------------------',
@@ -67,10 +60,13 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
     for i, word in enumerate(tokens):
         tokens_to_lexicon_indices[i] = lexicon.index(word)
 
+    # if pm.prediction_flag:
+    #     for i in enumerate(tokens):
+    #         if i in pred_dict.keys():
+    #             highest_predictions[i] = pred_dict[i].values().tolist()[0]
+
     if pm.prediction_flag:
-        for i in enumerate(tokens):
-            if i in pred_dict.keys():
-                highest_predictions[i] = pred_dict[i].values().tolist()[0]
+        entropy_values = compute_entropy(pred_dict)
 
     # ---------------------- Start looping through fixations ---------------------
     while not end_of_text:
@@ -79,29 +75,29 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
             print(f'---Fixation {fixation_counter} at position {fixation}---')
         logger.info(f'---Fixation {fixation_counter} at position {fixation}---')
 
-        fixation_data = defaultdict(list)
-
         # make sure that fixation does not go over the end of the text. Needed for continuous reading
         fixation = min(fixation, len(tokens) - 1)
 
-        # add initial info to fixation dict
-        fixation_data['foveal_word'] = tokens[fixation]
-        fixation_data['foveal_word_index'] = fixation
-        fixation_data['attentional_width'] = attend_width
-        fixation_data['foveal_word_frequency'] = freq_values[tokens[fixation]] if tokens[fixation] in freq_values.keys() else 0
-        fixation_data['foveal_word_predictability'] = pred_dict[str(fixation)][tokens[fixation]] if pred_dict and str(fixation) in pred_dict.keys() and tokens[fixation] in pred_dict[str(fixation)].keys() else 0
-        fixation_data['foveal_word_length'] = len(tokens[fixation])
-        # fixation_data['foveal_word_threshold'] = lexicon_thresholds[tokens_to_lexicon_indices[fixation]]
-        fixation_data['foveal_word_threshold'] = pm.max_threshold
-        fixation_data['stimulus_words'] = tokens
-
-        # saccade planning from previous fixation (or initialized values for first fixation)
-        fixation_data['saccade_type'] = saccade_info['saccade_type']
-        fixation_data['saccade_error'] = saccade_info['saccade_error']
-        fixation_data['saccade_distance'] = saccade_info['saccade_distance']
-        fixation_data['saccade_cause'] = saccade_info['saccade_cause']
-        fixation_data['recognition_cycle'] = None
-        fixation_data['cycle_of_recognition'] = recognized_word_at_cycle
+        fixation_data = {"foveal_word": tokens[fixation],
+                         'foveal_word_index': fixation,
+                         'foveal_word_frequency': freq_values[tokens[fixation]] if tokens[fixation] in freq_values.keys() else 0,
+                         'foveal_word_predictability': pred_dict[str(fixation)][tokens[fixation]] if pred_dict and str(fixation) in pred_dict.keys() and tokens[fixation] in pred_dict[str(fixation)].keys() else 0,
+                         'foveal_word_length': len(tokens[fixation]),
+                         'foveal_word_threshold': pm.max_threshold,
+                         'stimulus': None,
+                         'trial_words': tokens,
+                         'eye_position': None,
+                         'attentional_width': attend_width,
+                         'saccade_type': saccade_info['saccade_type'],
+                         'saccade_error': saccade_info['saccade_error'],
+                         'saccade_distance': saccade_info['saccade_distance'],
+                         'saccade_cause': saccade_info['saccade_cause'],
+                         'recognition_cycle': None,
+                         'cycle_of_recognition': recognized_word_at_cycle,
+                         'fixation_duration': None,
+                         'recognized_word_at_foveal_position': None,
+                         'recognized_words': None
+                         }
 
         # ---------------------- Define the stimulus and eye position ---------------------
         stimulus, stimulus_position, fixated_position_in_stimulus = compute_stimulus(fixation, tokens)
@@ -113,14 +109,14 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
 
         # ---------------------- Update attention width ---------------------
         # update attention width according to whether there was a regression in the last fixation,
-        # i.e. this fixation location is a result of regression
+        # i.e. this fixation location is a result of regressio
         if fixation_data['saccade_type'] == 'regression':
             # set regression flag to know that a regression has been realized towards this position
             regression_flag[fixation] = True
             # narrow attention width by 2 letters in the case of regressions
             attend_width = max(attend_width - 1.0, pm.min_attend_width)
         else:
-            # widen attention by 0.5 letters in forward saccades
+            # widen atention by 0.5 letters in forward saccades
             attend_width = min(attend_width + 0.5, pm.max_attend_width)
 
         # ---------------------- Define order of slot-matching ---------------------
@@ -144,16 +140,16 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
         n_cycles = 0
         n_cycles_since_attent_shift = 0
         attention_position = eye_position
-        # stimulus positions in which recognition is achieved during current fixation
+        # stimulus position in which recognition is achieved during current fixation
         recognition_in_stimulus = []
         # define index of letters at the words edges.
         word_edges = find_word_edges(stimulus)
 
         # ---------------------- Define word excitatory input ---------------------
-        # compute word input using ngram excitation and inhibition (out the cycle loop because this is constant)
+        # compute word input using ngram excitation and inhibition
         n_ngrams, total_ngram_activity, all_ngrams, word_input = compute_words_input(stimulus, lexicon_word_ngrams, eye_position, attention_position, attend_width, pm, freq_values)
-        fixation_data['n_ngrams'] = n_ngrams
-        fixation_data['total_ngram_activity'] = total_ngram_activity
+        # fixation_data['n_ngrams'] = n_ngrams
+        # fixation_data['total_ngram_activity'] = total_ngram_activity
         if verbose:
             print(f"  input to fixwrd at first cycle: {round(word_input[tokens_to_lexicon_indices[fixation]], 3)}")
         logger.info(f"  input to fixwrd at first cycle: {round(word_input[tokens_to_lexicon_indices[fixation]], 3)}")
@@ -172,7 +168,6 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                                                                                              attention_position,
                                                                                              attend_width, pm,
                                                                                              freq_values,
-                                                                                             shift,
                                                                                              recognition_in_stimulus,
                                                                                              tokens,
                                                                                              recognized_word_at_cycle,
@@ -193,16 +188,10 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
             # update cycle info
             foveal_word_index = lexicon_word_index[tokens[fixation]]
             foveal_word_activity = lexicon_word_activity[foveal_word_index]
-            fixation_data['foveal_word_activity_per_cycle'].append(foveal_word_activity)
-            # fixation_data['foveal_word_inhibition_per_cycle'].append(abs(lexicon_word_inhibition[foveal_word_index]))
-            stim_activity = sum([lexicon_word_activity[lexicon_word_index[word]] for word in stimulus.split() if word in lexicon_word_index.keys()])
-            fixation_data['stimulus_activity_per_cycle'].append(stim_activity)
-            total_activity = sum(lexicon_word_activity)
-            fixation_data['lexicon_activity_per_cycle'].append(total_activity)
-
             if verbose:
                print(f'CYCLE {n_cycles}    activ @fix {round(foveal_word_activity, 3)} inhib  #@fix {round(lexicon_word_inhibition[foveal_word_index], 6)}')
             logger.info(f'CYCLE {n_cycles}    activ @fix {round(foveal_word_activity, 3)} inhib  #@fix {round(lexicon_word_inhibition[foveal_word_index], 6)}')
+
             # ---------------------- Match words in lexicon to slots in input ---------------------
             # word recognition, by checking matching active wrds to slots
             recognized_word_at_position, lexicon_word_activity, recognition_in_stimulus = \
@@ -217,35 +206,6 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                                                   recognition_in_stimulus,
                                                   pm.max_threshold,
                                                   verbose)
-
-            # update threshold of n+1 or n+2 with pred value
-            # if recognized_word_at_position.any() and pm.prediction_flag and fixation < total_n_words-1:
-            #     updated_positions, lexicon_thresholds = update_lexicon_threshold(recognized_word_at_position,
-            #                                                                             fixation,
-            #                                                                             tokens,
-            #                                                                             updated_positions,
-            #                                                                             lexicon_thresholds,
-            #                                                                             pm.wordpred_p,
-            #                                                                             pred_dict,
-            #                                                                             tokens_to_lexicon_indices,
-            #                                                                             lexicon)
-
-            # # after recognition, prediction-based activation of recognized word + 1
-            # if recognized_word_at_position.any() and fixation < total_n_words-1 and pm.prediction_flag:
-            #     # check whether we should pre-activate and in relation to which position (n+1 or n+2)
-            #     position = check_predictability(recognized_word_at_position, fixation, tokens, updated_positions)
-            #     if position:
-            #         # avoid error because of missing word in provo cloze data
-            #         if not (pm.prediction_flag == 'cloze' and 'provo' in pm.stim_name.lower() and position == 50 and text_id == 17):
-            #             lexicon_word_activity, predicted = activate_predicted_upcoming_word(position,
-            #                                                                                  tokens[position],
-            #                                                                                  lexicon_word_activity,
-            #                                                                                  lexicon,
-            #                                                                                  pred_dict,
-            #                                                                                  pm.pred_weight,
-            #                                                                                  predicted,
-            #                                                                                  verbose)
-            #         updated_positions.append(position)
 
             if fixation < total_n_words-1 and pm.prediction_flag:
                 # gradually pre-activate words in stimulus (pred weighted by pred of previous word)
@@ -263,6 +223,7 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                                                                                                 pm.pred_weight,
                                                                                                 recognized_word_at_position,
                                                                                                 predicted,
+                                                                                                entropy_values,
                                                                                                 verbose)
 
             # ---------------------- Make saccade decisions ---------------------
@@ -272,9 +233,9 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                 # If cycle since fixstart > sample, make attentshift. This produces approx ex-gauss SRT
                 if recognized_word_at_position[fixation]:
                     # MM: if word recog, then faster switch (norm. distrib. with <mu) than if not recog.
-                    shift_start = sample_from_norm_distribution(pm.mu, pm.sigma, pm.recog_speeding,recognized=True)
+                    shift_start = sample_from_norm_distribution(pm.mu, pm.sigma, pm.recog_speeding, recognized=True)
                 else:
-                    shift_start = sample_from_norm_distribution(pm.mu, pm.sigma, pm.recog_speeding,recognized=False)
+                    shift_start = sample_from_norm_distribution(pm.mu, pm.sigma, pm.recog_speeding, recognized=False)
                 # shift attention (& plan saccade in 125 ms) if n_cycles is higher than random threshold shift_start
                 if n_cycles >= shift_start:
                     shift = True
@@ -296,11 +257,9 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                                                                         attention_position,
                                                                         attend_width,
                                                                         foveal_word_index,
-                                                                        highest_predictions,
                                                                         pm,
                                                                         verbose)
 
-                    fixation_data['foveal_word_activity_at_shift'] = fixation_data['foveal_word_activity_per_cycle'][-1]
                     predicted = False
 
                     if verbose:
@@ -314,16 +273,18 @@ def reading(pm,tokens,text_id,word_overlap_matrix,lexicon_word_ngrams,lexicon_wo
                                                                                                      lexicon_word_ngrams,
                                                                                                      eye_position,
                                                                                                      attention_position,
-                                                                                                     attend_width, pm,
+                                                                                                     attend_width,
+                                                                                                     pm,
                                                                                                      freq_values,
-                                                                                                     shift,
                                                                                                      recognition_in_stimulus,
                                                                                                      tokens,
                                                                                                      recognized_word_at_cycle,
                                                                                                      n_cycles)
                         attention_position = np.round(attention_position)
+
                     if verbose: print(f"  input after attentshift: {round(word_input[tokens_to_lexicon_indices[fixation]], 3)}")
                     logger.info(f"  input after attentshift: {round(word_input[tokens_to_lexicon_indices[fixation]], 3)}")
+
             if shift:
                 n_cycles_since_attent_shift += 1 # ...count cycles since attention shift
 
@@ -657,7 +618,7 @@ def simulate_experiment(pm):
 
             texts_simulations = defaultdict()
 
-            # AL: if language model, generate new predictions with a new seed for every x simulations
+            # AL: if language model, generate predictions
             word_predictions = get_pred_dict(pm, lexicon)
 
             # initiate progress bar
@@ -673,11 +634,9 @@ def simulate_experiment(pm):
 
                 text_data = reading(pm,
                                     text_tokens,
-                                    i,
                                     word_inhibition_matrix,
                                     lexicon_word_ngrams,
                                     lexicon_word_index,
-                                    lexicon_thresholds,
                                     lexicon,
                                     predictions_in_text,
                                     word_frequencies,
