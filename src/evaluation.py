@@ -679,8 +679,8 @@ def evaluate_output (parameters_list: list, verbose=True):
                 simulation_output = simulation_output[(simulation_output['fixation_duration'] > 80) & (simulation_output['fixation_duration'] < 800)]
 
             # ----------- Get word-level eye-movement measures in human data -----------
-            processed_eye_tracking_path = parameters.eye_tracking_filepath.replace('-Eyetracking_Data', '_eye_tracking').replace('raw','processed')
-            processed_mean_eye_tracking_path = parameters.eye_tracking_filepath.replace('-Eyetracking_Data', '_eye_tracking_mean').replace('raw','processed')
+            processed_eye_tracking_path = parameters.eye_tracking_filepath.replace('-Eyetracking_Data', '_eye_tracking_last_sim').replace('raw','processed')
+            processed_mean_eye_tracking_path = parameters.eye_tracking_filepath.replace('-Eyetracking_Data', '_eye_tracking_last_sim_mean').replace('raw','processed')
 
             if processed_mean_eye_tracking_path in data_log.keys():
                 # true_eye_movements = data_log[parameters.eye_tracking_filepath]

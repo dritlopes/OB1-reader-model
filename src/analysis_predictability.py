@@ -304,8 +304,8 @@ def test_correlation(pred_values, eye_movement_values, filepath):
 
     # do pearson correlation test
     test = stats.pearsonr(pred_values, eye_movement_values)
-    corr_results = {'test': ['corr-coefficient', 'p-value'],
-                    'result': [test.statistic, test.pvalue]}
+    corr_results = {'test': ['corr-coefficient', 'p-value', 'degrees-of-freedom'],
+                    'result': [test.statistic, test.pvalue, len(pred_values)-2]}
 
     df = pd.DataFrame.from_dict(corr_results)
     df.to_csv(filepath, sep='\t', index=False)
@@ -385,7 +385,7 @@ def main():
     # word_pred_acc(pred_maps)
     #
     # plot results on predictability
-    plot_sim_results_pred(results_filepaths, measures)
+    # plot_sim_results_pred(results_filepaths, measures)
 
     # test correlation between predictability and eye movements
     test_correlation_pred(eye_movement_filepath, measures, pred_maps)
