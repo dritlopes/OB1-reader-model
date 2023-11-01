@@ -338,74 +338,7 @@ def drop_nan_values(true_values:pd.Series, simulated_values:pd.Series):
         counter += 1
     return values
 
-# ---------------- Evaluation functions ------------------
-def compute_root_mean_squared_error(true_values:list, simulated_values:list):
 
-    # root mean squared error measures the average difference between values predicted by the model
-    # and the eye-tracking values. It provides an estimate of how well the model was able to predict the
-    # eye-tracking value.
-
-    diff = np.subtract(simulated_values, true_values)
-    # if normalize:
-    # # normalize difference: subtract the min difference from the difference and divide it by the difference between max and min differences
-    #     diff = np.divide((np.subtract(diff, min(diff))), np.subtract(max(diff), min(diff)))
-
-    # # another way: first normalize values with min-max scaler, then compute difference
-    # norm_sim_values = np.divide((np.subtract(simulated_values, min(true_values))), np.subtract(max(true_values), min(true_values)))
-    # norm_true_values = np.divide((np.subtract(true_values, min(true_values))), np.subtract(max(true_values), min(true_values)))
-    # norm_diff = np.subtract(norm_sim_values, norm_true_values)
-
-    # or standardize values: subtract value by the mean and divide by standard deviation,
-    # but Gaussian distribution is assumed
-    norm_sim_values = np.divide(np.subtract(simulated_values, np.mean(true_values)), np.std(true_values))
-    norm_true_values = np.divide(np.subtract(true_values, np.mean(true_values)), np.std(true_values))
-    norm_diff = np.subtract(norm_sim_values, norm_true_values)
-
-    # # standardize using median
-    # norm_sim_values = np.divide(np.subtract(simulated_values, np.median(true_values)), np.median(np.absolute(true_values - np.median(true_values))))
-    # norm_true_values = np.divide(np.subtract(true_values, np.median(true_values)), np.median(np.absolute(true_values - np.median(true_values))))
-    # diff = np.subtract(norm_sim_values, norm_true_values)
-
-    return math.sqrt(np.square(diff).mean()), math.sqrt(np.square(norm_diff).mean()), norm_sim_values, norm_true_values,
-
-def compute_error(measures, true, pred):
-
-    mean2errors = defaultdict(list)
-
-    for measure in measures:
-        # excluding words with nan value, e.g. skipped words of prob 1. Should words that are always skipped be included in the equation?
-        values = drop_nan_values(true[measure], pred[measure])
-        assert len(values['pred']) > 0, print(measure, values['pred'])
-        assert len(values['pred']) == len(values['true']), print(measure, len(values['pred']), len(values['true']))
-        mean2error, norm_mean2error, norm_sim, norm_true = compute_root_mean_squared_error(values['true'], values['pred'])
-        mean2errors['eye_tracking_measure'].append(measure)
-        mean2errors['true_mean'].append(np.round(np.nanmean(true[measure]), 3))
-        # mean2errors['norm_true_mean'].append(np.round(np.mean(norm_true), 3))
-        mean2errors['min_true_mean'].append(np.round(np.nanmin(true[measure]),3))
-        mean2errors['max_true_mean'].append(np.round(np.nanmax(true[measure]),3))
-        mean2errors['min_simulated_mean'].append(np.round(np.nanmin(pred[measure]),3))
-        mean2errors['max_simulated_mean'].append(np.round(np.nanmax(pred[measure]),3))
-        mean2errors['norm_simulated_mean'].append(np.round(np.mean(norm_sim),3))
-        mean2errors['simulated_mean'].append(np.round(np.nanmean(pred[measure]), 3))
-        mean2errors['mean_squared_error'].append(round(mean2error, 3))
-        mean2errors['norm_mean_squared_error'].append(round(norm_mean2error, 3))
-
-    average_norm_error = np.mean(mean2errors['norm_mean_squared_error'])
-    mean2errors['eye_tracking_measure'].append("MEAN")
-    mean2errors['true_mean'].append(None)
-    # mean2errors['norm_true_mean'].append(None)
-    mean2errors['min_true_mean'].append(None)
-    mean2errors['max_true_mean'].append(None)
-    mean2errors['min_simulated_mean'].append(None)
-    mean2errors['max_simulated_mean'].append(None)
-    mean2errors['norm_simulated_mean'].append(None)
-    mean2errors['simulated_mean'].append(None)
-    mean2errors['mean_squared_error'].append(None)
-    mean2errors['norm_mean_squared_error'].append(average_norm_error.round(3))
-
-    mean2error_df = pd.DataFrame(mean2errors)
-
-    return mean2error_df
 
 def word_recognition_acc_to_factor(accuracy, word_factor, recog_cycles):
 
@@ -542,40 +475,6 @@ def fit_mixed_effects(parameters, true, predicted, output_filepath):
                 fh.write(stats_result.summary().as_text())
         print('end stats model')
 
-def test_difference(measure, sim_values1, sim_values2, filepath):
-
-    # https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.ttest_rel.html
-    # "The T-statistic measures whether the average score differs significantly across samples.
-    # It is calculated as np.mean(a - b)/se, where se is the standard error.
-    # Therefore, the T-statistic will be positive when the sample mean of a - b is greater than zero
-    # and negative when the sample mean of a - b is less than zero"
-
-    assert len(sim_values1) == len(sim_values2)
-
-    # # test if distribution is normal
-    # if len(sim_values1) > 3:
-    #     print(stats.shapiro(sim_values1))
-    # if len(sim_values2) > 3:
-    #     print(stats.shapiro(sim_values2))
-    # print(measure)
-    # print(sim_values1, sim_values2)
-    # # test if difference in mean2error is significant between conditions
-    # test = stats.ttest_rel(sim_values2, sim_values2)
-    # t_test = {'test': ['t-statistics', 'p-value', 'degrees of freedom', 'confidence interval'],
-    #          'result': [test.statistic, test.pvalue, test.df, test.confidence_interval()]}
-    # print(test)
-
-    # AL: since no normal distribution, try Wilcoxon T-test
-    # https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.wilcoxon.html
-    # It is a non-parametric version of the paired T-test
-    test = stats.wilcoxon(sim_values1, sim_values2)
-    print(test)
-    t_test = {'test': ['t-statistics', 'p-value'],
-              'result': [test.statistic, test.pvalue]}
-    # Wilcoxon statistic: the sum of the ranks of the differences above zero
-    df = pd.DataFrame.from_dict(t_test)
-    df.to_csv(filepath, sep='\t', index=False)
-
 def scale_human_durations(data_log, parameters_list):
 
     all_measures = [measure for parameters in parameters_list for measure in parameters.evaluation_measures]
@@ -617,6 +516,269 @@ def plot_fixed_factor_vs_eye_movement(data, fixed_factors, measures, results_fil
             filepath = f"{results_dir}/plot_{fixed_factor}_{measure}.png"
             plot.figure.savefig(filepath)
 
+def process_eye_tracking_data(parameters, data_log, simulation_output):
+
+    processed_eye_tracking_path = parameters.eye_tracking_filepath.replace('-Eyetracking_Data',
+                                                                           '_eye_tracking_last_sim').replace('raw', 'processed')
+    processed_mean_eye_tracking_path = parameters.eye_tracking_filepath.replace('-Eyetracking_Data',
+                                                                                '_eye_tracking_last_sim_mean').replace('raw', 'processed')
+    if processed_mean_eye_tracking_path in data_log.keys():
+        # true_eye_movements = data_log[parameters.eye_tracking_filepath]
+        mean_true_eye_movements = data_log[processed_mean_eye_tracking_path]
+    else:
+        # read in eye_tracking data for comparing simulation with observed measures
+        # encoding = chardet.detect(open(parameters.eye_tracking_filepath, "rb").read())['encoding']
+        eye_tracking = pd.read_csv(parameters.eye_tracking_filepath, encoding="ISO-8859-1")
+        # pre-process eye-tracking data to the format needed
+        true_eye_movements = pre_process_eye_tracking(eye_tracking, parameters.eye_tracking_filepath, parameters.stim)
+        # only including texts that were included in simulations
+        text_ids = [int(text_id) for text_id in simulation_output['text_id'].unique().tolist()]
+        true_eye_movements = true_eye_movements[true_eye_movements['text_id'].isin(text_ids)]
+        # save out pre-processed data
+        true_eye_movements.to_csv(processed_eye_tracking_path, sep='\t')
+        data_log[processed_eye_tracking_path] = true_eye_movements
+        # get word level measures from eye_tracking, averaged over participants
+        mean_true_eye_movements = true_eye_movements.groupby(['text_id', 'word_id', 'word']) \
+            [parameters.evaluation_measures].mean().reset_index()
+        # round values
+        mean_true_eye_movements[parameters.evaluation_measures] = mean_true_eye_movements[
+            parameters.evaluation_measures].round(3)
+        # save out averaged data
+        mean_true_eye_movements.to_csv(processed_mean_eye_tracking_path, sep='\t', index_label='id')
+        data_log[processed_mean_eye_tracking_path] = mean_true_eye_movements
+
+    return mean_true_eye_movements, data_log
+
+def process_simulation_data(parameters, data_log, simulation_output, output_filepath, mean_true_eye_movements):
+
+    analysed_simulation_output_path = output_filepath.replace('model_output', 'analysed').replace('simulation_',
+                                                                                                  f'simulation_eye_movements_')
+    analysed_mean_simulation_output_path = output_filepath.replace('model_output', 'analysed').replace('simulation_',
+                                                                                                       f'simulation_eye_movements_mean_')
+    stimuli = mean_true_eye_movements[['text_id', 'word_id', 'word']]
+    # first aggregate fixations per word, keeping simulation level
+    predicted_eye_movements = aggregate_fixations_per_word(simulation_output,
+                                                           get_first_pass_fixations(simulation_output),
+                                                           stimuli,
+                                                           parameters.evaluation_measures)
+
+    # ----------- get word factors (e.g. frequency, length, predictability) -----------
+    # predicted_eye_movements = get_word_factors(parameters, predicted_eye_movements, parameters.fixed_factors)
+    # save it
+    dir = os.path.dirname(analysed_simulation_output_path)
+    if not os.path.exists(dir): os.makedirs(dir)
+    predicted_eye_movements.to_csv(analysed_simulation_output_path, sep='\t', index_label='id')
+    data_log[analysed_simulation_output_path] = predicted_eye_movements
+    # then average over simulations to get the means
+    # variables = parameters.evaluation_measures.extend(parameters.fixed_factors)
+    variables = parameters.evaluation_measures
+    mean_predicted_eye_movements = predicted_eye_movements.groupby(['text_id', 'word_id', 'word']) \
+        [variables].mean().reset_index()
+    # add fixed factors
+    mean_predicted_eye_movements = get_word_factors(parameters, mean_predicted_eye_movements)
+    # round values
+    mean_predicted_eye_movements[variables] = mean_predicted_eye_movements[variables].round(3)
+    # save it
+    mean_predicted_eye_movements.to_csv(analysed_mean_simulation_output_path, sep='\t', index_label='id')
+    data_log[analysed_mean_simulation_output_path] = mean_predicted_eye_movements
+
+    return mean_predicted_eye_movements, predicted_eye_movements, data_log
+
+def compute_root_mean_squared_error(true_values:list, simulated_values:list):
+
+    # root mean squared error measures the average difference between values predicted by the model
+    # and the eye-tracking values. It provides an estimate of how well the model was able to predict the
+    # eye-tracking value.
+
+    diff = np.subtract(simulated_values, true_values)
+    # if normalize:
+    # # normalize difference: subtract the min difference from the difference and divide it by the difference between max and min differences
+    #     diff = np.divide((np.subtract(diff, min(diff))), np.subtract(max(diff), min(diff)))
+
+    # # another way: first normalize values with min-max scaler, then compute difference
+    # norm_sim_values = np.divide((np.subtract(simulated_values, min(true_values))), np.subtract(max(true_values), min(true_values)))
+    # norm_true_values = np.divide((np.subtract(true_values, min(true_values))), np.subtract(max(true_values), min(true_values)))
+    # norm_diff = np.subtract(norm_sim_values, norm_true_values)
+
+    # or standardize values: subtract value by the mean and divide by standard deviation,
+    # but Gaussian distribution is assumed
+    norm_sim_values = np.divide(np.subtract(simulated_values, np.mean(true_values)), np.std(true_values))
+    norm_true_values = np.divide(np.subtract(true_values, np.mean(true_values)), np.std(true_values))
+    norm_diff = np.subtract(norm_sim_values, norm_true_values)
+
+    # # standardize using median
+    # norm_sim_values = np.divide(np.subtract(simulated_values, np.median(true_values)), np.median(np.absolute(true_values - np.median(true_values))))
+    # norm_true_values = np.divide(np.subtract(true_values, np.median(true_values)), np.median(np.absolute(true_values - np.median(true_values))))
+    # diff = np.subtract(norm_sim_values, norm_true_values)
+
+    return math.sqrt(np.square(diff).mean()), math.sqrt(np.square(norm_diff).mean()), norm_sim_values, norm_true_values,
+
+def compute_error(measures, true, pred):
+
+    mean2errors = defaultdict(list)
+
+    for measure in measures:
+        # excluding words with nan value, e.g. skipped words of prob 1. Should words that are always skipped be included in the equation?
+        values = drop_nan_values(true[measure], pred[measure])
+        assert len(values['pred']) > 0, print(measure, values['pred'])
+        assert len(values['pred']) == len(values['true']), print(measure, len(values['pred']), len(values['true']))
+        mean2error, norm_mean2error, norm_sim, norm_true = compute_root_mean_squared_error(values['true'], values['pred'])
+        mean2errors['eye_tracking_measure'].append(measure)
+        mean2errors['true_mean'].append(np.round(np.nanmean(true[measure]), 3))
+        # mean2errors['norm_true_mean'].append(np.round(np.mean(norm_true), 3))
+        mean2errors['min_true_mean'].append(np.round(np.nanmin(true[measure]),3))
+        mean2errors['max_true_mean'].append(np.round(np.nanmax(true[measure]),3))
+        mean2errors['min_simulated_mean'].append(np.round(np.nanmin(pred[measure]),3))
+        mean2errors['max_simulated_mean'].append(np.round(np.nanmax(pred[measure]),3))
+        mean2errors['norm_simulated_mean'].append(np.round(np.mean(norm_sim),3))
+        mean2errors['simulated_mean'].append(np.round(np.nanmean(pred[measure]), 3))
+        mean2errors['raw_difference'].append(np.subtract((np.round(np.nanmean(pred[measure]), 3)),(np.round(np.nanmean(true[measure]), 3))))
+        mean2errors['mean_squared_error'].append(round(mean2error, 3))
+        mean2errors['norm_mean_squared_error'].append(round(norm_mean2error, 3))
+
+    average_norm_error = np.mean(mean2errors['norm_mean_squared_error'])
+    mean2errors['eye_tracking_measure'].append("MEAN")
+    mean2errors['true_mean'].append(None)
+    # mean2errors['norm_true_mean'].append(None)
+    mean2errors['min_true_mean'].append(None)
+    mean2errors['max_true_mean'].append(None)
+    mean2errors['min_simulated_mean'].append(None)
+    mean2errors['max_simulated_mean'].append(None)
+    mean2errors['norm_simulated_mean'].append(None)
+    mean2errors['simulated_mean'].append(None)
+    mean2errors['raw_difference'].append(None)
+    mean2errors['mean_squared_error'].append(None)
+    mean2errors['norm_mean_squared_error'].append(average_norm_error.round(3))
+
+    mean2error_df = pd.DataFrame(mean2errors)
+
+    return mean2error_df
+
+def create_new_directory(filepath, new_folder):
+
+    dir = f"{os.path.dirname(filepath)}/{new_folder}"
+    filename = os.path.basename(filepath)
+    if not os.path.isdir(dir): os.makedirs(dir)
+    filepath = f"{dir}/{filename}"
+
+    return filepath
+
+def compute_all_error(parameters, output_filepath, mean_true_eye_movements, mean_predicted_eye_movements, predicted_eye_movements, data_log, verbose):
+
+    mean2error_df = compute_error(parameters.evaluation_measures,
+                                  mean_true_eye_movements,
+                                  mean_predicted_eye_movements)
+    filepath = output_filepath.replace('model_output', 'analysed').replace('simulation_', f'RM2E_mean_eye_movements_')
+    filepath = create_new_directory(filepath, 'RM2E')
+    mean2error_df.to_csv(filepath, sep='\t', index=False)
+
+    if verbose:
+        print(mean2error_df.head(len(parameters.evaluation_measures) + 1))
+
+    # ----------- mean square error per simulation -----------
+    error_dfs = []
+    for sim, sim_info in predicted_eye_movements.groupby('simulation_id'):
+        df = compute_error(parameters.evaluation_measures,
+                           mean_true_eye_movements,
+                           sim_info)
+        df['simulation_id'] = [sim for i in df.eye_tracking_measure.tolist()]
+        error_dfs.append(df)
+    error_df = pd.concat(error_dfs)
+    error_df = error_df.pivot_table('mean_squared_error', ['simulation_id'], 'eye_tracking_measure')
+    error_df = error_df.sort_values('simulation_id')
+    filepath = output_filepath.replace('model_output', 'analysed').replace('simulation_', f'RM2E_eye_movements_')
+    filepath = create_new_directory(filepath, 'RM2E')
+    error_df.to_csv(filepath, sep='\t')
+    data_log[filepath] = error_df
+
+    return data_log
+
+def compute_word_recog_acc(simulation_output_all, simulation_output, parameters, output_filepath, verbose):
+
+    all_acc, sim_ids_all = [], []
+    len_accs, freq_accs = dict(), dict()
+    sim_count_len = dict()
+    sim_count_freq = dict()
+
+    for sim_id, fixations in simulation_output_all.groupby('simulation_id'):
+        acc, len_acc, freq_acc = word_recognition_acc(fixations, parameters)
+        all_acc.append(round(sum(acc) / len(acc), 3))
+        sim_ids_all.append(sim_id)
+
+        for length in len_acc.keys():
+            if length in len_accs.keys():
+                len_accs[length]['mean_acc'] += len_acc[length]['mean_acc']
+                if 'mean_cycle' in len_acc[length].keys():
+                    if 'mean_cycle' in len_accs[length].keys():
+                        len_accs[length]['mean_cycle'] += len_acc[length]['mean_cycle']
+                        sim_count_len[length] += 1
+                    else:
+                        len_accs[length]['mean_cycle'] = len_acc[length]['mean_cycle']
+                        sim_count_len[length] = 1
+            else:
+                len_accs[length] = {'mean_acc': len_acc[length]['mean_acc']}
+                if 'mean_cycle' in len_acc[length].keys():
+                    len_accs[length]['mean_cycle'] = len_acc[length]['mean_cycle']
+                    sim_count_len[length] = 1
+
+        for freq in freq_acc.keys():
+            if freq in freq_accs.keys():
+                freq_accs[freq]['mean_acc'] += freq_acc[freq]['mean_acc']
+                if 'mean_cycle' in freq_acc[freq].keys():
+                    if 'mean_cycle' in freq_accs[freq].keys():
+                        freq_accs[freq]['mean_cycle'] += freq_acc[freq]['mean_cycle']
+                        sim_count_freq[freq] += 1
+                    else:
+                        freq_accs[freq]['mean_cycle'] = freq_acc[freq]['mean_cycle']
+                        sim_count_freq[freq] = 1
+            else:
+                freq_accs[freq] = {'mean_acc': freq_acc[freq]['mean_acc']}
+                if 'mean_cycle' in freq_acc[freq].keys():
+                    freq_accs[freq]['mean_cycle'] = freq_acc[freq]['mean_cycle']
+                    sim_count_freq[freq] = 1
+
+    for length in len_accs.keys():
+        len_accs[length]['mean_acc'] = round(len_accs[length]['mean_acc'] / len(sim_ids_all), 3)
+        if 'mean_cycle' in len_accs[length].keys():
+            len_accs[length]['mean_cycle'] = round(len_accs[length]['mean_cycle'] / sim_count_len[length], 3)
+    for freq in freq_accs.keys():
+        freq_accs[freq]['mean_acc'] = round(freq_accs[freq]['mean_acc'] / len(sim_ids_all), 3)
+        if 'mean_cycle' in freq_accs[freq].keys():
+            freq_accs[freq]['mean_cycle'] = round(freq_accs[freq]['mean_cycle'] / sim_count_freq[freq], 3)
+
+    all_acc.append(round(sum(all_acc) / len(all_acc), 3))
+    sim_ids_all.append('MEAN')
+    recog_acc_df = pd.DataFrame({'simulation_id': sim_ids_all, 'word_recognition_accuracy': all_acc})
+    filepath = output_filepath.replace('model_output', 'analysed').replace('simulation_', f'word_recognition_acc_')
+    filepath = create_new_directory(filepath, 'word_rcg_acc')
+    recog_acc_df.to_csv(filepath, sep='\t', index=False)
+
+    recog_acc_df_len = pd.DataFrame({'length': [int(length) for length in len_accs.keys()],
+                                     'word_recognition_accuracy': [item['mean_acc'] for length, item in
+                                                                   len_accs.items()],
+                                     'word_recognition_cycle': [
+                                         item['mean_cycle'] if 'mean_cycle' in item.keys() else None for length, item in
+                                         len_accs.items()]})
+    filepath = output_filepath.replace('model_output', 'analysed').replace('simulation_',
+                                                                           f'word_recognition_acc_length_')
+    filepath = create_new_directory(filepath, 'word_rcg_acc')
+    recog_acc_df_len = recog_acc_df_len.sort_values('length')
+    recog_acc_df_len.to_csv(filepath, sep='\t', index=False)
+
+    recog_acc_df_freq = pd.DataFrame({'freq': [int(freq) for freq in freq_accs.keys()],
+                                      'word_recognition_accuracy': [item['mean_acc'] for freq, item in
+                                                                    freq_accs.items()],
+                                      'word_recognition_cycle': [
+                                          item['mean_cycle'] if 'mean_cycle' in item.keys() else None for freq, item in
+                                          freq_accs.items()]})
+    filepath = output_filepath.replace('model_output', 'analysed').replace('simulation_', f'word_recognition_acc_freq_')
+    filepath = create_new_directory(filepath, 'word_rcg_acc')
+    recog_acc_df_freq = recog_acc_df_freq.sort_values('freq')
+    recog_acc_df_freq.to_csv(filepath, sep='\t', index=False)
+
+    if verbose: print(recog_acc_df.head(len(simulation_output['simulation_id'].unique()) + 1))
+
+
 def plot_word_measures(data, measures, results_filepath):
 
     results_dir = os.path.dirname(results_filepath).replace('model_output', 'analysed')
@@ -642,16 +804,77 @@ def plot_error(error_values, conditions, measure, filepath):
     plot.figure.savefig(filepath)
     plt.close()
 
-def create_new_directory(filepath, new_folder):
+def test_difference(measure, sim_values1, sim_values2, filepath):
 
-    dir = f"{os.path.dirname(filepath)}/{new_folder}"
-    filename = os.path.basename(filepath)
-    if not os.path.isdir(dir): os.makedirs(dir)
-    filepath = f"{dir}/{filename}"
+    # https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.ttest_rel.html
+    # "The T-statistic measures whether the average score differs significantly across samples.
+    # It is calculated as np.mean(a - b)/se, where se is the standard error.
+    # Therefore, the T-statistic will be positive when the sample mean of a - b is greater than zero
+    # and negative when the sample mean of a - b is less than zero"
 
-    return filepath
+    assert len(sim_values1) == len(sim_values2)
 
-# ---------------- MAIN ------------------
+    # # test if distribution is normal
+    # if len(sim_values1) > 3:
+    #     print(stats.shapiro(sim_values1))
+    # if len(sim_values2) > 3:
+    #     print(stats.shapiro(sim_values2))
+    # print(measure)
+    # print(sim_values1, sim_values2)
+    # # test if difference in mean2error is significant between conditions
+    # test = stats.ttest_rel(sim_values2, sim_values2)
+    # t_test = {'test': ['t-statistics', 'p-value', 'degrees of freedom', 'confidence interval'],
+    #          'result': [test.statistic, test.pvalue, test.df, test.confidence_interval()]}
+    # print(test)
+
+    # AL: since no normal distribution, try Wilcoxon T-test
+    # https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.wilcoxon.html
+    # It is a non-parametric version of the paired T-test
+    test = stats.wilcoxon(sim_values1, sim_values2)
+    print(test)
+    t_test = {'test': ['t-statistics', 'p-value'],
+              'result': [test.statistic, test.pvalue]}
+    # Wilcoxon statistic: the sum of the ranks of the differences above zero
+    df = pd.DataFrame.from_dict(t_test)
+    df.to_csv(filepath, sep='\t', index=False)
+
+def compare_conditions(parameters_list, data_log):
+
+    if data_log:
+
+        measures = parameters_list[0].evaluation_measures
+
+        for measure in measures:
+
+            sim_values1, sim_values2, error_values, conditions = [], [], [], []
+            for condition in ['baseline', 'cloze', 'llama']:
+                for data_name, data in data_log.items():
+                    if 'RM2E' in data_name and condition in data_name:
+                        if 'mean' in data_name:
+                            measure_value = \
+                            data.loc[data["eye_tracking_measure"] == measure]['norm_mean_squared_error'].tolist()[0]
+                            error_values.append(float(measure_value))
+                            conditions.append(condition)
+                        elif condition == 'cloze':
+                            sim_values1 = data[measure].tolist()
+                        elif condition == 'llama':
+                            sim_values2 = data[measure].tolist()
+
+            # ----------- Plot errors each condition per measure -----------
+            if len(error_values) > 0:
+                filepath = parameters_list[0].results_filepath.replace('model_output', 'analysed').replace('cloze',
+                                                                                                           '').replace(
+                    'llama', '')
+                filepath = create_new_directory(filepath, 'plots')
+                plot_error(error_values, conditions, measure, filepath)
+
+            # ----------- Test significance of difference in mean2error between conditions -----------
+            if len(sim_values1) > 0 and len(sim_values2) > 0:
+                filepath = parameters_list[0].results_filepath.replace('cloze', '').replace('llama', '')
+                filepath = filepath.replace('__', f'_{measure}_t-test_').replace('model_output', 'analysed')
+                filepath = create_new_directory(filepath, 't-test')
+                test_difference(measure, sim_values1, sim_values2, filepath)
+
 def evaluate_output (parameters_list: list, verbose=True):
 
     # register which human and simulated data have been analysed
@@ -666,8 +889,7 @@ def evaluate_output (parameters_list: list, verbose=True):
 
             output_filepath = parameters.results_filepath
             simulation_output_all = pd.read_csv(output_filepath, sep='\t')
-            simulation_output_all = simulation_output_all.rename(columns={'foveal_word_index': 'word_id',
-                                                                  'foveal_word': 'word'})
+            simulation_output_all = simulation_output_all.rename(columns={'foveal_word_index': 'word_id','foveal_word': 'word'})
 
             if verbose:
                 print(f'Evaluating output in {output_filepath}')
@@ -679,191 +901,25 @@ def evaluate_output (parameters_list: list, verbose=True):
                 simulation_output = simulation_output[(simulation_output['fixation_duration'] > 80) & (simulation_output['fixation_duration'] < 800)]
 
             # ----------- Get word-level eye-movement measures in human data -----------
-            processed_eye_tracking_path = parameters.eye_tracking_filepath.replace('-Eyetracking_Data', '_eye_tracking_last_sim').replace('raw','processed')
-            processed_mean_eye_tracking_path = parameters.eye_tracking_filepath.replace('-Eyetracking_Data', '_eye_tracking_last_sim_mean').replace('raw','processed')
-
-            if processed_mean_eye_tracking_path in data_log.keys():
-                # true_eye_movements = data_log[parameters.eye_tracking_filepath]
-                mean_true_eye_movements = data_log[processed_mean_eye_tracking_path]
-            else:
-                # read in eye_tracking data for comparing simulation with observed measures
-                # encoding = chardet.detect(open(parameters.eye_tracking_filepath, "rb").read())['encoding']
-                eye_tracking = pd.read_csv(parameters.eye_tracking_filepath, encoding="ISO-8859-1")
-                # pre-process eye-tracking data to the format needed
-                true_eye_movements = pre_process_eye_tracking(eye_tracking, parameters.eye_tracking_filepath, parameters.stim)
-                # only including texts that were included in simulations
-                text_ids = [int(text_id) for text_id in simulation_output['text_id'].unique().tolist()]
-                true_eye_movements = true_eye_movements[true_eye_movements['text_id'].isin(text_ids)]
-                # save out pre-processed data
-                true_eye_movements.to_csv(processed_eye_tracking_path, sep='\t')
-                data_log[processed_eye_tracking_path] = true_eye_movements
-                # get word level measures from eye_tracking, averaged over participants
-                mean_true_eye_movements = true_eye_movements.groupby(['text_id', 'word_id', 'word'])\
-                    [parameters.evaluation_measures].mean().reset_index()
-                # round values
-                mean_true_eye_movements[parameters.evaluation_measures] = mean_true_eye_movements[parameters.evaluation_measures].round(3)
-                # save out averaged data
-                mean_true_eye_movements.to_csv(processed_mean_eye_tracking_path, sep='\t', index_label='id')
-                data_log[processed_mean_eye_tracking_path] = mean_true_eye_movements
+            mean_true_eye_movements, data_log = process_eye_tracking_data(parameters, data_log, simulation_output)
 
             # ----------- Get word-level eye-movement measures in simulation data -----------
-            analysed_simulation_output_path = output_filepath.replace('model_output', 'analysed').replace('simulation_', f'simulation_eye_movements_')
-            analysed_mean_simulation_output_path = output_filepath.replace('model_output', 'analysed').replace('simulation_', f'simulation_eye_movements_mean_')
-            stimuli = mean_true_eye_movements[['text_id', 'word_id', 'word']]
-            # first aggregate fixations per word, keeping simulation level
-            predicted_eye_movements = aggregate_fixations_per_word(simulation_output,
-                                                                   get_first_pass_fixations(simulation_output),
-                                                                   stimuli,
-                                                                   parameters.evaluation_measures)
-
-            # ----------- Get word factors (e.g. frequency, length, predictability) -----------
-            # predicted_eye_movements = get_word_factors(parameters, predicted_eye_movements, parameters.fixed_factors)
-            # save it
-            dir = os.path.dirname(analysed_simulation_output_path)
-            if not os.path.exists(dir): os.makedirs(dir)
-            predicted_eye_movements.to_csv(analysed_simulation_output_path, sep='\t', index_label='id')
-            data_log[analysed_simulation_output_path] = predicted_eye_movements
-            # then average over simulations to get the means
-            # variables = parameters.evaluation_measures.extend(parameters.fixed_factors)
-            variables = parameters.evaluation_measures
-            mean_predicted_eye_movements = predicted_eye_movements.groupby(['text_id', 'word_id', 'word'])\
-                [variables].mean().reset_index()
-            # add fixed factors
-            mean_predicted_eye_movements = get_word_factors(parameters, mean_predicted_eye_movements)
-            # round values
-            mean_predicted_eye_movements[variables] = mean_predicted_eye_movements[variables].round(3)
-            # save it
-            mean_predicted_eye_movements.to_csv(analysed_mean_simulation_output_path, sep='\t', index_label='id')
-            data_log[analysed_mean_simulation_output_path] = mean_predicted_eye_movements
+            mean_predicted_eye_movements, predicted_eye_movements, data_log = process_simulation_data(parameters,
+                                                                                                      data_log,
+                                                                                                      simulation_output,
+                                                                                                      output_filepath,
+                                                                                                      mean_true_eye_movements)
 
             # ----------- Mean square error between each measure in simulation and eye-tracking -----------
-            mean2error_df = compute_error(parameters.evaluation_measures,
-                                          mean_true_eye_movements,
-                                          mean_predicted_eye_movements)
-            filepath = output_filepath.replace('model_output', 'analysed').replace('simulation_', f'RM2E_mean_eye_movements_')
-            filepath = create_new_directory(filepath, 'RM2E')
-            mean2error_df.to_csv(filepath, sep='\t', index=False)
-            if verbose:
-                print(mean2error_df.head(len(parameters.evaluation_measures)+1))
-
-            # ----------- Mean square error per simulation -----------
-            error_dfs = []
-            for sim, sim_info in predicted_eye_movements.groupby('simulation_id'):
-                df = compute_error(parameters.evaluation_measures,
-                                   mean_true_eye_movements,
-                                   sim_info)
-                df['simulation_id'] = [sim for i in df.eye_tracking_measure.tolist()]
-                error_dfs.append(df)
-            error_df = pd.concat(error_dfs)
-            error_df = error_df.pivot_table('mean_squared_error', ['simulation_id'], 'eye_tracking_measure')
-            error_df = error_df.sort_values('simulation_id')
-            filepath = output_filepath.replace('model_output', 'analysed').replace('simulation_', f'RM2E_eye_movements_')
-            filepath = create_new_directory(filepath, 'RM2E')
-            error_df.to_csv(filepath, sep='\t')
-            data_log[filepath] = error_df
+            data_log = compute_all_error(parameters, output_filepath, mean_true_eye_movements,
+                                        mean_predicted_eye_movements, predicted_eye_movements,
+                                        data_log, verbose)
 
             # ----------- Word recognition accuracy -----------
-            all_acc, sim_ids_all = [], []
-            len_accs, freq_accs = dict(), dict()
-            sim_count_len = dict()
-            sim_count_freq = dict()
+            compute_word_recog_acc(simulation_output_all, simulation_output, parameters, output_filepath, verbose)
 
-            for sim_id, fixations in simulation_output_all.groupby('simulation_id'):
-                acc, len_acc, freq_acc = word_recognition_acc(fixations, parameters)
-                all_acc.append(round(sum(acc) / len(acc), 3))
-                sim_ids_all.append(sim_id)
+    compare_conditions(parameters_list, data_log)
 
-                for length in len_acc.keys():
-                    if length in len_accs.keys():
-                        len_accs[length]['mean_acc'] += len_acc[length]['mean_acc']
-                        if 'mean_cycle' in len_acc[length].keys():
-                            if 'mean_cycle' in len_accs[length].keys():
-                                len_accs[length]['mean_cycle'] += len_acc[length]['mean_cycle']
-                                sim_count_len[length] += 1
-                            else:
-                                len_accs[length]['mean_cycle'] = len_acc[length]['mean_cycle']
-                                sim_count_len[length] = 1
-                    else:
-                        len_accs[length] = {'mean_acc': len_acc[length]['mean_acc']}
-                        if 'mean_cycle' in len_acc[length].keys():
-                            len_accs[length]['mean_cycle'] = len_acc[length]['mean_cycle']
-                            sim_count_len[length] = 1
-
-                for freq in freq_acc.keys():
-                    if freq in freq_accs.keys():
-                        freq_accs[freq]['mean_acc'] += freq_acc[freq]['mean_acc']
-                        if 'mean_cycle' in freq_acc[freq].keys():
-                            if 'mean_cycle' in freq_accs[freq].keys():
-                                freq_accs[freq]['mean_cycle'] += freq_acc[freq]['mean_cycle']
-                                sim_count_freq[freq] += 1
-                            else:
-                                freq_accs[freq]['mean_cycle'] = freq_acc[freq]['mean_cycle']
-                                sim_count_freq[freq] = 1
-                    else:
-                        freq_accs[freq] = {'mean_acc': freq_acc[freq]['mean_acc']}
-                        if 'mean_cycle' in freq_acc[freq].keys():
-                            freq_accs[freq]['mean_cycle'] = freq_acc[freq]['mean_cycle']
-                            sim_count_freq[freq] = 1
-
-            for length in len_accs.keys():
-                len_accs[length]['mean_acc'] = round(len_accs[length]['mean_acc']/len(sim_ids_all),3)
-                if 'mean_cycle' in len_accs[length].keys():
-                    len_accs[length]['mean_cycle'] = round(len_accs[length]['mean_cycle']/sim_count_len[length],3)
-            for freq in freq_accs.keys():
-                freq_accs[freq]['mean_acc'] = round(freq_accs[freq]['mean_acc']/len(sim_ids_all),3)
-                if 'mean_cycle' in freq_accs[freq].keys():
-                    freq_accs[freq]['mean_cycle'] = round(freq_accs[freq]['mean_cycle']/sim_count_freq[freq],3)
-
-            all_acc.append(round(sum(all_acc)/len(all_acc), 3))
-            sim_ids_all.append('MEAN')
-            recog_acc_df = pd.DataFrame({'simulation_id': sim_ids_all,'word_recognition_accuracy': all_acc})
-            filepath = output_filepath.replace('model_output', 'analysed').replace('simulation_', f'word_recognition_acc_')
-            filepath = create_new_directory(filepath, 'word_rcg_acc')
-            recog_acc_df.to_csv(filepath, sep='\t', index=False)
-
-            recog_acc_df_len = pd.DataFrame({'length': [int(length) for length in len_accs.keys()],
-                                             'word_recognition_accuracy': [item['mean_acc'] for length, item in len_accs.items()],
-                                             'word_recognition_cycle': [item['mean_cycle'] if 'mean_cycle' in item.keys() else None for length, item in len_accs.items()]})
-            filepath = output_filepath.replace('model_output', 'analysed').replace('simulation_', f'word_recognition_acc_length_')
-            filepath = create_new_directory(filepath, 'word_rcg_acc')
-            recog_acc_df_len = recog_acc_df_len.sort_values('length')
-            recog_acc_df_len.to_csv(filepath, sep='\t', index=False)
-
-            recog_acc_df_freq = pd.DataFrame({'freq': [int(freq) for freq in freq_accs.keys()],
-                                              'word_recognition_accuracy': [item['mean_acc'] for freq, item in freq_accs.items()],
-                                              'word_recognition_cycle': [item['mean_cycle'] if 'mean_cycle' in item.keys() else None for freq, item in freq_accs.items()]})
-            filepath = output_filepath.replace('model_output', 'analysed').replace('simulation_',f'word_recognition_acc_freq_')
-            filepath = create_new_directory(filepath, 'word_rcg_acc')
-            recog_acc_df_freq = recog_acc_df_freq.sort_values('freq')
-            recog_acc_df_freq.to_csv(filepath, sep='\t', index=False)
-            if verbose: print(recog_acc_df.head(len(simulation_output['simulation_id'].unique())+1))
-
-    if data_log:
-        measures = parameters_list[0].evaluation_measures
-        for measure in measures:
-            sim_values1, sim_values2, error_values, conditions = [], [], [], []
-            for condition in ['baseline', 'cloze', 'llama']:
-                for data_name, data in data_log.items():
-                    if 'RM2E' in data_name and condition in data_name:
-                        if 'mean' in data_name:
-                            measure_value = data.loc[data["eye_tracking_measure"] == measure]['norm_mean_squared_error'].tolist()[0]
-                            error_values.append(float(measure_value))
-                            conditions.append(condition)
-                        elif condition == 'cloze':
-                            sim_values1 = data[measure].tolist()
-                        elif condition == 'llama':
-                            sim_values2 = data[measure].tolist()
-            # ----------- Plot errors each condition per measure -----------
-            if len(error_values) > 0:
-                filepath = parameters_list[0].results_filepath.replace('model_output', 'analysed').replace('cloze','').replace('llama','')
-                filepath = create_new_directory(filepath, 'plots')
-                plot_error(error_values, conditions, measure, filepath)
-            # ----------- Test significance of difference in mean2error between conditions -----------
-            if len(sim_values1) > 0 and len(sim_values2) > 0:
-                filepath = parameters_list[0].results_filepath.replace('cloze','').replace('llama','')
-                filepath = filepath.replace('__', f'_{measure}_t-test_').replace('model_output', 'analysed')
-                filepath = create_new_directory(filepath, 't-test')
-                test_difference(measure, sim_values1, sim_values2, filepath)
 
 
 

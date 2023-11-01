@@ -136,8 +136,20 @@ def main():
             "analyze_results": True,
             "results_filepath": "",
             "parameters_filepath": "",
-            # "results_filepath": ["../data/model_output/_06_10_2023_10-34-12/simulation_Provo_Corpus_continuous_reading_baseline_0.1.csv"],
-            # "parameters_filepath": ["../data/model_output/_06_10_2023_10-34-12/parameters_Provo_Corpus_continuous_reading_baseline_0.1.pkl"],
+            # "results_filepath": ["../data/model_output/_31_10_2023_09-39-35/simulation_Provo_Corpus_continuous_reading_baseline_0.1.csv",
+            #                      "../data/model_output/_31_10_2023_09-39-35/simulation_Provo_Corpus_continuous_reading_cloze_0.05.csv",
+            #                      "../data/model_output/_31_10_2023_09-39-35/simulation_Provo_Corpus_continuous_reading_cloze_0.1.csv",
+            #                      "../data/model_output/_31_10_2023_09-39-35/simulation_Provo_Corpus_continuous_reading_cloze_0.2.csv",
+            #                      "../data/model_output/_31_10_2023_09-39-35/simulation_Provo_Corpus_continuous_reading_llama_0.05.csv",
+            #                      "../data/model_output/_31_10_2023_09-39-35/simulation_Provo_Corpus_continuous_reading_llama_0.1.csv",
+            #                      "../data/model_output/_31_10_2023_09-39-35/simulation_Provo_Corpus_continuous_reading_llama_0.2.csv"],
+            # "parameters_filepath": ["../data/model_output/_31_10_2023_09-39-35/parameters_Provo_Corpus_continuous_reading_baseline_0.1.pkl",
+            #                         "../data/model_output/_31_10_2023_09-39-35/parameters_Provo_Corpus_continuous_reading_cloze_0.05.pkl",
+            #                         "../data/model_output/_31_10_2023_09-39-35/parameters_Provo_Corpus_continuous_reading_cloze_0.1.pkl",
+            #                         "../data/model_output/_31_10_2023_09-39-35/parameters_Provo_Corpus_continuous_reading_cloze_0.2.pkl",
+            #                         "../data/model_output/_31_10_2023_09-39-35/parameters_Provo_Corpus_continuous_reading_llama_0.05.pkl",
+            #                         "../data/model_output/_31_10_2023_09-39-35/parameters_Provo_Corpus_continuous_reading_llama_0.1.pkl",
+            #                         "../data/model_output/_31_10_2023_09-39-35/parameters_Provo_Corpus_continuous_reading_llama_0.2.pkl"],
             "eye_tracking_filepath": '../data/raw/Provo_Corpus-Eyetracking_Data.csv',
             "results_identifier": 'prediction_flag',
             "experiment_parameters_filepath": 'experiment_parameters.json',
@@ -174,7 +186,6 @@ def main():
                 for parameters_filepath in global_parameters["parameters_filepath"]:
                     with open(parameters_filepath, 'rb') as infile:
                         parameters = pickle.load(infile)
-                        parameters['results_filepath'] = '../data/model_output/_06_10_2023_10-34-12/simulation_Provo_Corpus_continuous_reading_baseline_0.1.csv'
                         all_parameters.append(SimpleNamespace(**{**parameters}))
             except FileNotFoundError:
                 print("Parameter filepath not found. Please give at least one filepath to the set of parameters of the results you want to analyse, by filling in the terminal argument --parameters_filepath. The file should be in pickle format.")

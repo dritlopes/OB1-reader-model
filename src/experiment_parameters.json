@@ -9,18 +9,6 @@
       "prediction_flag": "cloze",
       "number_of_simulations": 10,
       "n_trials": 55,
-      "pred_weight": 0.05
-    },
-    {
-      "prediction_flag": "llama",
-      "number_of_simulations": 10,
-      "n_trials": 55,
-      "pred_weight": 0.05
-    },
-    {
-      "prediction_flag": "cloze",
-      "number_of_simulations": 10,
-      "n_trials": 55,
       "pred_weight": 0.1
     },
     {
@@ -28,18 +16,6 @@
       "number_of_simulations": 10,
       "n_trials": 55,
       "pred_weight": 0.1
-    },
-    {
-      "prediction_flag": "cloze",
-      "number_of_simulations": 10,
-      "n_trials": 55,
-      "pred_weight": 0.2
-    },
-    {
-      "prediction_flag": "llama",
-      "number_of_simulations": 10,
-      "n_trials": 55,
-      "pred_weight": 0.2
     }
   ]
 }
