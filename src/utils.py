@@ -8,7 +8,7 @@ import json
 import re
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 from transformers import LlamaForCausalLM, LlamaTokenizer
-#import torch
+import torch
 from reading_components import semantic_processing
 from reading_helper_functions import build_word_inhibition_matrix
 import logging
@@ -169,7 +169,7 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
     if pm.prediction_flag in ['gpt2', 'llama']:
 
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        print('Using device ', device)
+        print('Using device ', str(device))
 
         # load language model and its tokenizer
         if pm.prediction_flag == 'gpt2':
@@ -336,7 +336,7 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
 
 def get_pred_dict(pm, lexicon):
 
-    output_word_pred_map = f"../data/processed/prediction_map_{pm.stim_name}_{pm.prediction_flag}_{pm.task_to_run}_{pm.language}.json"
+    output_word_pred_map = f"../data/processed/prediction_map_{pm.stim_name}_{pm.prediction_flag}_{pm.task_to_run}_{pm.language}_last_run.json"
     if pm.prediction_flag in ['gpt2', 'llama']:
         output_word_pred_map = output_word_pred_map.replace('.json', f'_topk{pm.topk}.json')
 

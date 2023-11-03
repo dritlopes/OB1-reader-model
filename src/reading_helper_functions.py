@@ -247,11 +247,11 @@ def get_attention_skewed(attentionWidth, attention_eccentricity, attention_skew)
     if attention_eccentricity < 0:
         # Attention left
         attention = 1.0/(attentionWidth)*math.exp(-(pow(abs(attention_eccentricity), 2)) /
-                                                  (2*pow(attentionWidth/attention_skew, 2))) + 0.20
+                                                  (2*pow(attentionWidth/attention_skew, 2))) + 0.25
     else:
         # Attention right
         attention = 1.0/(attentionWidth)*math.exp(-(pow(abs(attention_eccentricity), 2)) /
-                                                  (2*pow(attentionWidth, 2))) + 0.20
+                                                  (2*pow(attentionWidth, 2))) + 0.25
     return attention
 
 def calc_acuity(eye_eccentricity, letPerDeg):

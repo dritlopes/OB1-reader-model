@@ -42,7 +42,6 @@ def simulate_reading(global_parameters):
         os.makedirs(dir)
     if 'prediction_flag' in pm.results_identifier:
         pred_flag = pm.prediction_flag
-        # TODO test this
         if pred_flag == '':
             pred_flag = 'baseline'
         results_id = f'{pred_flag}_{pm.pred_weight}'
@@ -129,11 +128,11 @@ def main():
     else:
         global_parameters = {
             "task_to_run": 'continuous_reading',
-            "stimuli_filepath": "../data/processed/Provo_Corpus.csv",
+            "stimuli_filepath": "../data/raw/example.txt",
             "stimuli_separator": "\t",
             "language": 'english',
             "run_exp": True,
-            "analyze_results": True,
+            "analyze_results": False,
             "results_filepath": "",
             "parameters_filepath": "",
             # "results_filepath": ["../data/model_output/_31_10_2023_09-39-35/simulation_Provo_Corpus_continuous_reading_baseline_0.1.csv",

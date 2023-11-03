@@ -369,6 +369,13 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
                     print(saccade_symbols[saccade_info['saccade_type']])
                 logger.info(saccade_symbols[saccade_info['saccade_type']])
 
+    print()
+    print(f'Recognized words: {all_data[fixation_counter-1]["recognized_words"]}')
+    print(f'Chain of fixations: {[row["foveal_word"] for row in all_data.values()]}')
+    print(f'Chain of saccades: {[row["saccade_type"] for row in all_data.values()]}')
+    logger.info(f'Chain of fixations: {[row["foveal_word"] for row in all_data.values()]}')
+    logger.info(f'Chain of saccades: {[row["saccade_type"] for row in all_data.values()]}')
+
     return all_data
 
 def word_recognition(pm,word_inhibition_matrix,lexicon_word_ngrams,lexicon_word_index,lexicon_thresholds_dict,lexicon,word_frequencies):

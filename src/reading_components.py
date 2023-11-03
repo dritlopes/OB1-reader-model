@@ -1,6 +1,6 @@
 import numpy as np
-#import torch
-#from torch import nn
+import torch
+from torch import nn
 import math
 import warnings
 from reading_helper_functions import string_to_open_ngrams, cal_ngram_exc_input, is_similar_word_length, \
@@ -374,7 +374,7 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
     if fixation > 0 and not recognized_word_at_position[fixation - 1] and not regression_flag[fixation - 1]:
         next_fixation = -1
 
-    # skip bc regression: if the current fixation was a regression
+    # skip bcs regression: if the current fixation was a regression
     # elif regression_flag[fixation]:
     #     # go to the nearest non-recognized word to the right within stimulus
     #     for i in [1, 2]:
@@ -399,6 +399,12 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
                     if verbose:
                         print('refix size: ', refix_size)
 
+    # skip bcs next word has already been recognized
+    elif fixation + 1 < len(tokens) and recognized_word_at_position[fixation + 1] and fixation + 2 < len(tokens):
+        next_fixation = 2
+        if recognized_word_at_position[fixation + 2] and fixation + 3 < len(tokens):
+            next_fixation = 3
+
     # forward saccade: perform normal forward saccade (unless at the last position in the text)
     elif fixation < (len(tokens) - 1):
         word_attention_right = calc_word_attention_right(word_edges,
@@ -413,6 +419,7 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
     if verbose:
         print(f'next fixation: {next_fixation}')
     logger.info(f'next fixation: {next_fixation}')
+
     # AL: Calculate next attention position based on next fixation estimate = 0: refixate, 1: forward, 2: wordskip, -1: regression
     if next_fixation == 0:
         # MM: if we're refixating same word because it has highest attentwgt AL: or not being recognized whilst processed
@@ -458,11 +465,11 @@ def compute_next_eye_position(pm, attention_position, eye_position, fixation, fi
     saccade_info['saccade_error'] = float(saccade_error)
 
     # compute the position of next fixation
-    # eye_position = int(np.round(eye_position + saccade_distance))
-    if saccade_distance < 0:
-        eye_position = int(math.floor(eye_position + saccade_distance))
-    else:
-        eye_position = int(math.ceil(eye_position + saccade_distance))
+    eye_position = int(np.round(eye_position + saccade_distance))
+    # if saccade_distance < 0:
+    #     eye_position = int(math.floor(eye_position + saccade_distance))
+    # else:
+    #     eye_position = int(math.ceil(eye_position + saccade_distance))
     if verbose:
         print(f'next eye position: {eye_position}')
     logger.info(f'next eye position: {eye_position}')

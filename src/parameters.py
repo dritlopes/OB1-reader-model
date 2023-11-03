@@ -165,7 +165,7 @@ def return_task_params(task_attributes):
     These parameters are set for experimentation and are established by the task_attributes object.
     """
 
-    cycle_size = 20 # milliseconds that one model cycle is supposed to last (brain time, not model time)
+    cycle_size = 25 # milliseconds that one model cycle is supposed to last (brain time, not model time)
     output_dir = time.time()
 
     # word activation
@@ -174,7 +174,7 @@ def return_task_params(task_attributes):
     word_inhibition = -0.5 # -.0018 (paper) # -2.5
     min_activity = 0.0
     max_activity = 1.0 # 1.0
-    decay = -0.1 # -0.05 (paper) # -0.11 # AL: decay in word activation over time
+    decay = -0.10 # -0.05 (paper) # -0.11 # AL: decay in word activation over time
     discounted_Ngrams = 5 # MM: Max extra wgt bigrams do to edges in 4-letter wrd w. gap 3. Added to bigram count in compute_input formula to compensate
     bigram_gap = 2  # How many in btw letters still lead to bigram? 5 (optimal) or 2 (paper, though there 3 because of different definition)
     #min_overlap = 0 # was 2 # min overlap for words to inhibit each other. MM: unnecessary, can be deleted later
@@ -196,12 +196,12 @@ def return_task_params(task_attributes):
 
     # attention
     attend_width = 5.0 # 5.0 for natural reading # NV: was set to 15 for flanker, 20 for sentence and 3 for transposed
-    max_attend_width = 5.0  # 5 in paper; MM: used in reading sim where attend_with is dynamic.
+    max_attend_width = 7.0  # 5 in paper; MM: used in reading sim where attend_with is dynamic.
     min_attend_width = 3.0
     attention_skew = 3 # 1 equals symmetrical distribution # 4 (paper)
     letPerDeg = .3
     refix_size = 0.2 #during refix, how much do we jump?
-    salience_position = 1. # 1.29 (paper)
+    salience_position = 0.5 # 1.29 (paper)
 
     # saccade
     sacc_optimal_distance = 7 # 8.0 (optimal) # 7.0 (paper)
