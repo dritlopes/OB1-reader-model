@@ -375,12 +375,12 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
         next_fixation = -1
 
     # skip bcs regression: if the current fixation was a regression
-    # elif regression_flag[fixation]:
-    #     # go to the nearest non-recognized word to the right within stimulus
-    #     for i in [1, 2]:
-    #         if fixation + i < len(tokens):
-    #             if recognized_word_at_position[fixation + i]:
-    #                 next_fixation = i + 1
+    elif regression_flag[fixation]:
+        # go to the nearest non-recognized word to the right within stimulus
+        for i in [1, 2]:
+            if fixation + i < len(tokens):
+                if recognized_word_at_position[fixation + i]:
+                    next_fixation = i + 1
 
     # refixation: refixate if the foveal word is not recognized but is still being processed
     elif (not recognized_word_at_position[fixation]) and (lexicon_word_activity[fix_lexicon_index] > 0):
@@ -465,11 +465,11 @@ def compute_next_eye_position(pm, attention_position, eye_position, fixation, fi
     saccade_info['saccade_error'] = float(saccade_error)
 
     # compute the position of next fixation
-    eye_position = int(np.round(eye_position + saccade_distance))
-    # if saccade_distance < 0:
-    #     eye_position = int(math.floor(eye_position + saccade_distance))
-    # else:
-    #     eye_position = int(math.ceil(eye_position + saccade_distance))
+    # eye_position = int(np.round(eye_position + saccade_distance))
+    if saccade_distance < 0:
+        eye_position = int(math.floor(eye_position + saccade_distance))
+    else:
+        eye_position = int(math.ceil(eye_position + saccade_distance))
     if verbose:
         print(f'next eye position: {eye_position}')
     logger.info(f'next eye position: {eye_position}')

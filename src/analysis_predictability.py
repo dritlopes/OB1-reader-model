@@ -19,7 +19,7 @@ def read_in_pred_files(pred_map_filepaths):
 
     for predictor, filepath in pred_map_filepaths.items():
         with open(filepath) as f:
-            pos_pred_maps[predictor]=json.load(f)
+            pos_pred_maps[predictor] = json.load(f)
 
     return pos_pred_maps
 
@@ -267,38 +267,42 @@ def plot_sim_results_pred(filepaths, measures):
 
         x, y, data_type, predictors = [], [], [], []
 
-        for predictor in ['cloze', 'llama']:
+        for predictor in ['cloze', 'gpt2', 'llama']:
+
+            model_values, human_values, pred_values = [], [], []
+
             for data_name, data in data_log.items():
-                if f'simulation_eye_movements_mean_Provo_Corpus_continuous_reading_{predictor}' in data_name:
+                if f'simulation_eye_movements_mean_Provo_corpus_continuous_reading_{predictor}' in data_name:
                     results_dir = os.path.dirname(data_name).replace('model_output', 'analysed')
                     pred_values = data['predictability'].tolist()
                     model_values = data[measure].tolist()
-                elif 'Provo_Corpus_eye_tracking_mean.csv' in data_name:
+                elif 'Provo_Corpus_eye_tracking_last_sim_mean.csv' in data_name:
                     human_values = data[measure].tolist()
 
-            for eye_movement in [model_values, human_values]:
-                # drop nan values
-                pred_values_clean, eye_movement_clean = drop_nan_values(np.array(pred_values), np.array(eye_movement))
-                # bin data
-                y_means, edges, _ = binned_statistic(pred_values_clean, eye_movement_clean, statistic='mean', bins=50)
-                x_bins = edges[:-1]
-                x.extend(x_bins)
-                y.extend(y_means)
-                if eye_movement == model_values:
-                    type = 'OB1-reader'
-                else:
-                    type = 'PROVO'
-                data_type.extend([type for bin in x_bins])
-                predictors.extend([predictor for bin in x_bins])
+            if len(model_values) > 0 and len(human_values) > 0 and len(pred_values) > 0:
+                for eye_movement in [model_values, human_values]:
+                    # drop nan values
+                    pred_values_clean, eye_movement_clean = drop_nan_values(np.array(pred_values), np.array(eye_movement))
+                    # bin data
+                    y_means, edges, _ = binned_statistic(pred_values_clean, eye_movement_clean, statistic='mean', bins=50)
+                    x_bins = edges[:-1]
+                    x.extend(x_bins)
+                    y.extend(y_means)
+                    if eye_movement == model_values:
+                        type = 'OB1-reader'
+                    else:
+                        type = 'PROVO'
+                    data_type.extend([type for bin in x_bins])
+                    predictors.extend([predictor for bin in x_bins])
 
-        # seaborn lmplot function requires dataframe
-        df = pd.DataFrame({'predictability': x, measure: y, 'predictor': data_type, 'condition': predictors})
-        plt.figure()
-        plot = sb.lmplot(data=df, x='predictability', y=measure, hue='predictor', col='condition')
-        results_dir = f'{results_dir}/plots'
-        if not os.path.isdir(results_dir): os.makedirs(results_dir)
-        plot.figure.savefig(f'{results_dir}/plot_{measure}.png')
-        plt.close()
+        if len(data_type) > 0:
+            # seaborn lmplot function requires dataframe
+            df = pd.DataFrame({'predictability': x, measure: y, 'predictor': data_type, 'condition': predictors})
+            plot = sb.lmplot(data=df, x='predictability', y=measure, hue='predictor', col='condition')
+            results_dir = f'{results_dir}/plots'
+            if not os.path.isdir(results_dir): os.makedirs(results_dir)
+            plot.figure.savefig(f'{results_dir}/plot_{measure}.png')
+            plt.close()
 
 def test_correlation(pred_values, eye_movement_values, filepath):
 
@@ -345,9 +349,10 @@ def main():
     unknown_map_filepaths = {'cloze': '../data/processed/prediction_map_Provo_Corpus_cloze_continuous_reading_english_unknown.json',
                              'GPT2': '../data/processed/prediction_map_Provo_Corpus_gpt2_continuous_reading_english_topkall_unknown.json',
                              'LLAMA': '../data/processed/prediction_map_Provo_Corpus_llama_continuous_reading_english_topkall_unknown.json'}
-    results_filepaths = ["../data/analysed/_19_10_2023_13-53-17/simulation_eye_movements_mean_Provo_Corpus_continuous_reading_cloze_0.1.csv",
-                         "../data/analysed/_19_10_2023_13-53-17/simulation_eye_movements_mean_Provo_Corpus_continuous_reading_llama_0.1.csv",
-                         "../data/processed/Provo_Corpus_eye_tracking_mean.csv"]
+    results_filepaths = ["../data/analysed/_06_11_2023_15-29-19/simulation_eye_movements_mean_Provo_corpus_continuous_reading_baseline_0.1.csv",
+                        "../data/analysed/_06_11_2023_15-29-19/simulation_eye_movements_mean_Provo_corpus_continuous_reading_cloze_0.1.csv",
+                        "../data/analysed/_06_11_2023_15-29-19/simulation_eye_movements_mean_Provo_corpus_continuous_reading_gpt2_0.1.csv",
+                         "../data/processed/Provo_Corpus_eye_tracking_last_sim_mean.csv"]
     eye_movement_filepath = '../data/processed/Provo_Corpus_eye_tracking_mean.csv'
     measures = ['skip',
                 'single_fix',
@@ -385,10 +390,10 @@ def main():
     # word_pred_acc(pred_maps)
     #
     # plot results on predictability
-    # plot_sim_results_pred(results_filepaths, measures)
+    plot_sim_results_pred(results_filepaths, measures)
 
     # test correlation between predictability and eye movements
-    test_correlation_pred(eye_movement_filepath, measures, pred_maps)
+    # test_correlation_pred(eye_movement_filepath, measures, pred_maps)
 
 if __name__ == '__main__':
     main()

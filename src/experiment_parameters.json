@@ -2,13 +2,18 @@
   "parameters" : [
     {
       "prediction_flag": "",
-      "number_of_simulations": 5,
-      "n_trials": 1
+      "number_of_simulations": 10,
+      "n_trials": 28
+    },
+    {
+      "prediction_flag": "cloze",
+      "number_of_simulations": 10,
+      "n_trials": 28
     },
     {
       "prediction_flag": "gpt2",
-      "number_of_simulations": 5,
-      "n_trials": 1
+      "number_of_simulations": 10,
+      "n_trials": 28
     }
   ]
 }

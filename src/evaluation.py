@@ -671,7 +671,7 @@ def compute_all_error(parameters, output_filepath, mean_true_eye_movements, mean
     filepath = output_filepath.replace('model_output', 'analysed').replace('simulation_', f'RM2E_mean_eye_movements_')
     filepath = create_new_directory(filepath, 'RM2E')
     mean2error_df.to_csv(filepath, sep='\t', index=False)
-
+    data_log[filepath] = mean2error_df
     if verbose:
         print(mean2error_df.head(len(parameters.evaluation_measures) + 1))
 
@@ -804,6 +804,19 @@ def plot_error(error_values, conditions, measure, filepath):
     plot.figure.savefig(filepath)
     plt.close()
 
+def plot_raw_measures(raw_values, conditions, measure, filepath):
+
+    plt.figure()
+    plot = sb.barplot(x=conditions, y=raw_values, errorbar="sd",
+                     errwidth=0.5) # TODO upate version seaborn to use err_kws argument
+    # err_kws={"alpha": 0.2, "linewidth": 0.5}
+    plot.set(ylabel=measure)
+    plot.bar_label(plot.containers[0])
+    dir = os.path.dirname(filepath)
+    filepath = f"{dir}/plot_{measure}_raw.png"
+    plot.figure.savefig(filepath)
+    plt.close()
+
 def test_difference(measure, sim_values1, sim_values2, filepath):
 
     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.ttest_rel.html
@@ -831,7 +844,6 @@ def test_difference(measure, sim_values1, sim_values2, filepath):
     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.wilcoxon.html
     # It is a non-parametric version of the paired T-test
     test = stats.wilcoxon(sim_values1, sim_values2)
-    print(test)
     t_test = {'test': ['t-statistics', 'p-value'],
               'result': [test.statistic, test.pvalue]}
     # Wilcoxon statistic: the sum of the ranks of the differences above zero
@@ -841,36 +853,38 @@ def test_difference(measure, sim_values1, sim_values2, filepath):
 def compare_conditions(parameters_list, data_log):
 
     if data_log:
-
         measures = parameters_list[0].evaluation_measures
 
         for measure in measures:
-
-            sim_values1, sim_values2, error_values, conditions = [], [], [], []
-            for condition in ['baseline', 'cloze', 'llama']:
+            sim_values1, sim_values2, error_values, raw_values, conditions_raw, conditions_error = [], [], [], [], [], []
+            for condition in ['Provo', 'baseline', 'cloze', 'gpt2']:
                 for data_name, data in data_log.items():
+                    if 'mean' in data_name and condition in data_name:
+                        if 'simulation' in data_name or 'last_sim' in data_name:
+                            raw_values.extend(data[measure].tolist())
+                            conditions_raw.extend([condition.lower() for value in data[measure].tolist()])
                     if 'RM2E' in data_name and condition in data_name:
                         if 'mean' in data_name:
                             measure_value = \
                             data.loc[data["eye_tracking_measure"] == measure]['norm_mean_squared_error'].tolist()[0]
                             error_values.append(float(measure_value))
-                            conditions.append(condition)
+                            conditions_error.append(condition)
                         elif condition == 'cloze':
                             sim_values1 = data[measure].tolist()
-                        elif condition == 'llama':
+                        elif condition == 'gpt2':
                             sim_values2 = data[measure].tolist()
 
             # ----------- Plot errors each condition per measure -----------
-            if len(error_values) > 0:
-                filepath = parameters_list[0].results_filepath.replace('model_output', 'analysed').replace('cloze',
-                                                                                                           '').replace(
-                    'llama', '')
-                filepath = create_new_directory(filepath, 'plots')
-                plot_error(error_values, conditions, measure, filepath)
+            filepath = parameters_list[0].results_filepath.replace('model_output', 'analysed').replace('cloze','').replace('gpt2', '')
+            filepath = create_new_directory(filepath, 'plots')
+            # if len(error_values) > 0:
+            #     plot_error(error_values, conditions_error, measure, filepath)
+            if len(raw_values) > 0:
+                plot_raw_measures(raw_values, conditions_raw, measure, filepath)
 
             # ----------- Test significance of difference in mean2error between conditions -----------
             if len(sim_values1) > 0 and len(sim_values2) > 0:
-                filepath = parameters_list[0].results_filepath.replace('cloze', '').replace('llama', '')
+                filepath = parameters_list[0].results_filepath.replace('cloze', '').replace('gpt2', '')
                 filepath = filepath.replace('__', f'_{measure}_t-test_').replace('model_output', 'analysed')
                 filepath = create_new_directory(filepath, 't-test')
                 test_difference(measure, sim_values1, sim_values2, filepath)
@@ -918,6 +932,13 @@ def evaluate_output (parameters_list: list, verbose=True):
             # ----------- Word recognition accuracy -----------
             compute_word_recog_acc(simulation_output_all, simulation_output, parameters, output_filepath, verbose)
 
+    # paths = ["../data/processed/Provo_Corpus_eye_tracking_last_sim_mean.csv",
+    #          "../data/analysed/_03_11_2023_11-44-35/simulation_eye_movements_mean_Provo_corpus_continuous_reading_baseline_0.1.csv",
+    #          "../data/analysed/_03_11_2023_11-44-35/simulation_eye_movements_mean_Provo_corpus_continuous_reading_cloze_0.1.csv",
+    #          "../data/analysed/_03_11_2023_11-44-35/simulation_eye_movements_mean_Provo_corpus_continuous_reading_gpt2_0.1.csv"]
+    # for path in paths:
+    #     df = pd.read_csv(path, sep='\t')
+    #     data_log[path] = df
     compare_conditions(parameters_list, data_log)
 
 
