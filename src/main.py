@@ -128,7 +128,7 @@ def main():
     else:
         global_parameters = {
             "task_to_run": 'continuous_reading',
-            "stimuli_filepath": "../data/processed/Provo_corpus.csv",
+            "stimuli_filepath": "../data/processed/Provo_Corpus.csv",
             "stimuli_separator": "\t",
             "language": 'english',
             "run_exp": True,
