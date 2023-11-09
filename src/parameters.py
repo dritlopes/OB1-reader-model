@@ -200,7 +200,7 @@ def return_task_params(task_attributes):
     min_attend_width = 3.0
     attention_skew = 3 # 1 equals symmetrical distribution # 4 (paper)
     letPerDeg = .3
-    refix_size = 0.2 #during refix, how much do we jump?
+    refix_size = 0.2 # during refix, how much do we jump?
     salience_position = 0.5 # 1.29 (paper)
 
     # saccade

@@ -375,12 +375,12 @@ def compute_next_attention_position(all_data,tokens,fixation,word_edges,fixated_
         next_fixation = -1
 
     # skip bcs regression: if the current fixation was a regression
-    elif regression_flag[fixation]:
-        # go to the nearest non-recognized word to the right within stimulus
-        for i in [1, 2]:
-            if fixation + i < len(tokens):
-                if recognized_word_at_position[fixation + i]:
-                    next_fixation = i + 1
+    # elif regression_flag[fixation]:
+    #     # go to the nearest non-recognized word to the right within stimulus
+    #     for i in [1, 2]:
+    #         if fixation + i < len(tokens):
+    #             if recognized_word_at_position[fixation + i]:
+    #                 next_fixation = i + 1
 
     # refixation: refixate if the foveal word is not recognized but is still being processed
     elif (not recognized_word_at_position[fixation]) and (lexicon_word_activity[fix_lexicon_index] > 0):
