@@ -1,19 +1,28 @@
 {
   "parameters" : [
     {
-      "prediction_flag": "",
-      "number_of_simulations": 10,
-      "n_trials": 38
-    },
-    {
       "prediction_flag": "cloze",
       "number_of_simulations": 10,
-      "n_trials": 38
+      "n_trials": 38,
+      "pred_weight": 0.05
     },
     {
       "prediction_flag": "gpt2",
       "number_of_simulations": 10,
-      "n_trials": 38
+      "n_trials": 38,
+      "pred_weight": 0.05
+    },
+    {
+      "prediction_flag": "cloze",
+      "number_of_simulations": 10,
+      "n_trials": 38,
+      "pred_weight": 0.2
+    },
+    {
+      "prediction_flag": "gpt2",
+      "number_of_simulations": 10,
+      "n_trials": 38,
+      "pred_weight": 0.2
     }
   ]
 }
