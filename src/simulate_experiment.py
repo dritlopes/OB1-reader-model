@@ -625,8 +625,9 @@ def simulate_experiment(pm):
 
             texts_simulations = defaultdict()
 
-            # AL: if language model, generate predictions
-            word_predictions = get_pred_dict(pm, lexicon)
+            word_predictions = None
+            if pm.prediction_flag:
+                word_predictions = get_pred_dict(pm, lexicon)
 
             # # initiate progress bar
             # pbar = tqdm(total=pm.n_trials)
