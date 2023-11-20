@@ -125,7 +125,6 @@ def compute_unknown_proportion(pred_maps, pred_maps_unknown):
         proportions = []
         for text, info in pred_maps_unknown[predictor].items():
             for pos, pos_info in info.items():
-                # change this later when cloze is updated (also having token_processed key)
                 if predictor == 'cloze':
                     unknown_predictions = pos_info['predictions'].keys()
                 else:
@@ -137,34 +136,36 @@ def compute_unknown_proportion(pred_maps, pred_maps_unknown):
 
         proportion.append(sum(proportions)/len(proportions))
         predictors.append(predictor)
+        print(f'Proportion of predicted tokens by {predictor} not in OB1-reader lexicon: {sum(proportions)/len(proportions)}')
 
     assert len(predictors) == len(proportion)
 
-    sb.set(rc={'figure.figsize': (10,5)})
-    ax = sb.barplot(x=predictors, y=proportion)
-    for i in ax.containers:
-        ax.bar_label(i,)
-    ax.figure.savefig('../data/processed/proportion_unknown_predictions.jpg')
-    plt.close()
+    # sb.set(rc={'figure.figsize': (10,5)})
+    # ax = sb.barplot(x=predictors, y=proportion)
+    # for i in ax.containers:
+    #     ax.bar_label(i,)
+    # ax.figure.savefig('../data/processed/proportion_unknown_predictions.jpg')
+    # plt.close()
     pd.DataFrame({'predictor': predictors, "proportion": proportion}).to_csv(f'../data/processed/propotion_unknown_tokens.csv',sep='\t',index=False)
 
 def analyse_unk_word_pred(pred_maps_unknown):
 
     for predictor in ['GPT2', 'LLAMA']:
-        pred_tokens = []
-        for text, info in pred_maps_unknown[predictor].items():
-            for pos, pos_info in info.items():
-                pred_tokens.extend(pos_info['predictions'].keys())
-        unknown_tokens = Counter(pred_tokens)
-        df_unknown = pd.DataFrame({'TOKEN': [token for token in unknown_tokens.keys()],
-                                   'COUNT': [count for count in unknown_tokens.values()]})
-        df_unknown = df_unknown.sort_values(by='COUNT', ascending=False)
-        df_unknown.to_csv(f'../data/processed/unknown_counts_{predictor}.csv', sep='\t', index=False)
-        df_unknown_short = pd.DataFrame({'TOKEN': [token for token in unknown_tokens.keys() if len(token) <= 2],
-                                         'COUNT': [count for token, count in unknown_tokens.items() if
-                                                   len(token) <= 2]})
-        df_unknown_short = df_unknown_short.sort_values(by='COUNT', ascending=False)
-        df_unknown_short.to_csv(f'../data/processed/unknown_short_counts_{predictor}.csv', sep='\t', index=False)
+        if predictor in pred_maps_unknown.keys():
+            pred_tokens = []
+            for text, info in pred_maps_unknown[predictor].items():
+                for pos, pos_info in info.items():
+                    pred_tokens.extend(pos_info['predictions'].keys())
+            unknown_tokens = Counter(pred_tokens)
+            df_unknown = pd.DataFrame({'TOKEN': [token for token in unknown_tokens.keys()],
+                                       'COUNT': [count for count in unknown_tokens.values()]})
+            df_unknown = df_unknown.sort_values(by='COUNT', ascending=False)
+            df_unknown.to_csv(f'../data/processed/unknown_counts_{predictor}.csv', sep='\t', index=False)
+            df_unknown_short = pd.DataFrame({'TOKEN': [token for token in unknown_tokens.keys() if len(token) <= 2],
+                                             'COUNT': [count for token, count in unknown_tokens.items() if
+                                                       len(token) <= 2]})
+            df_unknown_short = df_unknown_short.sort_values(by='COUNT', ascending=False)
+            df_unknown_short.to_csv(f'../data/processed/unknown_short_counts_{predictor}.csv', sep='\t', index=False)
 
 def get_mean_count_pred(pred_maps):
 
@@ -272,11 +273,12 @@ def plot_sim_results_pred(filepaths, measures):
             model_values, human_values, pred_values = [], [], []
 
             for data_name, data in data_log.items():
-                if f'simulation_eye_movements_mean_Provo_corpus_continuous_reading_{predictor}' in data_name:
+
+                if f'simulation_eye_movements_mean_Provo_Corpus_continuous_reading_{predictor}' in data_name:
                     results_dir = os.path.dirname(data_name).replace('model_output', 'analysed')
                     pred_values = data['predictability'].tolist()
                     model_values = data[measure].tolist()
-                elif 'Provo_Corpus_eye_tracking_last_sim_mean.csv' in data_name:
+                elif 'Provo_Corpus_eye_tracking_last_sim_mean.csv' in data_name or 'Provo_Corpus_eye_tracking_mean.csv' in data_name:
                     human_values = data[measure].tolist()
 
             if len(model_values) > 0 and len(human_values) > 0 and len(pred_values) > 0:
@@ -298,10 +300,23 @@ def plot_sim_results_pred(filepaths, measures):
         if len(data_type) > 0:
             # seaborn lmplot function requires dataframe
             df = pd.DataFrame({'predictability': x, measure: y, 'predictor': data_type, 'condition': predictors})
+
             plot = sb.lmplot(data=df, x='predictability', y=measure, hue='predictor', col='condition')
+            if measure in ['first_fix_duration', 'gaze_duration', 'total_reading_time']:
+                plot.set(ylim=(100, 350))
+            elif measure in ['skip', 'single_fix', 'regression']:
+                plot.set(ylim=(0, 1.01))
             results_dir = f'{results_dir}/plots'
             if not os.path.isdir(results_dir): os.makedirs(results_dir)
-            plot.figure.savefig(f'{results_dir}/plot_{measure}.png')
+            plot.figure.savefig(f'{results_dir}/plot_pred_trend_{measure}.png')
+            plt.close()
+
+            plot = sb.relplot(data=df, x='predictability', y=measure, hue='predictor', col='condition', kind="line")
+            if measure in ['first_fix_duration', 'gaze_duration', 'total_reading_time']:
+                plot.set(ylim=(100, 350))
+            elif measure in ['skip', 'single_fix', 'regression']:
+                plot.set(ylim=(0, 1.01))
+            plot.figure.savefig(f'{results_dir}/plot_pred_line_{measure}.png')
             plt.close()
 
 def test_correlation(pred_values, eye_movement_values, filepath):
@@ -341,6 +356,15 @@ def test_correlation_pred(eye_movement_filepath, measures, pred_maps):
         filepath = f'../data/processed/pearson_corr_{combi[0]}_{combi[1]}.csv'
         test_correlation(all_pred_values[combi[0]], all_pred_values[combi[1]], filepath)
 
+
+def plot_pred_dist(predictions, ):
+
+    df = pd.DataFrame({'predictor': predictions['predictor'],
+                       'prediction': predictions['prediction'],
+                       'text_word': predictions['text_word']})
+    plot = sb.displot(df, x="prediction", stat='probability', col='predictor', common_norm=False)
+    plot.figure.savefig('../data/processed/distribution_pred_values.jpg')
+
 def main():
 
     pred_map_filepaths = {'cloze':'../data/processed/prediction_map_Provo_Corpus_cloze_continuous_reading_english.json',
@@ -349,10 +373,9 @@ def main():
     unknown_map_filepaths = {'cloze': '../data/processed/prediction_map_Provo_Corpus_cloze_continuous_reading_english_unknown.json',
                              'GPT2': '../data/processed/prediction_map_Provo_Corpus_gpt2_continuous_reading_english_topkall_unknown.json',
                              'LLAMA': '../data/processed/prediction_map_Provo_Corpus_llama_continuous_reading_english_topkall_unknown.json'}
-    results_filepaths = ["../data/analysed/_06_11_2023_15-29-19/simulation_eye_movements_mean_Provo_corpus_continuous_reading_baseline_0.1.csv",
-                        "../data/analysed/_06_11_2023_15-29-19/simulation_eye_movements_mean_Provo_corpus_continuous_reading_cloze_0.1.csv",
-                        "../data/analysed/_06_11_2023_15-29-19/simulation_eye_movements_mean_Provo_corpus_continuous_reading_gpt2_0.1.csv",
-                         "../data/processed/Provo_Corpus_eye_tracking_last_sim_mean.csv"]
+    results_filepaths = ["../data/analysed/_31_10_2023_09-39-35/simulation_eye_movements_mean_Provo_Corpus_continuous_reading_cloze_0.2.csv",
+                        "../data/analysed/_31_10_2023_09-39-35/simulation_eye_movements_mean_Provo_Corpus_continuous_reading_llama_0.2.csv",
+                         "../data/processed/Provo_Corpus_eye_tracking_mean.csv"]
     eye_movement_filepath = '../data/processed/Provo_Corpus_eye_tracking_mean.csv'
     measures = ['skip',
                 'single_fix',
@@ -367,12 +390,17 @@ def main():
     # # write out mappings in csv to visualise it more easily
     # write_out_mappings_csv(pred_maps, pred_map_filepaths)
     #
-    # # get text word predictability values
-    # target_predictions = get_text_word_pred(pred_maps)
-    #
+    # get text word predictability values
+    target_predictions = get_text_word_pred(pred_maps)
+
     # # count pred values in each predictor only including the predictability of target words (words in text)
     # count_text_word_pred(target_predictions)
-    #
+
+    # plot distribution of predictability values of text words
+    plot_pred_dist(target_predictions)
+
+    # plot distribution of predictability values of all predicted words
+
     # # proportion of unknown predicted tokens per target word in relation to model lexicon
     # pred_maps_unknown = read_in_pred_files(unknown_map_filepaths)
     # compute_unknown_proportion(pred_maps, pred_maps_unknown)
@@ -388,9 +416,9 @@ def main():
     #
     # # measure word prediction accuracy
     # word_pred_acc(pred_maps)
-    #
+
     # plot results on predictability
-    plot_sim_results_pred(results_filepaths, measures)
+    # plot_sim_results_pred(results_filepaths, measures)
 
     # test correlation between predictability and eye movements
     # test_correlation_pred(eye_movement_filepath, measures, pred_maps)

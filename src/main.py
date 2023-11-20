@@ -13,7 +13,7 @@ from types import SimpleNamespace
 
 # will create a new file everytime, stamped with date and time. #TODO; build system to keep only last X logs
 now = datetime.now()
-dt_string = now.strftime("_%d_%m_%Y_%H-%M-%S")
+dt_string = now.strftime("_%Y_%m_%d_%H-%M-%S")
 filename = f'logs/logfile{dt_string}.log'
 if not os.path.isdir('logs'): os.mkdir('logs')
 logging.basicConfig(filename=filename,
@@ -135,12 +135,10 @@ def main():
             "analyze_results": True,
             "results_filepath": "",
             "parameters_filepath": "",
-            # "results_filepath": ["../data/model_output/_03_11_2023_11-44-35/simulation_Provo_corpus_continuous_reading_baseline_0.1.csv",
-            #                      "../data/model_output/_03_11_2023_11-44-35/simulation_Provo_corpus_continuous_reading_cloze_0.1.csv",
-            #                      "../data/model_output/_03_11_2023_11-44-35/simulation_Provo_corpus_continuous_reading_gpt2_0.1.csv"],
-            # "parameters_filepath": ["../data/model_output/_03_11_2023_11-44-35/parameters_Provo_corpus_continuous_reading_baseline_0.1.pkl",
-            #                         "../data/model_output/_03_11_2023_11-44-35/parameters_Provo_corpus_continuous_reading_cloze_0.1.pkl",
-            #                         "../data/model_output/_03_11_2023_11-44-35/parameters_Provo_corpus_continuous_reading_gpt2_0.1.pkl"],
+            # "results_filepath": ["../data/model_output/_13_11_2023_08-41-44/simulation_Provo_Corpus_continuous_reading_cloze_0.2.csv",
+            #                      "../data/model_output/_13_11_2023_08-41-44/simulation_Provo_Corpus_continuous_reading_gpt2_0.2.csv"],
+            # "parameters_filepath": ["../data/model_output/_13_11_2023_08-41-44/parameters_Provo_Corpus_continuous_reading_cloze_0.2.pkl",
+            #                         "../data/model_output/_13_11_2023_08-41-44/parameters_Provo_Corpus_continuous_reading_gpt2_0.2.pkl"],
             "eye_tracking_filepath": '../data/raw/Provo_Corpus-Eyetracking_Data.csv',
             "results_identifier": 'prediction_flag',
             "experiment_parameters_filepath": 'experiment_parameters.json',
