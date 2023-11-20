@@ -9,19 +9,19 @@
       "prediction_flag": "cloze",
       "number_of_simulations": 10,
       "n_trials": 38,
-      "pred_weight": 0.05
+      "pred_weight": 0.1
     },
     {
       "prediction_flag": "gpt2",
       "number_of_simulations": 10,
       "n_trials": 38,
-      "pred_weight": 0.05
+      "pred_weight": 0.1
     },
     {
       "prediction_flag": "llama",
       "number_of_simulations": 10,
       "n_trials": 38,
-      "pred_weight": 0.05
+      "pred_weight": 0.1
     }
   ]
 }
