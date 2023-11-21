@@ -1,0 +1,8 @@
+{
+  "parameters" : [
+    {
+      "prediction_flag": "cloze",
+      "pred_weight": 0.05
+    }
+  ]
+}

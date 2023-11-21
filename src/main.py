@@ -114,7 +114,7 @@ def main():
             "stimuli_separator": args.stimuli_separator,
             "language": args.language,
             "run_exp": eval(args.run_exp),
-            "number_of_simulations": args.number_of_simulations,
+            "number_of_simulations": int(args.number_of_simulations),
             "analyze_results": eval(args.analyze_results),
             "results_filepath": args.results_filepath,
             "results_identifier": args.results_identifier,

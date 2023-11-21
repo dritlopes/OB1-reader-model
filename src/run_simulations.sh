@@ -16,8 +16,9 @@ module load PyTorch/1.12.1-foss-2021a-CUDA-11.3.1
 # cd to directory with program
 cd $HOME/OB1-reader-model/src
 
-# Run program
-python main.py "../data/processed/Provo_Corpus.csv" --number_of_simulations 1 --experiment_parameters_filepath "experiment_parameters_0.05.json" --analyze_results "True" --eye_tracking_filepath '../data/raw/Provo_Corpus-Eyetracking_Data.csv' --results_identifier 'prediction_flag' &
-python main.py "../data/processed/Provo_Corpus.csv" --number_of_simulations 1 --experiment_parameters_filepath "experiment_parameters_0.1.json" --analyze_results "True" --eye_tracking_filepath '../data/raw/Provo_Corpus-Eyetracking_Data.csv' --results_identifier 'prediction_flag' &
-python main.py "../data/processed/Provo_Corpus.csv" --number_of_simulations 1 --experiment_parameters_filepath "experiment_parameters_0.2.json" --analyze_results "True" --eye_tracking_filepath '../data/raw/Provo_Corpus-Eyetracking_Data.csv' --results_identifier 'prediction_flag' &
+# Run program(s)
+python main.py "../data/processed/Provo_Corpus.csv" --number_of_simulations 1 --analyze_results "True" --eye_tracking_filepath '../data/raw/Provo_Corpus-Eyetracking_Data.csv' --results_identifier 'prediction_flag' &
+python main.py "../data/processed/Provo_Corpus.csv" --number_of_simulations 1 --experiment_parameters_filepath "experiment_parameters_cloze.json" --analyze_results "True" --eye_tracking_filepath '../data/raw/Provo_Corpus-Eyetracking_Data.csv' --results_identifier 'prediction_flag' &
+python main.py "../data/processed/Provo_Corpus.csv" --number_of_simulations 1 --experiment_parameters_filepath "experiment_parameters_gpt2.json" --analyze_results "True" --eye_tracking_filepath '../data/raw/Provo_Corpus-Eyetracking_Data.csv' --results_identifier 'prediction_flag' &
+python main.py "../data/processed/Provo_Corpus.csv" --number_of_simulations 1 --experiment_parameters_filepath "experiment_parameters_llama.json" --analyze_results "True" --eye_tracking_filepath '../data/raw/Provo_Corpus-Eyetracking_Data.csv' --results_identifier 'prediction_flag' &
 wait
