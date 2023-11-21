@@ -140,9 +140,9 @@ def create_freq_file(language, task_words, output_file_frequency_map, freq_thres
             file_freq_dict[word] = freq
 
         if verbose:
-            print("amount of words in task:", len(task_words))
-            print("amount of overlapping words", len(overlapping_words))
-            print('frequency file stored in ' + output_file_frequency_map)
+            print(f"amount of words in task: {len(task_words)}")
+            print(f"amount of overlapping words: {len(overlapping_words)}")
+            print(f'frequency file stored in {output_file_frequency_map}')
 
         with open(output_file_frequency_map, "w") as f:
             json.dump(file_freq_dict, f, ensure_ascii=False)

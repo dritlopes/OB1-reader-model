@@ -399,12 +399,10 @@ def main():
     # plot distribution of predictability values of text words
     plot_pred_dist(target_predictions)
 
-    # plot distribution of predictability values of all predicted words
+    # proportion of unknown predicted tokens per target word in relation to model lexicon
+    pred_maps_unknown = read_in_pred_files(unknown_map_filepaths)
+    compute_unknown_proportion(pred_maps, pred_maps_unknown)
 
-    # # proportion of unknown predicted tokens per target word in relation to model lexicon
-    # pred_maps_unknown = read_in_pred_files(unknown_map_filepaths)
-    # compute_unknown_proportion(pred_maps, pred_maps_unknown)
-    #
     # # analyse unknown tokens predicted by language model
     # analyse_unk_word_pred(pred_maps_unknown)
     #

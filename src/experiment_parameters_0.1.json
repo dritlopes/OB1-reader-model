@@ -1,0 +1,16 @@
+{
+  "parameters" : [
+    {
+      "prediction_flag": "cloze",
+      "pred_weight": 0.1
+    },
+    {
+      "prediction_flag": "llama",
+      "pred_weight": 0.1
+    },
+    {
+      "prediction_flag": "gpt2",
+      "pred_weight": 0.1
+    }
+  ]
+}

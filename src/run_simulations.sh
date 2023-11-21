@@ -5,7 +5,7 @@
 #SBATCH -N 1
 #SBATCH -p defq
 #SBATCH --gpus=A30:1
-#SBATCH -t 10:00:00
+#SBATCH -t 1:00:00
 #SBATCH --mail-type=BEGIN,END
 #SBATCH --mail-user=a.t.lopesrego@vu.nl
 
@@ -17,4 +17,7 @@ module load PyTorch/1.12.1-foss-2021a-CUDA-11.3.1
 cd $HOME/OB1-reader-model/src
 
 # Run program
-python main.py
+for i in 0.05 0.1 0.2 do
+  python main.py "../data/processed/Provo_Corpus.csv" --number_of_simulations 1 --experiment_parameters_filepath "experiment_parameters_$i.json" --analyze_results "True" --eye_tracking_filepath '../data/raw/Provo_Corpus-Eyetracking_Data.csv' --results_identifier 'prediction_flag' &
+done
+wait
