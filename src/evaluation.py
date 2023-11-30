@@ -812,8 +812,7 @@ def plot_raw_measures(raw_values, conditions, measure, filepath):
     # err_kws={"alpha": 0.2, "linewidth": 0.5}
     plot.set(ylabel=measure)
     plot.bar_label(plot.containers[0])
-    dir = os.path.dirname(filepath)
-    filepath = f"{dir}/plot_{measure}_raw.png"
+    filepath = filepath.replace('.csv', f'_plot_{measure}_raw.png')
     plot.figure.savefig(filepath)
     plt.close()
 

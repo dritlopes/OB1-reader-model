@@ -537,6 +537,8 @@ def simulate_experiment(pm):
     max_frequency = max(word_frequencies.values())
     lexicon = list(set(tokens) | set(word_frequencies.keys()))
     lexicon = [pre_process_string(word) for word in lexicon]
+    # if verbose:
+    print(f'Lexicon size: {len(lexicon)}')
 
     printwords=False
     if printwords:
@@ -625,11 +627,12 @@ def simulate_experiment(pm):
 
             texts_simulations = defaultdict()
 
-            # AL: if language model, generate predictions
-            word_predictions = get_pred_dict(pm, lexicon)
+            word_predictions = None
+            if pm.prediction_flag:
+                word_predictions = get_pred_dict(pm, lexicon)
 
-            # # initiate progress bar
-            # pbar = tqdm(total=pm.n_trials)
+            # initiate progress bar
+            pbar = tqdm(total=pm.n_trials)
 
             for i, text in enumerate(pm.stim_all[:pm.n_trials]):
 
@@ -651,13 +654,13 @@ def simulate_experiment(pm):
 
                 texts_simulations[i] = text_data
 
-                # # progress bar update
-                # sleep(0.1)
-                # pbar.update(1)
+                # progress bar update
+                sleep(0.1)
+                pbar.update(1)
 
             all_data[sim_number] = texts_simulations
-            # # close progress bar
-            # pbar.close()
+            # close progress bar
+            pbar.close()
 
         else:
             all_data = word_recognition(pm,
