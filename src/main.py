@@ -39,7 +39,7 @@ def simulate_reading(global_parameters):
     results_id = ''
     dir = f'../data/model_output/{dt_string}/'
     if not os.path.exists(dir):
-        os.makedirs(dir)
+        os.makedirs(dir, exist_ok=True)
     if 'prediction_flag' in pm.results_identifier:
         pred_flag = pm.prediction_flag
         if pred_flag == '':
