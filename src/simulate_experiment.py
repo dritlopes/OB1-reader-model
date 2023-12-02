@@ -5,6 +5,7 @@ from collections import defaultdict
 import math
 from tqdm import tqdm
 from time import sleep
+import os
 import random
 from utils import get_word_freq, get_pred_dict, set_up_inhibition_matrix, pre_process_string, add_predicted_tokens_to_vocab, create_freq_dict
 from reading_components import compute_stimulus, compute_eye_position, compute_words_input, update_word_activity, \
@@ -533,12 +534,18 @@ def simulate_experiment(pm):
     tokens = [pre_process_string(token) for token in tokens]
     # remove empty strings which were once punctuations
     tokens = [token for token in tokens if token != '']
-    # add unknown words predicted to lexicon
     word_frequencies = get_word_freq(pm, set(tokens), n_high_freq_words=500)
     max_frequency = max(word_frequencies.values())
+
+    lexicon_filename = '../data/processed/lexicon.pkl'
+    # if os.path.exists(lexicon_filename):
+    #     with open(lexicon_filename, 'rb') as infile:
+    #         lexicon = pickle.load(infile)
+    # else:
     lexicon = list(set(tokens) | set(word_frequencies.keys()))
     lexicon = [pre_process_string(word) for word in lexicon]
     word_predictions = get_pred_dict(pm, lexicon)
+    # add unknown words predicted to lexicon
     if pm.results_identifier == 'prediction_flag':
         unknown_tokens = add_predicted_tokens_to_vocab(pm)
         overlap_tokens = set.intersection(*[x for x in unknown_tokens.values()])
@@ -546,6 +553,9 @@ def simulate_experiment(pm):
         lexicon.extend(list(freqs.keys()))
         word_frequencies.update(freqs)
     lexicon = list(set(lexicon))
+    # write out lexicon for consulting purposes
+    with open(lexicon_filename, "wb") as f:
+        pickle.dump(lexicon, f)
     if verbose:
         print(f'Lexicon size: {len(lexicon)}')
 
@@ -563,11 +573,6 @@ def simulate_experiment(pm):
                 if word_frequencies[token] <= 1.5:
                     if verbose: print(f'{token}, freq: {word_frequencies[token]}, count: {tokens.count(token)}')
                     logger.info(f'{token}, freq: {word_frequencies[token]}, count: {tokens.count(token)}')
-
-    # write out lexicon for consulting purposes
-    lexicon_filename = '../data/processed/lexicon.pkl'
-    with open(lexicon_filename, "wb") as f:
-        pickle.dump(lexicon, f)
 
     if verbose:
         print('\nSetting word recognition thresholds...')
