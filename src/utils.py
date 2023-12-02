@@ -64,7 +64,7 @@ def pre_process_string(string, remove_punctuation=True, all_lowercase=True, stri
         string = string.strip()
     return string
 
-def create_freq_file(language, task_words, output_file_frequency_map, freq_threshold, n_high_freq_words, task, verbose):
+def create_freq_dict(language, task_words, output_file_frequency_map = "", freq_threshold = 1, n_high_freq_words = 500, task = 'continuous_reading', verbose = False):
 
     # TODO AL: this was needed to reproduce results on PSCall because the overlap between the words and SUBTLEX-DE was low (less than half). Need to fix this later
     if task == 'continuous_reading' and language == 'german':
@@ -135,17 +135,22 @@ def create_freq_file(language, task_words, output_file_frequency_map, freq_thres
             file_freq_dict[word] = frequency_words_dict[word]
 
         # add top n words from frequency resource
-        for word, freq in zip(freq_words[word_col].tolist()[:n_high_freq_words], freq_words[freq_type].tolist()[:n_high_freq_words]):
-            # file_freq_dict[(freq_words.iloc[line_number][0])] = freq_words.iloc[line_number][1]
-            file_freq_dict[word] = freq
+        if n_high_freq_words:
+            for word, freq in zip(freq_words[word_col].tolist()[:n_high_freq_words], freq_words[freq_type].tolist()[:n_high_freq_words]):
+                # file_freq_dict[(freq_words.iloc[line_number][0])] = freq_words.iloc[line_number][1]
+                file_freq_dict[word] = freq
 
         if verbose:
             print(f"amount of words in task: {len(task_words)}")
             print(f"amount of overlapping words: {len(overlapping_words)}")
+            print(f'text words not in frequency resource: {set(task_words).difference(set(freq_words[word_col].tolist()))}')
+
+        if output_file_frequency_map:
+            with open(output_file_frequency_map, "w") as f:
+                json.dump(file_freq_dict, f, ensure_ascii=False)
             print(f'frequency file stored in {output_file_frequency_map}')
 
-        with open(output_file_frequency_map, "w") as f:
-            json.dump(file_freq_dict, f, ensure_ascii=False)
+    return file_freq_dict
 
 def get_word_freq(pm, unique_words, n_high_freq_words = 500, freq_threshold = 1, verbose=True):
 
@@ -153,7 +158,7 @@ def get_word_freq(pm, unique_words, n_high_freq_words = 500, freq_threshold = 1,
 
     # AL: in case freq file needs to be created from original files
     if not os.path.exists(output_word_frequency_map):
-        create_freq_file(pm.language, unique_words, output_word_frequency_map, freq_threshold, n_high_freq_words, pm.task_to_run, verbose)
+        create_freq_dict(pm.language, unique_words, output_word_frequency_map, freq_threshold, n_high_freq_words, pm.task_to_run, verbose)
 
     with open(output_word_frequency_map, "r") as f:
         word_freq_dict = json.load(f)
@@ -338,17 +343,48 @@ def get_pred_dict(pm, lexicon):
 
     # output_word_pred_map = f"../data/processed/prediction_map_{pm.stim_name}_{pm.prediction_flag}_{pm.task_to_run}_{pm.language}_last_run.json"
     output_word_pred_map = f"../data/processed/prediction_map_{pm.stim_name}_{pm.prediction_flag}_{pm.task_to_run}_{pm.language}.json"
+
     if pm.prediction_flag in ['gpt2', 'llama']:
         output_word_pred_map = output_word_pred_map.replace('.json', f'_topk{pm.topk}.json')
 
     # AL: in case pred file needs to be created from original files
     if not os.path.exists(output_word_pred_map):
         create_pred_file(pm, output_word_pred_map, lexicon)
-
+        
     with open(output_word_pred_map, "r") as f:
         word_pred_dict = json.load(f)
 
     return word_pred_dict
+
+def add_predicted_tokens_to_vocab(pm):
+
+    tokens = defaultdict(set)
+
+    for predictor in ['cloze','gpt2','llama']:
+
+        output_word_pred_map = f"../data/processed/prediction_map_{pm.stim_name}_{predictor}_{pm.task_to_run}_{pm.language}_unknown.json"
+        if predictor in ['gpt2', 'llama']:
+            output_word_pred_map = output_word_pred_map.replace('_unknown.json', f'_topk{pm.topk}_unknown.json')
+
+        if os.path.exists(output_word_pred_map):
+
+            with open(output_word_pred_map, "r") as f:
+                word_pred_dict = json.load(f)
+
+            if predictor in ['gpt2', 'llama']:
+                for text_id, text_pred in word_pred_dict.items():
+                    for pos, pos_info in text_pred.items():
+                        for token, pred_info in pos_info['predictions'].items():
+                            if pred_info['token_processed']:
+                                tokens[predictor].add(pred_info['token_processed'])
+            else:
+                for text_id, text_pred in word_pred_dict.items():
+                    for pos, pos_info in text_pred.items():
+                        for token, pred_value in pos_info['predictions'].items():
+                            if token:
+                                tokens[predictor].add(token)
+
+    return tokens
 
 def check_previous_inhibition_matrix(pm,lexicon,lexicon_word_bigrams,inhib_matrix_previous,inhib_matrix_parameters):
 

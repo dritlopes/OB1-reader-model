@@ -153,7 +153,7 @@ def build_word_inhibition_matrix(lexicon,lexicon_word_ngrams,pm,matrix_filepath,
         for word_2_index in range(word_1_index+1, lexicon_size):    # MM: sending unit, I think...
             word1, word2 = lexicon[word_1_index], lexicon[word_2_index]
             # the degree of length similarity
-            length_sim = 1 #- (abs(len(word1)-len(word2))/max(len(word1),len(word2)))
+            length_sim = 1 - (abs(len(word1)-len(word2))/max(len(word1),len(word2)))
             # if not is_similar_word_length(len(word1), len(word2), pm.word_length_similarity_constant):
             #     continue
             # else:

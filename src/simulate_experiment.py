@@ -6,7 +6,7 @@ import math
 from tqdm import tqdm
 from time import sleep
 import random
-from utils import get_word_freq, get_pred_dict, set_up_inhibition_matrix, pre_process_string
+from utils import get_word_freq, get_pred_dict, set_up_inhibition_matrix, pre_process_string, add_predicted_tokens_to_vocab, create_freq_dict
 from reading_components import compute_stimulus, compute_eye_position, compute_words_input, update_word_activity, \
     match_active_words_to_input_slots, compute_next_attention_position, compute_next_eye_position, \
     activate_predicted_upcoming_word
@@ -533,12 +533,21 @@ def simulate_experiment(pm):
     tokens = [pre_process_string(token) for token in tokens]
     # remove empty strings which were once punctuations
     tokens = [token for token in tokens if token != '']
+    # add unknown words predicted to lexicon
     word_frequencies = get_word_freq(pm, set(tokens), n_high_freq_words=500)
     max_frequency = max(word_frequencies.values())
     lexicon = list(set(tokens) | set(word_frequencies.keys()))
     lexicon = [pre_process_string(word) for word in lexicon]
-    # if verbose:
-    print(f'Lexicon size: {len(lexicon)}')
+    word_predictions = get_pred_dict(pm, lexicon)
+    if pm.results_identifier == 'prediction_flag':
+        unknown_tokens = add_predicted_tokens_to_vocab(pm)
+        overlap_tokens = set.intersection(*[x for x in unknown_tokens.values()])
+        freqs = create_freq_dict(pm.language, overlap_tokens, n_high_freq_words=0, verbose=True)
+        lexicon.extend(list(freqs.keys()))
+        word_frequencies.update(freqs)
+    lexicon = list(set(lexicon))
+    if verbose:
+        print(f'Lexicon size: {len(lexicon)}')
 
     printwords=False
     if printwords:
@@ -627,10 +636,6 @@ def simulate_experiment(pm):
 
             texts_simulations = defaultdict()
 
-            word_predictions = None
-            if pm.prediction_flag:
-                word_predictions = get_pred_dict(pm, lexicon)
-
             # initiate progress bar
             pbar = tqdm(total=pm.n_trials)
 
@@ -639,7 +644,7 @@ def simulate_experiment(pm):
                 text_tokens = [pre_process_string(token) for token in text.split()]
 
                 predictions_in_text = None
-                if word_predictions:
+                if pm.prediction_flag:
                     predictions_in_text = word_predictions[str(i)]
 
                 text_data = reading(pm,

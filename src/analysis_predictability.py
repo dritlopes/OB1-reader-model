@@ -373,9 +373,10 @@ def main():
     unknown_map_filepaths = {'cloze': '../data/processed/prediction_map_Provo_Corpus_cloze_continuous_reading_english_unknown.json',
                              'GPT2': '../data/processed/prediction_map_Provo_Corpus_gpt2_continuous_reading_english_topkall_unknown.json',
                              'LLAMA': '../data/processed/prediction_map_Provo_Corpus_llama_continuous_reading_english_topkall_unknown.json'}
-    results_filepaths = ["../data/analysed/_31_10_2023_09-39-35/simulation_eye_movements_mean_Provo_Corpus_continuous_reading_cloze_0.2.csv",
-                        "../data/analysed/_31_10_2023_09-39-35/simulation_eye_movements_mean_Provo_Corpus_continuous_reading_llama_0.2.csv",
-                         "../data/processed/Provo_Corpus_eye_tracking_mean.csv"]
+    results_filepaths = ["../data/analysed/_2023_11_24_11-36-16/simulation_eye_movements_mean_Provo_Corpus_continuous_reading_cloze_0.1.csv",
+                         "../data/analysed/_2023_11_24_11-36-16/simulation_eye_movements_mean_Provo_Corpus_continuous_reading_gpt2_0.1.csv",
+                         "../data/analysed/_2023_11_24_11-36-16/simulation_eye_movements_mean_Provo_Corpus_continuous_reading_llama_0.1.csv",
+                         "../data/processed/Provo_Corpus_eye_tracking_last_sim_mean.csv"]
     eye_movement_filepath = '../data/processed/Provo_Corpus_eye_tracking_mean.csv'
     measures = ['skip',
                 'single_fix',
@@ -400,8 +401,8 @@ def main():
     plot_pred_dist(target_predictions)
 
     # proportion of unknown predicted tokens per target word in relation to model lexicon
-    pred_maps_unknown = read_in_pred_files(unknown_map_filepaths)
-    compute_unknown_proportion(pred_maps, pred_maps_unknown)
+    # pred_maps_unknown = read_in_pred_files(unknown_map_filepaths)
+    # compute_unknown_proportion(pred_maps, pred_maps_unknown)
 
     # # analyse unknown tokens predicted by language model
     # analyse_unk_word_pred(pred_maps_unknown)
@@ -416,7 +417,7 @@ def main():
     # word_pred_acc(pred_maps)
 
     # plot results on predictability
-    # plot_sim_results_pred(results_filepaths, measures)
+    plot_sim_results_pred(results_filepaths, measures)
 
     # test correlation between predictability and eye movements
     # test_correlation_pred(eye_movement_filepath, measures, pred_maps)
