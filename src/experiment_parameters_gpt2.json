@@ -3,14 +3,6 @@
     {
       "prediction_flag": "gpt2",
       "pred_weight": 0.05
-    },
-    {
-      "prediction_flag": "gpt2",
-      "pred_weight": 0.1
-    },
-    {
-      "prediction_flag": "gpt2",
-      "pred_weight": 0.2
     }
   ]
 }
