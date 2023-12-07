@@ -2,7 +2,7 @@
   "parameters" : [
     {
       "prediction_flag": "gpt2",
-      "pred_weight": 0.05
+      "pred_weight": 0.1
     }
   ]
 }

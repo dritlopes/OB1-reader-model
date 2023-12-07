@@ -538,24 +538,24 @@ def simulate_experiment(pm):
     max_frequency = max(word_frequencies.values())
 
     lexicon_filename = '../data/processed/lexicon.pkl'
-    # if os.path.exists(lexicon_filename):
-    #     with open(lexicon_filename, 'rb') as infile:
-    #         lexicon = pickle.load(infile)
-    # else:
-    lexicon = list(set(tokens) | set(word_frequencies.keys()))
-    lexicon = [pre_process_string(word) for word in lexicon]
-    word_predictions = get_pred_dict(pm, lexicon)
-    # add unknown words predicted to lexicon
-    if pm.results_identifier == 'prediction_flag':
-        unknown_tokens = add_predicted_tokens_to_vocab(pm)
-        overlap_tokens = set.intersection(*[x for x in unknown_tokens.values()])
-        freqs = create_freq_dict(pm.language, overlap_tokens, n_high_freq_words=0, verbose=True)
-        lexicon.extend(list(freqs.keys()))
-        word_frequencies.update(freqs)
-    lexicon = list(set(lexicon))
-    # write out lexicon for consulting purposes
-    with open(lexicon_filename, "wb") as f:
-        pickle.dump(lexicon, f)
+    if os.path.exists(lexicon_filename):
+        with open(lexicon_filename, 'rb') as infile:
+            lexicon = pickle.load(infile)
+    else:
+        lexicon = list(set(tokens) | set(word_frequencies.keys()))
+        lexicon = [pre_process_string(word) for word in lexicon]
+        word_predictions = get_pred_dict(pm, lexicon)
+        # add unknown words predicted to lexicon
+        if pm.results_identifier == 'prediction_flag':
+            unknown_tokens = add_predicted_tokens_to_vocab(pm)
+            overlap_tokens = set.intersection(*[x for x in unknown_tokens.values()])
+            freqs = create_freq_dict(pm.language, overlap_tokens, n_high_freq_words=0, verbose=True)
+            lexicon.extend(list(freqs.keys()))
+            word_frequencies.update(freqs)
+        lexicon = list(set(lexicon))
+        # write out lexicon for consulting purposes
+        with open(lexicon_filename, "wb") as f:
+            pickle.dump(lexicon, f)
     if verbose:
         print(f'Lexicon size: {len(lexicon)}')
 
