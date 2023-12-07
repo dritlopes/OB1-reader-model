@@ -541,6 +541,7 @@ def simulate_experiment(pm):
     if os.path.exists(lexicon_filename):
         with open(lexicon_filename, 'rb') as infile:
             lexicon = pickle.load(infile)
+        word_predictions = get_pred_dict(pm, lexicon)
     else:
         lexicon = list(set(tokens) | set(word_frequencies.keys()))
         lexicon = [pre_process_string(word) for word in lexicon]

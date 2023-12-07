@@ -888,6 +888,26 @@ def compare_conditions(parameters_list, data_log):
                 filepath = create_new_directory(filepath, 't-test')
                 test_difference(measure, sim_values1, sim_values2, filepath)
 
+def plot_RMSE(parameters_list, data_log):
+
+    pass
+    predictors, rmse_scores = [], []
+
+    for data_name, data in data_log.items():
+
+        for predictor in ['baseline', 'cloze', 'llama', 'gpt2']:
+
+            if predictor in data_name and 'RMSE' in data_name:
+                results_dir = os.path.dirname(data_name).replace('model_output', 'analysed').replace('RMSE', 'plots')
+                for measure in parameters_list[0].evaluation_measures:
+                    rmse = data.loc[data['eye_tracking_measure'] == measure]['mean_squared_error'].tolist()[0]
+
+    df = pd.DataFrame({'condition': predictors, measure: rmse_scores})
+    plot = sb.barplot(data=df, x='condition', y=measure)
+    results_dir = f'{results_dir}/plots'
+    if not os.path.isdir(results_dir): os.makedirs(results_dir)
+    plot.figure.savefig(f'{results_dir}/plot_RMSE.png')
+
 def evaluate_output (parameters_list: list, verbose=True):
 
     # register which human and simulated data have been analysed
@@ -939,6 +959,8 @@ def evaluate_output (parameters_list: list, verbose=True):
     #     df = pd.read_csv(path, sep='\t')
     #     data_log[path] = df
     compare_conditions(parameters_list, data_log)
+    # plot eye movement measures from human data vs. simulations in all pred conditions
+    # plot_RMSE(parameters_list, data_log)
 
 
 

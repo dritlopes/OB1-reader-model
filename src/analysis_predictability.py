@@ -373,37 +373,6 @@ def plot_pred_dist(predictions):
     plot = sb.displot(df, x="prediction", stat='probability', col='predictor', common_norm=False)
     plot.figure.savefig('../data/processed/distribution_pred_values.jpg')
 
-
-def plot_diff_results(filepaths, measures):
-
-    pass
-    # data_log = {}
-    #
-    # baseline_df = None
-    # if 'baseline'in filepaths.keys():
-    #     baseline_df = pd.read_csv(filepaths['baseline'], sep='\t')
-    #
-    # for weight, filepath in filepaths.items():
-    #
-    #
-    # for measure in measures:
-    #
-    #         predictors, eye_movement_values = [], []
-    #
-    #             if f'simulation_eye_movements_mean_Provo_Corpus_continuous_reading_{predictor}' in data_name:
-    #                 results_dir = os.path.dirname().replace('model_output', 'analysed')
-    #                 pred_values = data['predictability'].tolist()
-    #                 model_values = data[measure].tolist()
-    #             elif 'Provo_Corpus_eye_tracking_last_sim_mean.csv' in data_name or 'Provo_Corpus_eye_tracking_mean.csv' in data_name:
-    #                 human_values = data[measure].tolist()
-    #
-    #         df = pd.DataFrame({'condition': predictors, measure: eye_movement_values, 'weight': weights})
-    #         plot = sb.barplot(data=df, x='condition', y=measure, col='weight')
-    #         results_dir = f'{results_dir}/plots'
-    #         if not os.path.isdir(results_dir): os.makedirs(results_dir)
-    #         plot.figure.savefig(f'{results_dir}/plot_results_{measure}.png')
-    #         plt.close()
-
 def main():
 
     pred_map_filepaths = {'cloze':'../data/processed/prediction_map_Provo_Corpus_cloze_continuous_reading_english.json',
@@ -416,16 +385,6 @@ def main():
                          "../data/analysed/_2023_12_03_00-09-20/simulation_eye_movements_mean_Provo_Corpus_continuous_reading_gpt2_0.05.csv",
                          "../data/analysed/_2023_12_03_00-09-20/simulation_eye_movements_mean_Provo_Corpus_continuous_reading_llama_0.05.csv",
                          "../data/processed/Provo_Corpus_eye_tracking_mean.csv"]
-    RMSE_result_filepaths = {'baseline':'../data/analysed/_2023_12_02_12-00-44/RM2E/RM2E_mean_eye_movements_Provo_Corpus_continuous_reading_None_0.1.csv',
-                             '0.05':['../data/analysed/_2023_12_03_00-09-25/RM2E/RM2E_mean_eye_movements_Provo_Corpus_continuous_reading_cloze_0.05.csv',
-                                    '../data/analysed/_2023_12_03_00-09-20/RM2E/RM2E_mean_eye_movements_Provo_Corpus_continuous_reading_gpt2_0.05.csv',
-                                     '../data/analysed/_2023_12_03_00-09-20/RM2E/RM2E_eye_movements_Provo_Corpus_continuous_reading_llama_0.05.csv'],
-                             '0.1':['../data/analysed/_2023_12_03_00-09-25/RM2E/RM2E_mean_eye_movements_Provo_Corpus_continuous_reading_cloze_0.1.csv,',
-                                    '../data/analysed/_2023_12_03_00-09-20/RM2E/RM2E_mean_eye_movements_Provo_Corpus_continuous_reading_gpt2_0.1.csv',
-                                    'data/analysed/_2023_12_03_00-09-20/RM2E/RM2E_mean_eye_movements_Provo_Corpus_continuous_reading_llama_0.1.csv'],
-                             '0.2':['../data/analysed/_2023_12_03_00-09-25/RM2E/RM2E_mean_eye_movements_Provo_Corpus_continuous_reading_cloze_0.2.csv',
-                                    '../data/analysed/_2023_12_03_00-09-20/RM2E/RM2E_mean_eye_movements_Provo_Corpus_continuous_reading_gpt2_0.2.csv',
-                                    '../data/analysed/_2023_12_03_00-09-20/RM2E/RM2E_mean_eye_movements_Provo_Corpus_continuous_reading_llama_0.2.csv']}
     eye_movement_filepath = '../data/processed/Provo_Corpus_eye_tracking_mean.csv'
     measures = ['skip',
                 'single_fix',
@@ -470,9 +429,6 @@ def main():
 
     # test correlation between predictability and eye movements
     # test_correlation_pred(eye_movement_filepath, measures, pred_maps)
-
-    # plot eye movement measures from human data vs. simulations in all pred conditions
-    plot_diff_results(RMSE_result_filepaths, measures)
 
 if __name__ == '__main__':
     main()
