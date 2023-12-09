@@ -42,9 +42,11 @@ def simulate_reading(global_parameters):
         os.makedirs(dir, exist_ok=True)
     if 'prediction_flag' in pm.results_identifier:
         pred_flag = pm.prediction_flag
-        if pred_flag == '':
-            pred_flag = 'baseline'
         results_id = f'{pred_flag}_{pm.pred_weight}'
+        if not pred_flag:
+            pred_flag = 'baseline'
+            results_id = f'{pred_flag}'
+
     if not pm.results_filepath:
         pm.results_filepath = f"{dir}simulation_{pm.stim_name}_{pm.task_to_run}_{results_id}.csv"
     if not pm.parameters_filepath:
@@ -131,14 +133,18 @@ def main():
             "stimuli_filepath": "../data/processed/Provo_Corpus.csv",
             "stimuli_separator": "\t",
             "language": 'english',
-            "run_exp": True,
+            "run_exp": False,
             "analyze_results": True,
-            "results_filepath": "",
-            "parameters_filepath": "",
-            # "results_filepath": ["../data/model_output/_13_11_2023_08-41-44/simulation_Provo_Corpus_continuous_reading_cloze_0.2.csv",
-            #                      "../data/model_output/_13_11_2023_08-41-44/simulation_Provo_Corpus_continuous_reading_gpt2_0.2.csv"],
-            # "parameters_filepath": ["../data/model_output/_13_11_2023_08-41-44/parameters_Provo_Corpus_continuous_reading_cloze_0.2.pkl",
-            #                         "../data/model_output/_13_11_2023_08-41-44/parameters_Provo_Corpus_continuous_reading_gpt2_0.2.pkl"],
+            # "results_filepath": "",
+            # "parameters_filepath": "",
+            "results_filepath": ["../data/model_output/_2023_12_05_09-57-49/simulation_Provo_Corpus_continuous_reading_None_0.1.csv",
+                                 "../data/model_output/_2023_12_05_09-57-49/simulation_Provo_Corpus_continuous_reading_cloze_0.05.csv",
+                                 "../data/model_output/_2023_12_05_09-57-49/simulation_Provo_Corpus_continuous_reading_gpt2_0.05.csv",
+                                 "../data/model_output/_2023_12_05_09-57-49/simulation_Provo_Corpus_continuous_reading_llama_0.05.csv"],
+            "parameters_filepath": ["../data/model_output/_2023_12_05_09-57-49/parameters_Provo_Corpus_continuous_reading_None_0.1.pkl",
+                                    "../data/model_output/_2023_12_05_09-57-49/parameters_Provo_Corpus_continuous_reading_cloze_0.05.pkl",
+                                    "../data/model_output/_2023_12_05_09-57-49/parameters_Provo_Corpus_continuous_reading_gpt2_0.05.pkl",
+                                    "../data/model_output/_2023_12_05_09-57-49/parameters_Provo_Corpus_continuous_reading_llama_0.05.pkl"],
             "eye_tracking_filepath": '../data/raw/Provo_Corpus-Eyetracking_Data.csv',
             "results_identifier": 'prediction_flag',
             "experiment_parameters_filepath": 'experiment_parameters.json',

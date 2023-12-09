@@ -2,7 +2,7 @@
   "parameters" : [
     {
       "prediction_flag": "llama",
-      "pred_weight": 0.1
+      "pred_weight": 0.2
     }
   ]
 }

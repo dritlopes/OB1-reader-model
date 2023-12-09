@@ -591,6 +591,7 @@ def compute_root_mean_squared_error(true_values:list, simulated_values:list):
     # eye-tracking value.
 
     diff = np.subtract(simulated_values, true_values)
+
     # if normalize:
     # # normalize difference: subtract the min difference from the difference and divide it by the difference between max and min differences
     #     diff = np.divide((np.subtract(diff, min(diff))), np.subtract(max(diff), min(diff)))
@@ -605,7 +606,6 @@ def compute_root_mean_squared_error(true_values:list, simulated_values:list):
     norm_sim_values = np.divide(np.subtract(simulated_values, np.mean(true_values)), np.std(true_values))
     norm_true_values = np.divide(np.subtract(true_values, np.mean(true_values)), np.std(true_values))
     norm_diff = np.subtract(norm_sim_values, norm_true_values)
-
     # # standardize using median
     # norm_sim_values = np.divide(np.subtract(simulated_values, np.median(true_values)), np.median(np.absolute(true_values - np.median(true_values))))
     # norm_true_values = np.divide(np.subtract(true_values, np.median(true_values)), np.median(np.absolute(true_values - np.median(true_values))))
@@ -684,7 +684,8 @@ def compute_all_error(parameters, output_filepath, mean_true_eye_movements, mean
         df['simulation_id'] = [sim for i in df.eye_tracking_measure.tolist()]
         error_dfs.append(df)
     error_df = pd.concat(error_dfs)
-    error_df = error_df.pivot_table('mean_squared_error', ['simulation_id'], 'eye_tracking_measure')
+    error_df = error_df.pivot_table('norm_mean_squared_error', ['simulation_id'], 'eye_tracking_measure')
+    #cerror_df = error_df.pivot_table('mean_squared_error', ['simulation_id'], 'eye_tracking_measure')
     error_df = error_df.sort_values('simulation_id')
     filepath = output_filepath.replace('model_output', 'analysed').replace('simulation_', f'RM2E_eye_movements_')
     filepath = create_new_directory(filepath, 'RM2E')
@@ -816,7 +817,7 @@ def plot_raw_measures(raw_values, conditions, measure, filepath):
     plot.figure.savefig(filepath)
     plt.close()
 
-def test_difference(measure, sim_values1, sim_values2, filepath):
+def test_difference(sim_values1, sim_values2, filepath):
 
     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.ttest_rel.html
     # "The T-statistic measures whether the average score differs significantly across samples.
@@ -886,27 +887,61 @@ def compare_conditions(parameters_list, data_log):
                 filepath = parameters_list[0].results_filepath.replace('cloze', '').replace('gpt2', '')
                 filepath = filepath.replace('__', f'_{measure}_t-test_').replace('model_output', 'analysed')
                 filepath = create_new_directory(filepath, 't-test')
-                test_difference(measure, sim_values1, sim_values2, filepath)
+                test_difference(sim_values1, sim_values2, filepath)
 
-def plot_RMSE(parameters_list, data_log):
+def plot_RMSE(eye_measures, data_log, conditions, weights):
 
-    pass
-    predictors, rmse_scores = [], []
+    predictors, rmse_scores, measures = [], [], []
+    rmse_per_condition = defaultdict()
 
-    for data_name, data in data_log.items():
+    for predictor in conditions:
+        rmse_per_measure = defaultdict()
+        for measure in eye_measures:
+            rmse_per_weight = dict()
+            for weight in weights:
+                for data_name, data in data_log.items():
+                    if predictor in data_name and 'RM2E' in data_name: # and 'mean' not in data_name:
+                        results_dir = os.path.dirname(data_name).replace('model_output', 'analysed').replace('RM2E', 'plots')
+                        # rmse = data.loc[data['eye_tracking_measure'] == measure]['norm_mean_squared_error'].tolist()[0]
+                        rmse = data[measure].tolist()
+                        rmse_per_weight[weight] = float(rmse)
+            rmse_per_measure[measure] = rmse_per_weight
+        rmse_per_condition[predictor] = rmse_per_measure
 
-        for predictor in ['baseline', 'cloze', 'llama', 'gpt2']:
+    for condition, measure_dict in rmse_per_condition.items():
+        for measure, weight_dict in measure_dict.items():
+            mean_rmse = []
+            if weight_dict.keys():
+                # mean_rmse = sum(weight_dict.values())/len(weight_dict.keys())
+                # rmse_scores.append(mean_rmse)
+                # predictors.append(condition)
+                # measures.append(measure.replace('_', ' '))
+                for sim_id in range(len(list(weight_dict.values())[0])):
+                    score = []
+                    for weight in weight_dict.keys():
+                        score.append(weight_dict[weight][sim_id])
+                    mean_rmse.append(sum(score)/len(score))
+            for rmse in mean_rmse:
+                rmse_scores.append(rmse)
+                predictors.append(condition)
+                measures.append(measure.replace('_', ' '))
 
-            if predictor in data_name and 'RMSE' in data_name:
-                results_dir = os.path.dirname(data_name).replace('model_output', 'analysed').replace('RMSE', 'plots')
-                for measure in parameters_list[0].evaluation_measures:
-                    rmse = data.loc[data['eye_tracking_measure'] == measure]['mean_squared_error'].tolist()[0]
-
-    df = pd.DataFrame({'condition': predictors, measure: rmse_scores})
-    plot = sb.barplot(data=df, x='condition', y=measure)
-    results_dir = f'{results_dir}/plots'
+    df = pd.DataFrame({'condition': predictors, 'normalized error': rmse_scores, 'measure': measures})
+    plot = sb.catplot(data=df, x='measure', y='normalized error', hue='condition', kind='bar', errorbar='sd', errwidth=0.75, height=7, aspect=3, palette="Blues")
+    # add values to top of bars
+    ax = plot.facet_axis(0, 0)
+    for c in ax.containers:
+        labels = [f'{round((v.get_height()),3)}' for v in c]
+        ax.bar_label(c, labels=labels, label_type='edge')
+    # remove xlabel to avoid crowdness in x axis
+    plot.set(xlabel=None)
+    # make sure there is some space between 1 and the beginning of y axis to add stripes later
+    plot.set(ylim=(0.75, 3))
+    # define y ticks according to start from 1 (no normalized error below 1, given the normalization technique used)
+    plot.set(yticks=[1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3])
     if not os.path.isdir(results_dir): os.makedirs(results_dir)
     plot.figure.savefig(f'{results_dir}/plot_RMSE.png')
+
 
 def evaluate_output (parameters_list: list, verbose=True):
 
@@ -921,46 +956,59 @@ def evaluate_output (parameters_list: list, verbose=True):
         if parameters.task_to_run == 'continuous_reading':
 
             output_filepath = parameters.results_filepath
-            simulation_output_all = pd.read_csv(output_filepath, sep='\t')
-            simulation_output_all = simulation_output_all.rename(columns={'foveal_word_index': 'word_id','foveal_word': 'word'})
-
-            if verbose:
-                print(f'Evaluating output in {output_filepath}')
-
-            if 'provo' in parameters.eye_tracking_filepath.lower():
-                # exclude first word of every passage (not in eye tracking -PROVO- data either)
-                simulation_output = simulation_output_all[simulation_output_all['word_id'] != 0]
-                # remove outliers, according to PROVO eye-tracking corpus: fixations > 80ms and < 800ms
-                simulation_output = simulation_output[(simulation_output['fixation_duration'] > 80) & (simulation_output['fixation_duration'] < 800)]
-
-            # ----------- Get word-level eye-movement measures in human data -----------
-            mean_true_eye_movements, data_log = process_eye_tracking_data(parameters, data_log, simulation_output)
-
-            # ----------- Get word-level eye-movement measures in simulation data -----------
-            mean_predicted_eye_movements, predicted_eye_movements, data_log = process_simulation_data(parameters,
-                                                                                                      data_log,
-                                                                                                      simulation_output,
-                                                                                                      output_filepath,
-                                                                                                      mean_true_eye_movements)
-
+            # simulation_output_all = pd.read_csv(output_filepath, sep='\t')
+            # simulation_output_all = simulation_output_all.rename(columns={'foveal_word_index': 'word_id','foveal_word': 'word'})
+    #
+    #         if verbose:
+    #             print(f'Evaluating output in {output_filepath}')
+    #
+    #         if 'provo' in parameters.eye_tracking_filepath.lower():
+    #             # exclude first word of every passage (not in eye tracking -PROVO- data either)
+    #             simulation_output = simulation_output_all[simulation_output_all['word_id'] != 0]
+    #             # remove outliers, according to PROVO eye-tracking corpus: fixations > 80ms and < 800ms
+    #             simulation_output = simulation_output[(simulation_output['fixation_duration'] > 80) & (simulation_output['fixation_duration'] < 800)]
+    #
+    #         # ----------- Get word-level eye-movement measures in human data -----------
+    #         mean_true_eye_movements, data_log = process_eye_tracking_data(parameters, data_log, simulation_output)
+    #
+    #         # ----------- Get word-level eye-movement measures in simulation data -----------
+    #         mean_predicted_eye_movements, predicted_eye_movements, data_log = process_simulation_data(parameters,
+    #                                                                                                   data_log,
+    #                                                                                                   simulation_output,
+    #                                                                                                   output_filepath,
+    #                                                                                                   mean_true_eye_movements)
+            print(parameters.prediction_flag)
+            mean_true_eye_movements = pd.read_csv('../data/processed/Provo_Corpus_eye_tracking_mean.csv', sep='\t')
+            mean_predicted_eye_movements = pd.read_csv(output_filepath.replace('model_output', 'analysed').replace('simulation_',
+                                                                                                          f'simulation_eye_movements_mean_'), sep='\t')
+            predicted_eye_movements = pd.read_csv(output_filepath.replace('model_output', 'analysed').replace(
+                'simulation_',
+                f'simulation_eye_movements_'), sep = '\t')
             # ----------- Mean square error between each measure in simulation and eye-tracking -----------
             data_log = compute_all_error(parameters, output_filepath, mean_true_eye_movements,
                                         mean_predicted_eye_movements, predicted_eye_movements,
                                         data_log, verbose)
+    #
+    #         # ----------- Word recognition accuracy -----------
+    #         compute_word_recog_acc(simulation_output_all, simulation_output, parameters, output_filepath, verbose)
 
-            # ----------- Word recognition accuracy -----------
-            compute_word_recog_acc(simulation_output_all, simulation_output, parameters, output_filepath, verbose)
-
-    # paths = ["../data/processed/Provo_Corpus_eye_tracking_last_sim_mean.csv",
-    #          "../data/analysed/_03_11_2023_11-44-35/simulation_eye_movements_mean_Provo_corpus_continuous_reading_baseline_0.1.csv",
-    #          "../data/analysed/_03_11_2023_11-44-35/simulation_eye_movements_mean_Provo_corpus_continuous_reading_cloze_0.1.csv",
-    #          "../data/analysed/_03_11_2023_11-44-35/simulation_eye_movements_mean_Provo_corpus_continuous_reading_gpt2_0.1.csv"]
+    # paths = ["../data/processed/Provo_Corpus_eye_tracking_mean.csv",
+    #          "../data/analysed/_2023_12_05_09-57-49/simulation_eye_movements_mean_Provo_Corpus_continuous_reading_None_0.1.csv",
+    #          "../data/analysed/_2023_12_05_09-57-49/simulation_eye_movements_mean_Provo_Corpus_continuous_reading_cloze_0.05.csv",
+    #          "../data/analysed/_2023_12_05_09-57-49/simulation_eye_movements_mean_Provo_Corpus_continuous_reading_gpt2_0.05.csv",
+    #          "../data/analysed/_2023_12_05_09-57-49/simulation_eye_movements_mean_Provo_Corpus_continuous_reading_llama_0.05.csv",
+    #          "../data/analysed/_2023_12_05_09-57-49/RM2E/RM2E_mean_eye_movements_Provo_Corpus_continuous_reading_baseline_0.1.csv",
+    #          "../data/analysed/_2023_12_05_09-57-49/RM2E/RM2E_mean_eye_movements_Provo_Corpus_continuous_reading_cloze_0.05.csv",
+    #          "../data/analysed/_2023_12_05_09-57-49/RM2E/RM2E_mean_eye_movements_Provo_Corpus_continuous_reading_gpt2_0.05.csv",
+    #          "../data/analysed/_2023_12_05_09-57-49/RM2E/RM2E_mean_eye_movements_Provo_Corpus_continuous_reading_llama_0.05.csv"]
+    #
     # for path in paths:
     #     df = pd.read_csv(path, sep='\t')
     #     data_log[path] = df
-    compare_conditions(parameters_list, data_log)
-    # plot eye movement measures from human data vs. simulations in all pred conditions
-    # plot_RMSE(parameters_list, data_log)
+    #
+    # compare_conditions(parameters_list, data_log)
+    # # plot eye movement measures from human data vs. simulations in all pred conditions
+    # plot_RMSE(['skip', 'single_fix', 'first_fix_duration', "gaze_duration", "total_reading_time", "regression_in"], data_log, ['baseline', 'cloze', 'gpt2', 'llama'], ['0.05'])
 
 
 
