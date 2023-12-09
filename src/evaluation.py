@@ -956,27 +956,27 @@ def evaluate_output (parameters_list: list, verbose=True):
         if parameters.task_to_run == 'continuous_reading':
 
             output_filepath = parameters.results_filepath
-            # simulation_output_all = pd.read_csv(output_filepath, sep='\t')
-            # simulation_output_all = simulation_output_all.rename(columns={'foveal_word_index': 'word_id','foveal_word': 'word'})
-    #
-    #         if verbose:
-    #             print(f'Evaluating output in {output_filepath}')
-    #
-    #         if 'provo' in parameters.eye_tracking_filepath.lower():
-    #             # exclude first word of every passage (not in eye tracking -PROVO- data either)
-    #             simulation_output = simulation_output_all[simulation_output_all['word_id'] != 0]
-    #             # remove outliers, according to PROVO eye-tracking corpus: fixations > 80ms and < 800ms
-    #             simulation_output = simulation_output[(simulation_output['fixation_duration'] > 80) & (simulation_output['fixation_duration'] < 800)]
-    #
-    #         # ----------- Get word-level eye-movement measures in human data -----------
-    #         mean_true_eye_movements, data_log = process_eye_tracking_data(parameters, data_log, simulation_output)
-    #
-    #         # ----------- Get word-level eye-movement measures in simulation data -----------
-    #         mean_predicted_eye_movements, predicted_eye_movements, data_log = process_simulation_data(parameters,
-    #                                                                                                   data_log,
-    #                                                                                                   simulation_output,
-    #                                                                                                   output_filepath,
-    #                                                                                                   mean_true_eye_movements)
+            simulation_output_all = pd.read_csv(output_filepath, sep='\t')
+            simulation_output_all = simulation_output_all.rename(columns={'foveal_word_index': 'word_id','foveal_word': 'word'})
+
+            if verbose:
+                print(f'Evaluating output in {output_filepath}')
+
+            if 'provo' in parameters.eye_tracking_filepath.lower():
+                # exclude first word of every passage (not in eye tracking -PROVO- data either)
+                simulation_output = simulation_output_all[simulation_output_all['word_id'] != 0]
+                # remove outliers, according to PROVO eye-tracking corpus: fixations > 80ms and < 800ms
+                simulation_output = simulation_output[(simulation_output['fixation_duration'] > 80) & (simulation_output['fixation_duration'] < 800)]
+
+            # ----------- Get word-level eye-movement measures in human data -----------
+            mean_true_eye_movements, data_log = process_eye_tracking_data(parameters, data_log, simulation_output)
+
+            # ----------- Get word-level eye-movement measures in simulation data -----------
+            mean_predicted_eye_movements, predicted_eye_movements, data_log = process_simulation_data(parameters,
+                                                                                                      data_log,
+                                                                                                      simulation_output,
+                                                                                                      output_filepath,
+                                                                                                      mean_true_eye_movements)
             print(parameters.prediction_flag)
             mean_true_eye_movements = pd.read_csv('../data/processed/Provo_Corpus_eye_tracking_mean.csv', sep='\t')
             mean_predicted_eye_movements = pd.read_csv(output_filepath.replace('model_output', 'analysed').replace('simulation_',
@@ -988,9 +988,9 @@ def evaluate_output (parameters_list: list, verbose=True):
             data_log = compute_all_error(parameters, output_filepath, mean_true_eye_movements,
                                         mean_predicted_eye_movements, predicted_eye_movements,
                                         data_log, verbose)
-    #
-    #         # ----------- Word recognition accuracy -----------
-    #         compute_word_recog_acc(simulation_output_all, simulation_output, parameters, output_filepath, verbose)
+
+            # ----------- Word recognition accuracy -----------
+            compute_word_recog_acc(simulation_output_all, simulation_output, parameters, output_filepath, verbose)
 
     # paths = ["../data/processed/Provo_Corpus_eye_tracking_mean.csv",
     #          "../data/analysed/_2023_12_05_09-57-49/simulation_eye_movements_mean_Provo_Corpus_continuous_reading_None_0.1.csv",
@@ -1006,9 +1006,9 @@ def evaluate_output (parameters_list: list, verbose=True):
     #     df = pd.read_csv(path, sep='\t')
     #     data_log[path] = df
     #
-    # compare_conditions(parameters_list, data_log)
-    # # plot eye movement measures from human data vs. simulations in all pred conditions
-    # plot_RMSE(['skip', 'single_fix', 'first_fix_duration', "gaze_duration", "total_reading_time", "regression_in"], data_log, ['baseline', 'cloze', 'gpt2', 'llama'], ['0.05'])
+    compare_conditions(parameters_list, data_log)
+    # plot eye movement measures from human data vs. simulations in all pred conditions
+    plot_RMSE(['skip', 'single_fix', 'first_fix_duration', "gaze_duration", "total_reading_time", "regression_in"], data_log, ['baseline', 'cloze', 'gpt2', 'llama'], ['0.05'])
 
 
 
