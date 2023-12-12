@@ -301,7 +301,7 @@ def plot_sim_results_pred(filepaths, measures):
                     if eye_movement == model_values:
                         type = 'OB1-reader'
                     else:
-                        type = 'PROVO'
+                        type = 'Provo'
                     data_type.extend([type for bin in x_bins])
                     predictors.extend([predictor for bin in x_bins])
 
@@ -309,9 +309,11 @@ def plot_sim_results_pred(filepaths, measures):
             # seaborn lmplot function requires dataframe
             df = pd.DataFrame({'predictability': x, measure: y, 'predictor': data_type, 'condition': predictors})
 
+            plt.rcParams.update({'font.size': 18})
             plot = sb.lmplot(data=df, x='predictability', y=measure, hue='predictor', col='condition')
             if measure in ['first_fix_duration', 'gaze_duration', 'total_reading_time']:
-                plot.set(ylim=(100, 350))
+                plot.set(ylim=(50, 350))
+                plot.set(yticks=[100, 150, 200, 250, 300, 350])
             elif measure in ['skip', 'single_fix', 'regression']:
                 plot.set(ylim=(0, 1.01))
             results_dir = f'{results_dir}/plots'
@@ -321,18 +323,19 @@ def plot_sim_results_pred(filepaths, measures):
 
             plot = sb.relplot(data=df, x='predictability', y=measure, hue='predictor', col='condition', kind="line")
             if measure in ['first_fix_duration', 'gaze_duration', 'total_reading_time']:
-                plot.set(ylim=(100, 350))
+                plot.set(ylim=(50, 350))
+                plot.set(yticks=[100,150,200,250,300,350])
             elif measure in ['skip', 'single_fix', 'regression']:
                 plot.set(ylim=(0, 1.01))
             plot.figure.savefig(f'{results_dir}/plot_pred_line_{measure}.png')
             plt.close()
 
-def test_correlation(pred_values, eye_movement_values, filepath):
+def test_correlation(x, y, filepath):
 
     # do pearson correlation test
-    test = stats.pearsonr(pred_values, eye_movement_values)
+    test = stats.pearsonr(x, y)
     corr_results = {'test': ['corr-coefficient', 'p-value', 'degrees-of-freedom'],
-                    'result': [test.statistic, test.pvalue, len(pred_values)-2]}
+                    'result': [test.statistic, test.pvalue, len(x)-2]}
 
     df = pd.DataFrame.from_dict(corr_results)
     df.to_csv(filepath, sep='\t', index=False)
@@ -373,6 +376,31 @@ def plot_pred_dist(predictions):
     plot = sb.displot(df, x="prediction", stat='probability', col='predictor', common_norm=False)
     plot.figure.savefig('../data/processed/distribution_pred_values.jpg')
 
+
+def test_correlation_with_fixed_factors(pred_maps, frequency_filepath=None):
+
+    if frequency_filepath:
+        with open(frequency_filepath, 'rb') as infile:
+            freq_dict = json.load(infile)
+
+    for predictor, data in pred_maps.items():
+        pred_values, length_values, freq_values = [],[],[]
+        for text_id, text in data.items():
+            for pos, info in text.items():
+                predictability = 0.0
+                if info["target"] in info['predictions'].keys():
+                   predictability = info['predictions'][info['target']]
+                pred_values.append(predictability)
+                length_values.append(len(info['target']))
+                if frequency_filepath:
+                    frequency = 0.0
+                    if info['target'] in freq_dict.keys():
+                        frequency = freq_dict[info['target']]
+                    freq_values.append(frequency)
+        test_correlation(pred_values, length_values, f'../data/processed/pearson_corr_pred_length_{predictor}.csv')
+        if freq_values:
+            test_correlation(pred_values, freq_values, f'../data/processed/pearson_corr_pred_freq_{predictor}.csv')
+
 def main():
 
     pred_map_filepaths = {'cloze':'../data/processed/prediction_map_Provo_Corpus_cloze_continuous_reading_english.json',
@@ -381,11 +409,12 @@ def main():
     unknown_map_filepaths = {'cloze': '../data/processed/prediction_map_Provo_Corpus_cloze_continuous_reading_english_unknown.json',
                              'GPT2': '../data/processed/prediction_map_Provo_Corpus_gpt2_continuous_reading_english_topkall_unknown.json',
                              'LLAMA': '../data/processed/prediction_map_Provo_Corpus_llama_continuous_reading_english_topkall_unknown.json'}
-    results_filepaths = ["../data/analysed/_2023_12_03_00-09-25/simulation_eye_movements_mean_Provo_Corpus_continuous_reading_cloze_0.05.csv",
-                         "../data/analysed/_2023_12_03_00-09-20/simulation_eye_movements_mean_Provo_Corpus_continuous_reading_gpt2_0.05.csv",
-                         "../data/analysed/_2023_12_03_00-09-20/simulation_eye_movements_mean_Provo_Corpus_continuous_reading_llama_0.05.csv",
+    results_filepaths = ["../data/analysed/_2023_12_05_09-57-49/simulation_eye_movements_mean_Provo_Corpus_continuous_reading_cloze_0.05.csv",
+                         "../data/analysed/_2023_12_05_09-57-49/simulation_eye_movements_mean_Provo_Corpus_continuous_reading_gpt2_0.05.csv",
+                         "../data/analysed/_2023_12_05_09-57-49/simulation_eye_movements_mean_Provo_Corpus_continuous_reading_llama_0.05.csv",
                          "../data/processed/Provo_Corpus_eye_tracking_mean.csv"]
     eye_movement_filepath = '../data/processed/Provo_Corpus_eye_tracking_mean.csv'
+    frequency_filepath = '../data/processed/frequency_map_Provo_Corpus_continuous_reading_english.json'
     measures = ['skip',
                 'single_fix',
                 'first_fix_duration',
@@ -429,6 +458,8 @@ def main():
 
     # test correlation between predictability and eye movements
     # test_correlation_pred(eye_movement_filepath, measures, pred_maps)
+    test_correlation_with_fixed_factors(pred_maps, frequency_filepath)
+
 
 if __name__ == '__main__':
     main()

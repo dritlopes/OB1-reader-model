@@ -90,7 +90,7 @@ def simulate_reading(global_parameters):
 
 def main():
 
-    useparser=True
+    useparser=False
     if useparser:
         parser = argparse.ArgumentParser()
         parser.add_argument('stimuli_filepath')
@@ -137,14 +137,12 @@ def main():
             "analyze_results": True,
             # "results_filepath": "",
             # "parameters_filepath": "",
-            "results_filepath": ["../data/model_output/_2023_12_05_09-57-49/simulation_Provo_Corpus_continuous_reading_None_0.1.csv",
-                                 "../data/model_output/_2023_12_05_09-57-49/simulation_Provo_Corpus_continuous_reading_cloze_0.05.csv",
-                                 "../data/model_output/_2023_12_05_09-57-49/simulation_Provo_Corpus_continuous_reading_gpt2_0.05.csv",
-                                 "../data/model_output/_2023_12_05_09-57-49/simulation_Provo_Corpus_continuous_reading_llama_0.05.csv"],
-            "parameters_filepath": ["../data/model_output/_2023_12_05_09-57-49/parameters_Provo_Corpus_continuous_reading_None_0.1.pkl",
-                                    "../data/model_output/_2023_12_05_09-57-49/parameters_Provo_Corpus_continuous_reading_cloze_0.05.pkl",
-                                    "../data/model_output/_2023_12_05_09-57-49/parameters_Provo_Corpus_continuous_reading_gpt2_0.05.pkl",
-                                    "../data/model_output/_2023_12_05_09-57-49/parameters_Provo_Corpus_continuous_reading_llama_0.05.pkl"],
+            "results_filepath": ["../data/model_output/_2023_12_07_22-32-42/simulation_Provo_Corpus_continuous_reading_cloze_0.1.csv",
+                                 "../data/model_output/_2023_12_07_22-32-42/simulation_Provo_Corpus_continuous_reading_gpt2_0.1.csv",
+                                 "../data/model_output/_2023_12_07_22-32-42/simulation_Provo_Corpus_continuous_reading_llama_0.1.csv"],
+            "parameters_filepath": ["../data/model_output/_2023_12_07_22-32-42/parameters_Provo_Corpus_continuous_reading_cloze_0.1.pkl",
+                                    "../data/model_output/_2023_12_07_22-32-42/parameters_Provo_Corpus_continuous_reading_gpt2_0.1.pkl",
+                                    "../data/model_output/_2023_12_07_22-32-42/parameters_Provo_Corpus_continuous_reading_llama_0.1.pkl"],
             "eye_tracking_filepath": '../data/raw/Provo_Corpus-Eyetracking_Data.csv',
             "results_identifier": 'prediction_flag',
             "experiment_parameters_filepath": 'experiment_parameters.json',

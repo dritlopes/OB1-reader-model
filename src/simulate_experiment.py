@@ -507,7 +507,7 @@ def word_recognition(pm,word_inhibition_matrix,lexicon_word_ngrams,lexicon_word_
         print("\n")
 
         trial_data['attend width'] = attend_width
-        trial_data['reaction time'] = reaction_time
+        trial_data['reactiown time'] = reaction_time
         trial_data['matched slots'] = stimulus_matched_slots
         trial_data['target recognized'] = recognized
         trial_data['false guess'] = false_guess
