@@ -1,0 +1,72 @@
+chardet.charsetprober DEBUG:EUC-JP Japanese prober hit error at byte 85
+chardet.charsetprober DEBUG:EUC-KR Korean prober hit error at byte 85
+chardet.charsetprober DEBUG:EUC-TW Taiwan prober hit error at byte 84
+chardet.charsetprober DEBUG:utf-8  confidence = 0.87625
+chardet.charsetprober DEBUG:SHIFT_JIS Japanese confidence = 0.01
+chardet.charsetprober DEBUG:EUC-JP not active
+chardet.charsetprober DEBUG:GB2312 Chinese confidence = 0.01
+chardet.charsetprober DEBUG:EUC-KR not active
+chardet.charsetprober DEBUG:CP949 Korean confidence = 0.01
+chardet.charsetprober DEBUG:Big5 Chinese confidence = 0.01
+chardet.charsetprober DEBUG:EUC-TW not active
+chardet.charsetprober DEBUG:Johab Korean confidence = 0.01
+chardet.charsetprober DEBUG:windows-1251 Russian confidence = 0.01
+chardet.charsetprober DEBUG:KOI8-R Russian confidence = 0.01
+chardet.charsetprober DEBUG:ISO-8859-5 Russian confidence = 0.0
+chardet.charsetprober DEBUG:MacCyrillic Russian confidence = 0.01
+chardet.charsetprober DEBUG:IBM866 Russian confidence = 0.01
+chardet.charsetprober DEBUG:IBM855 Russian confidence = 0.01
+chardet.charsetprober DEBUG:ISO-8859-7 Greek confidence = 0.026903678881445604
+chardet.charsetprober DEBUG:windows-1253 Greek confidence = 0.026903678881445604
+chardet.charsetprober DEBUG:ISO-8859-5 Bulgarian confidence = 0.0
+chardet.charsetprober DEBUG:windows-1251 Bulgarian confidence = 0.01
+chardet.charsetprober DEBUG:TIS-620 Thai confidence = 0.04997516833835604
+chardet.charsetprober DEBUG:ISO-8859-9 Turkish confidence = 0.6989517639535363
+chardet.charsetprober DEBUG:windows-1255 Hebrew confidence = 0.0
+chardet.charsetprober DEBUG:windows-1255 Hebrew confidence = 0.12441817669348361
+chardet.charsetprober DEBUG:windows-1255 Hebrew confidence = 0.05332207572577869
+chardet.charsetprober DEBUG:utf-8  confidence = 0.87625
+chardet.charsetprober DEBUG:SHIFT_JIS Japanese confidence = 0.01
+chardet.charsetprober DEBUG:EUC-JP not active
+chardet.charsetprober DEBUG:GB2312 Chinese confidence = 0.01
+chardet.charsetprober DEBUG:EUC-KR not active
+chardet.charsetprober DEBUG:CP949 Korean confidence = 0.01
+chardet.charsetprober DEBUG:Big5 Chinese confidence = 0.01
+chardet.charsetprober DEBUG:EUC-TW not active
+chardet.charsetprober DEBUG:Johab Korean confidence = 0.01
+chardet.charsetprober DEBUG:EUC-JP Japanese prober hit error at byte 85
+chardet.charsetprober DEBUG:EUC-KR Korean prober hit error at byte 85
+chardet.charsetprober DEBUG:EUC-TW Taiwan prober hit error at byte 84
+chardet.charsetprober DEBUG:utf-8  confidence = 0.87625
+chardet.charsetprober DEBUG:SHIFT_JIS Japanese confidence = 0.01
+chardet.charsetprober DEBUG:EUC-JP not active
+chardet.charsetprober DEBUG:GB2312 Chinese confidence = 0.01
+chardet.charsetprober DEBUG:EUC-KR not active
+chardet.charsetprober DEBUG:CP949 Korean confidence = 0.01
+chardet.charsetprober DEBUG:Big5 Chinese confidence = 0.01
+chardet.charsetprober DEBUG:EUC-TW not active
+chardet.charsetprober DEBUG:Johab Korean confidence = 0.01
+chardet.charsetprober DEBUG:windows-1251 Russian confidence = 0.01
+chardet.charsetprober DEBUG:KOI8-R Russian confidence = 0.01
+chardet.charsetprober DEBUG:ISO-8859-5 Russian confidence = 0.0
+chardet.charsetprober DEBUG:MacCyrillic Russian confidence = 0.01
+chardet.charsetprober DEBUG:IBM866 Russian confidence = 0.01
+chardet.charsetprober DEBUG:IBM855 Russian confidence = 0.01
+chardet.charsetprober DEBUG:ISO-8859-7 Greek confidence = 0.026903678881445604
+chardet.charsetprober DEBUG:windows-1253 Greek confidence = 0.026903678881445604
+chardet.charsetprober DEBUG:ISO-8859-5 Bulgarian confidence = 0.0
+chardet.charsetprober DEBUG:windows-1251 Bulgarian confidence = 0.01
+chardet.charsetprober DEBUG:TIS-620 Thai confidence = 0.04997516833835604
+chardet.charsetprober DEBUG:ISO-8859-9 Turkish confidence = 0.6989517639535363
+chardet.charsetprober DEBUG:windows-1255 Hebrew confidence = 0.0
+chardet.charsetprober DEBUG:windows-1255 Hebrew confidence = 0.12441817669348361
+chardet.charsetprober DEBUG:windows-1255 Hebrew confidence = 0.05332207572577869
+chardet.charsetprober DEBUG:utf-8  confidence = 0.87625
+chardet.charsetprober DEBUG:SHIFT_JIS Japanese confidence = 0.01
+chardet.charsetprober DEBUG:EUC-JP not active
+chardet.charsetprober DEBUG:GB2312 Chinese confidence = 0.01
+chardet.charsetprober DEBUG:EUC-KR not active
+chardet.charsetprober DEBUG:CP949 Korean confidence = 0.01
+chardet.charsetprober DEBUG:Big5 Chinese confidence = 0.01
+chardet.charsetprober DEBUG:EUC-TW not active
+chardet.charsetprober DEBUG:Johab Korean confidence = 0.01

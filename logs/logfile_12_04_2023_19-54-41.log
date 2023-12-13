@@ -1,0 +1,37 @@
+chardet.charsetprober DEBUG:EUC-JP Japanese prober hit error at byte 85
+chardet.charsetprober DEBUG:EUC-KR Korean prober hit error at byte 85
+chardet.charsetprober DEBUG:EUC-TW Taiwan prober hit error at byte 84
+chardet.charsetprober DEBUG:utf-8  confidence = 0.87625
+chardet.charsetprober DEBUG:SHIFT_JIS Japanese confidence = 0.01
+chardet.charsetprober DEBUG:EUC-JP not active
+chardet.charsetprober DEBUG:GB2312 Chinese confidence = 0.01
+chardet.charsetprober DEBUG:EUC-KR not active
+chardet.charsetprober DEBUG:CP949 Korean confidence = 0.01
+chardet.charsetprober DEBUG:Big5 Chinese confidence = 0.01
+chardet.charsetprober DEBUG:EUC-TW not active
+chardet.charsetprober DEBUG:Johab Korean confidence = 0.01
+chardet.charsetprober DEBUG:windows-1251 Russian confidence = 0.01
+chardet.charsetprober DEBUG:KOI8-R Russian confidence = 0.01
+chardet.charsetprober DEBUG:ISO-8859-5 Russian confidence = 0.0
+chardet.charsetprober DEBUG:MacCyrillic Russian confidence = 0.01
+chardet.charsetprober DEBUG:IBM866 Russian confidence = 0.01
+chardet.charsetprober DEBUG:IBM855 Russian confidence = 0.01
+chardet.charsetprober DEBUG:ISO-8859-7 Greek confidence = 0.026903678881445604
+chardet.charsetprober DEBUG:windows-1253 Greek confidence = 0.026903678881445604
+chardet.charsetprober DEBUG:ISO-8859-5 Bulgarian confidence = 0.0
+chardet.charsetprober DEBUG:windows-1251 Bulgarian confidence = 0.01
+chardet.charsetprober DEBUG:TIS-620 Thai confidence = 0.04997516833835604
+chardet.charsetprober DEBUG:ISO-8859-9 Turkish confidence = 0.6989517639535363
+chardet.charsetprober DEBUG:windows-1255 Hebrew confidence = 0.0
+chardet.charsetprober DEBUG:windows-1255 Hebrew confidence = 0.12441817669348361
+chardet.charsetprober DEBUG:windows-1255 Hebrew confidence = 0.05332207572577869
+chardet.charsetprober DEBUG:utf-8  confidence = 0.87625
+chardet.charsetprober DEBUG:SHIFT_JIS Japanese confidence = 0.01
+chardet.charsetprober DEBUG:EUC-JP not active
+chardet.charsetprober DEBUG:GB2312 Chinese confidence = 0.01
+chardet.charsetprober DEBUG:EUC-KR not active
+chardet.charsetprober DEBUG:CP949 Korean confidence = 0.01
+chardet.charsetprober DEBUG:Big5 Chinese confidence = 0.01
+chardet.charsetprober DEBUG:EUC-TW not active
+chardet.charsetprober DEBUG:Johab Korean confidence = 0.01
+__main__ DEBUG:namespace(task_to_run='continuous reading', stimuli_filepath='stimuli\\PSC_test.txt', language='german', run_exp=True, analyze_results=False, optimize=False, print_stim=False, plotting=False, task_name='continuous reading', stim_name='PSC_test', stim={'all': 'Die Sonne scheint zumeist, nur selten verdecken sie lockere Wolken. Ich habe mit großem Vergnügen die amüsanten Filmkritiken gelesen.'}, stim_all='Die Sonne scheint zumeist, nur selten verdecken sie lockere Wolken. Ich habe mit großem Vergnügen die amüsanten Filmkritiken gelesen.', stimcycles=0, is_priming_task=False, blankscreen_type='blank', blankscreen_cycles_begin=0, blankscreen_cycles_end=0, ncyclesprime=0, POS_implemented=False, affix_implemented=False, totalcycles=0, cycle_size=25, output_dir=1681322081.4670372, bigram_to_word_excitation=1, bigram_to_word_inhibition=0.0, word_inhibition=-0.4, min_activity=0.0, max_activity=1.0, decay=-0.09, discounted_Ngrams=10, bigram_gap=2, max_threshold=0.6, wordfreq_p=0.2, wordpred_p=0.2, word_length_similarity_constant=0.15, use_grammar_prob=False, uniform_prob=False, grammar_weight=0.5, linear=False, attend_width=15, max_attend_width=5.0, min_attend_width=3.0, attention_skew=4, letPerDeg=0.3, refix_size=0.2, salience_position=5, include_sacc_type_sse=True, sacc_type_objective='total', include_sacc_dist_sse=True, sacc_optimal_distance=8, saccErr_scaler=0.2, saccErr_sigma=0.17, saccErr_sigma_scaler=0.06, tuning_measure='SSE', discretization='bin', objective=[], epsilon=0.1, frequency_flag=True, prediction_flag=True, similarity_based_recognition=True, use_saccade_error=True, use_attendposition_change=True, visualise=False, slow_word_activity=False, pauze_allocation_errors=False, use_boundary_task=False, corpora_repeats=0, mu=12, sigma=4, recog_speeding=5.0, trial_ends_on_key_press=False, affix_system=False, simil_algo='', max_edit_dist=0, short_word_cutoff=0)

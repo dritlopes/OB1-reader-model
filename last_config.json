@@ -1,0 +1,1 @@
+{"stimuli_filepath": "data/processed/Provo_Corpus.csv", "run_exp": true, "analyze_results": false, "optimize": false, "print_stim": false, "plotting": false, "stimuli_separator": "\\t", "task_to_run": "ContinuousReading_English", "language": "English"}
