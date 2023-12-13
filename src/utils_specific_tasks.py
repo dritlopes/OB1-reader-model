@@ -334,20 +334,6 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
         with open(output_file, "w") as f:
             json.dump(unknown_word_pred_values_dict, f, ensure_ascii=False)
 
-# def get_pred_dict(pm, lexicon):
-
-#     output_word_pred_map = f"../data/processed/prediction_map_{pm.stim_name}_{pm.prediction_flag}_{pm.task_to_run}_{pm.language}.json"
-#     if pm.prediction_flag in ['gpt2', 'llama']:
-#         output_word_pred_map = output_word_pred_map.replace('.json', f'_topk{pm.topk}.json')
-
-#     # AL: in case pred file needs to be created from original files
-#     if not os.path.exists(output_word_pred_map):
-#         create_pred_file(pm, output_word_pred_map, lexicon)
-
-#     with open(output_word_pred_map, "r") as f:
-#         word_pred_dict = json.load(f)
-
-#     return word_pred_dict
 
 def get_pred_values(pm, task_words):
 
@@ -600,25 +586,6 @@ def calculate_unit_activations(all_ngrams, bigrams_to_locations, eye_position, A
                                                           pm.attention_skew)
     return unit_activations
 
-    
-    # This is where input is computed (excit is specific to word, inhib same for all)
-    for lexicon_ix, lexicon_word in enumerate(lexicon):  # NS: why is this?
-        wordExcitationInput = 0
-
-        # (Fast) Bigram & Monogram activations
-        bigram_intersect_list = allBigrams_set.intersection(
-            lexicon_word_bigrams[lexicon_word])
-        for bigram in bigram_intersect_list:
-            wordExcitationInput += pm.bigram_to_word_excitation * \
-                unitActivations[bigram]
-        for monogram in allMonograms:
-            if monogram in lexicon_word:
-                wordExcitationInput += pm.bigram_to_word_excitation * \
-                    unitActivations[monogram]
-
-        word_input_np[lexicon_ix] = wordExcitationInput + wordBigramsInhibitionInput
-    
-    return word_input_np
 
 
 def inter_word_inhibition(lexicon_word_activity_np, lexicon_total_input_np, lexicon_activewords_np, word_input_np, pm, word_overlap_matrix, lexicon_normalized_word_inhibition, N_ngrams_lexicon, lexicon, target):
@@ -664,55 +631,6 @@ def inter_word_inhibition(lexicon_word_activity_np, lexicon_total_input_np, lexi
 
     return lexicon_word_activity_np_local, lexicon_total_input_np_local, squared_activity, lexicon_word_inhibition_np, overlap_select, lexicon_select#, target_lexicon_index
 
-
-# def match_words_in_slots(trial,recognized, n_words_in_stim, order_match_check, stim_matched_slots, stimulus, above_thresh_lexicon_np, lexicon, 
-#                         affixes, lexicon_word_activity_np, pm, target, task, lexicon_index_dict):
-#     new_recognized_words = np.zeros(len(lexicon), dtype=bool)
-#     falseguess = False
-#     noun_count = 0
-#     ver_count = 0
-#     POSrecognition = ['' for _ in range(n_words_in_stim)]
-
-#     for slot_to_check in range(0, n_words_in_stim):
-#         slot_num = order_match_check[slot_to_check]
-#         # print(f"Order match check: {order_match_check}")
-#         if len(stim_matched_slots[slot_num]) == 0:
-#             word_searched = stimulus.split()[slot_num]
-#             recognWrdsFittingLen_np = above_thresh_lexicon_np * \
-#                         np.array([0 if x in affixes else int(is_similar_word_length(pm, len(x.replace('_', '')),
-#                               len(word_searched))) for x in lexicon])
-#             if sum(recognWrdsFittingLen_np):
-#                 highest = np.argmax(recognWrdsFittingLen_np * lexicon_word_activity_np)
-#                 highest_word = lexicon[highest]
-#                 stim_matched_slots[slot_num] = highest_word
-#                 new_recognized_words[highest] = 1
-#                 above_thresh_lexicon_np[highest] = 0
-#                 lexicon_word_activity_np[highest] = pm.min_activity
-#                 if target in stimulus.split():
-#                     if stimulus.split().index(target) == slot_num:
-#                         if target == highest_word.replace('_', ''):
-#                             recognized = True
-#                         else:
-#                             falseguess = True
-#                 # if pm.use_grammar_prob:
-#                 #     POSrecognition[slot_num] = POSdict[highest_word.replace('_', '')]
-#                 #     if task == 'Classification':
-#                 #         if POSrecognition[0] == 'NOU' or POSrecognition[2] == 'NOU':
-#                 #             noun_count += lexicon_word_activity_np[lexicon_index_dict[
-#                 #                 f'_{stimulus.split()[ slot_num]}_']]
-#                 #         elif POSrecognition[0] == 'VER' or POSrecognition[2] == 'VER':
-#                 #             ver_count += lexicon_word_activity_np[lexicon_index_dict[
-#                 #                 f'_{stimulus.split()[ slot_num]}_']]
-#                 #     if POSrecognition[slot_num] == POSdict[stimulus.split()[slot_num]]:
-#                 #         if slot_num > 0:
-#                 #             lexicon_word_activity_np[lexicon_index_dict[f'_{stimulus.split()[slot_num - 1]}_']]\
-#                 #                 += word_pred_values[0][trial][slot_num - 1] * grammar_weight
-#                 #         if slot_num < len(stimulus.split())-1:
-#                 #             lexicon_word_activity_np[lexicon_index_dict[f'_{stimulus.split()[slot_num + 1]}_']] \
-#                 #                 += word_pred_values[1][trial][slot_num + 1] * grammar_weight
-#                 ### ADD OTHER TASKS HERE
-
-    return stim_matched_slots, new_recognized_words, above_thresh_lexicon_np, lexicon_word_activity_np, recognized, falseguess, POSrecognition, noun_count, ver_count
 
 def plot_inhib_spectrum(lexicon, lexicon_activewords_np, inhib_spectrum1, inhib_spectrum2,
                         index_num1, index_num2, inhib_spectrum1_indices, inhib_spectrum2_indices, 
@@ -774,19 +692,6 @@ def get_pred_dict(pm, lexicon):
 
     return word_pred_dict
 
-# def write_out_simulation_data_specific(simulation_data, outfile_sim_data):
-
-    # simulation_results = defaultdict(list)
-
-    # for trial_data in simulation_data:  # Iterate through each trial's data
-    #     for key, values in trial_data.items():
-    #         if isinstance(values, list):
-    #             simulation_results[key].extend(values)
-    #         else:
-    #             simulation_results[key].append(values)
-
-    # simulation_results_df = pd.DataFrame.from_dict(simulation_results)
-    # simulation_results_df.to_csv(outfile_sim_data, sep='\t', index=False)
 
 def write_out_simulation_data_specific(simulation_data, outfile_sim_data):
 

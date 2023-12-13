@@ -104,15 +104,6 @@ def update_lexicon_threshold(recognized_word_at_position,fixation,tokens,updated
 
     return updated_thresh_positions, lexicon_thresholds
 
-# def is_similar_word_length(len1, len2, len_sim_constant):
-
-#     is_similar = False
-#     # NV: difference of word length  must be within 15% of the length of the longest word
-#     if abs(len1-len2) < (len_sim_constant * max(len1, len2)):
-#         is_similar = True
-
-#     return is_similar
-
 def is_similar_word_length(pm, len1, lengths_to_be_matched):
     for len2 in lengths_to_be_matched:
         # NV: difference of word length  must be within 15% of the length of the longest word
@@ -120,41 +111,6 @@ def is_similar_word_length(pm, len1, lengths_to_be_matched):
             return True
     return False
 
-
-# Work on this to impact inhibition values
-# def build_word_inhibition_matrix(lexicon,lexicon_word_ngrams,pm,tokens_to_lexicon_indices):
-
-#     lexicon_size = len(lexicon)
-#     word_overlap_matrix = np.zeros((lexicon_size, lexicon_size), dtype=float)
-#     # word_inhibition_matrix = np.empty((lexicon_size, lexicon_size), dtype=bool)
-
-#     for word_1_index in range(lexicon_size):    # MM: receiving unit, I think...
-#         # AL: make sure word1-word2, but not word2-word1 or word1-word1.
-#         for word_2_index in range(word_1_index+1,lexicon_size):    # MM: sending unit, I think...
-#             word1, word2 = lexicon[word_1_index], lexicon[word_2_index]
-#             # if not is_similar_word_length(len(word1), len(word2), pm.word_length_similarity_constant):
-#             #     continue
-#             # else:
-#             # AL: lexicon_word_ngrams already contains all ngrams (bigrams and included monograms)
-#             ngram_common = list(set(lexicon_word_ngrams[word1]).intersection(set(lexicon_word_ngrams[word2])))
-#             n_total_overlap = len(ngram_common)
-#             # MM: now inhib set as proportion of overlapping bigrams (instead of nr overlap)
-#             word_overlap_matrix[word_1_index, word_2_index] = n_total_overlap / len(lexicon_word_ngrams[word1])
-#             word_overlap_matrix[word_2_index, word_1_index] = n_total_overlap / len(lexicon_word_ngrams[word2])
-#             #print("word1 ", word1, "word2 ", word2, "overlap ", n_total_overlap, "len w1 ", len(lexicon_word_ngrams[word1]))
-#             #print("inhib one way", word_overlap_matrix[word_1_index, word_2_index])
-#             #exit()
-
-#     output_inhibition_matrix = 'data\Inhibition_matrix_previous.dat'
-#     with open(output_inhibition_matrix, "wb") as f:
-#         pickle.dump(np.sum(word_overlap_matrix, axis=0)[tokens_to_lexicon_indices], f)
-
-#     size_of_file = os.path.getsize(output_inhibition_matrix)
-#     with open('data\Inhib_matrix_params_latest_run.dat', "wb") as f:
-#         pickle.dump(str(lexicon_word_ngrams) + str(lexicon_size) +
-#                     str(pm.simil_algo) + str(pm.max_edit_dist) + str(pm.short_word_cutoff) + str(size_of_file), f)
-
-#     return word_overlap_matrix
 def build_word_inhibition_matrix(lexicon,lexicon_word_ngrams,pm,matrix_filepath,matrix_parameters_filepath):
 
     lexicon_size = len(lexicon)
@@ -189,30 +145,6 @@ def build_word_inhibition_matrix(lexicon,lexicon_word_ngrams,pm,matrix_filepath,
 
     return word_overlap_matrix
 
-
-
-
-
-
-# def build_word_inhibition_matrix(lexicon, lexicon_word_bigrams, lexicon_word_monograms, min_overlap=0.5):
-#     # Initialize the matrix with zeros
-#     word_overlap_matrix = np.zeros((len(lexicon), len(lexicon)))
-
-#     # Iterate through every pair of words in the lexicon
-#     for word_1_index, word_1 in enumerate(lexicon):
-#         for word_2_index, word_2 in enumerate(lexicon):
-#             # Skip if it's the same word (if needed)
-#             if word_1 != word_2:
-#                 # Calculate overlap between the bigrams and monograms
-#                 bigram_overlap = len(set(lexicon_word_bigrams[word_1]) & set(lexicon_word_bigrams[word_2]))
-#                 monogram_overlap = len(set(lexicon_word_monograms[word_1]) & set(lexicon_word_monograms[word_2]))
-#                 total_overlap = bigram_overlap + monogram_overlap
-
-#                 # Update the word_overlap_matrix if overlap is above threshold
-#                 if total_overlap > min_overlap:
-#                     word_overlap_matrix[word_1_index, word_2_index] = total_overlap
-
-#     return word_overlap_matrix
 
 
 def get_attention_skewed(attentionWidth, attention_eccentricity, attention_skew):
