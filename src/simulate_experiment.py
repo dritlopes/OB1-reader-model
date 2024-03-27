@@ -378,21 +378,24 @@ def reading(pm,tokens,word_overlap_matrix,lexicon_word_ngrams,lexicon_word_index
     # logger.info(f'Chain of saccades: {[row["saccade_type"] for row in all_data.values()]}')
 
     return all_data
+def word_recognition(pm, word_inhibition_matrix, lexicon_word_ngrams, lexicon_word_index, lexicon_thresholds_dict, lexicon, word_frequencies):
 
-def word_recognition(pm,word_inhibition_matrix,lexicon_word_ngrams,lexicon_word_index,lexicon_thresholds_dict,lexicon,word_frequencies):
-
+    print("\n ____ WORD_RECOGNITION ____")
     # information computed for each fixation
     all_data = {}
     # data frame with stimulus info
     stim_df = pm.stim
     # list of stimuli
     stim = pm.stim_all
-    # initialise attention window size
-    attend_width = pm.attend_width
+    # initialise word length
+    len_sim_const = pm.word_length_similarity_constant
     # word activity for each word in lexicon
     lexicon_word_activity = np.zeros((len(lexicon)), dtype=float)
+    # initialise attention window size
+    attend_width = pm.attend_width
     # recognition threshold for each word in lexicon
     lexicon_thresholds = np.zeros((len(lexicon)), dtype=float)
+
     # update lexicon_thresholds with frequencies if dict filled in (if frequency flag)
     if lexicon_thresholds_dict != {}:
         for i, word in enumerate(lexicon):
@@ -404,7 +407,14 @@ def word_recognition(pm,word_inhibition_matrix,lexicon_word_ngrams,lexicon_word_
 
         # ---------------------- Define the trial stimuli ---------------------
         stimulus = stim[trial]
-        fixated_position_in_stim = math.floor(len(stimulus.split(' '))/2)
+
+        # Print the stimulus presentation
+        print(f"\n Simulus presentation of {pm.stimcycles * pm.cycle_size}ms\n ****** {stimulus}******")
+
+        recognized_word_at_position = np.empty(len(stimulus.split(' ')), dtype=object)
+        fixated_position_in_stim = math.floor(len(stimulus.split(' '))/2) # math.floor = arrondi
+        stimulus_position = [i for i in range(0, len(stimulus.split(' ')))]
+        print(stimulus_position)
         eye_position = np.round(len(stimulus) // 2)
         target = stim_df['target'][trial]
         condition = stim_df['condition'][trial]
@@ -412,46 +422,48 @@ def word_recognition(pm,word_inhibition_matrix,lexicon_word_ngrams,lexicon_word_
         trial_data['eye position'] = eye_position
         trial_data['target'] = target
         trial_data['condition'] = condition
+
+        #stimulus, stimulus_position, fixated_position_stimulus = compute_stimulus(fixated_position_in_stim,stimulus) # n i e t   [0, 1, 2, 3, 4] 1
+
+        recognition_in_stimulus = []
         if pm.is_priming_task:
             prime = stim_df['prime'][trial]
             trial_data['prime'] = prime
 
         trial_data['target threshold'] = lexicon_thresholds[lexicon_word_index[target]]
         trial_data['target frequency'] = word_frequencies[target]
-        # if pred_values:
-        #     trial_data['target predictability'] = pred_values[stimulus.split().index(target)]
 
         # ---------------------- Start processing stimuli ---------------------
-        n_cycles = 0
-        recog_cycle = 0
+        n_cycle = 1    # counter for cycles
+        recog_cycle = n_cycle
         attention_position = eye_position
         stimuli = []
-        recognized, false_guess = False,False
+        recognized, false_guess = False, False
         # init activity matrix with min activity. Assumption that each trial is independent.
-        lexicon_word_activity[lexicon_word_activity < pm.min_activity] = pm.min_activity
+        lexicon_word_activity[:] = pm.min_activity
 
         # keep processing stimuli as long as trial lasts
-        while n_cycles < pm.totalcycles:
+        while n_cycle < pm.totalcycles:
 
             # stimulus may change within a trial to blankscreen, prime
-            if n_cycles < pm.blankscreen_cycles_begin or n_cycles > pm.totalcycles - pm.blankscreen_cycles_end:
+            if n_cycle < pm.blankscreen_cycles_begin or n_cycle > pm.totalcycles - pm.blankscreen_cycles_end:
                 stimulus = get_blankscreen_stimulus(pm.blankscreen_type)
                 stimuli.append(stimulus)
-                n_cycles += 1
+                n_cycle += 1
                 continue
-            elif pm.is_priming_task and n_cycles < (pm.blankscreen_cycles_begin+pm.ncyclesprime):
+            elif pm.is_priming_task and n_cycle < (pm.blankscreen_cycles_begin+pm.ncyclesprime):
                 stimulus = prime
             else:
                 stimulus = stim[trial]
             stimuli.append(stimulus)
 
-            # keep track of which words have been recognized in the stimulus
-            # create array if first stimulus or stimulus has changed within trial
-            if (len(stimuli) <= 1) or (stimuli[-2] != stimuli[-1]):
-                stimulus_matched_slots = np.empty(len(stimulus.split()),dtype=object)
+            # # keep track of which words have been recognized in the stimulus
+            # # create array if first stimulus or stimulus has changed within trial
+            # if (len(stimuli) <= 1) or (stimuli[-2] != stimuli[-1]):
+            #     stimulus_matched_slots = np.empty(len(stimulus.split()),dtype=object)
 
             # define order for slot matching. Computed within cycle loop bcs stimulus may change within trial
-            order_match_check = define_slot_matching_order(len(stimulus.split()),fixated_position_in_stim,attend_width)
+            order_match_check = define_slot_matching_order(len(stimulus.split()), fixated_position_in_stim, attend_width)
 
             # compute word excitatory input given stimulus
             n_ngrams, total_ngram_activity, all_ngrams, word_input = compute_words_input(stimulus,
@@ -459,7 +471,8 @@ def word_recognition(pm,word_inhibition_matrix,lexicon_word_ngrams,lexicon_word_
                                                                                          eye_position,
                                                                                          attention_position,
                                                                                          attend_width,
-                                                                                         pm)
+                                                                                         pm,
+                                                                                         word_frequencies)
             trial_data['ngram act per cycle'].append(total_ngram_activity)
             trial_data['n of ngrams per cycle'].append(len(all_ngrams))
 
@@ -469,25 +482,34 @@ def word_recognition(pm,word_inhibition_matrix,lexicon_word_ngrams,lexicon_word_
                                                                                   pm,
                                                                                   word_input,
                                                                                   len(lexicon))
+
             trial_data['target act per cycle'].append(lexicon_word_activity[lexicon_word_index[target]])
             trial_data['lexicon act per cycle'].append(sum(lexicon_word_activity))
             trial_data['stimulus act per cycle'].append(sum([lexicon_word_activity[lexicon_word_index[word]] for word in stimulus.split() if word in lexicon_word_index.keys()]))
 
+            # check all activity, last is to check act of specific word
+            target_word_index = lexicon_word_index[target]
+            print(f"  input to target {target}: {round(word_input[target_word_index], 3)}")
+            print(f'CYCLE {n_cycle}    activ of target {round(lexicon_word_activity[target_word_index], 3)} inhib target: {round(lexicon_word_inhibition[target_word_index], 6)}')
+            # print(f'                   activ of ziet: {round(lexicon_word_activity[lexicon_word_index["ziet"]], 3)}')
+
             # word recognition, by checking matching active wrds to slots
-            stimulus_matched_slots, lexicon_word_activity = \
+            stimulus_matched_slots, lexicon_word_activity, recognition_in_stimulus = \
                 match_active_words_to_input_slots(order_match_check,
                                                   stimulus,
-                                                  stimulus_matched_slots,
-                                                  lexicon_thresholds,
+                                                  recognized_word_at_position, # fixed
                                                   lexicon_word_activity,
                                                   lexicon,
                                                   pm.min_activity,
-                                                  None,
-                                                  pm.word_length_similarity_constant)
+                                                  stimulus_position, # fixed
+                                                  len_sim_const,
+                                                  recognition_in_stimulus, # fixed
+                                                  pm.max_threshold,
+                                                  verbose=True)
 
             # register cycle of recognition at target position
             if target in stimulus.split() and stimulus_matched_slots[fixated_position_in_stim]:
-                recog_cycle = n_cycles
+                recog_cycle = n_cycle
                 if stimulus_matched_slots[fixated_position_in_stim] == target:
                     recognized = True
                 else:
@@ -497,17 +519,18 @@ def word_recognition(pm,word_inhibition_matrix,lexicon_word_ngrams,lexicon_word_
             if pm.trial_ends_on_key_press and (recognized == True or false_guess == True):
                 break
 
-            n_cycles += 1
+            n_cycle += 1
 
         # compute reaction time
         reaction_time = ((recog_cycle + 1 - pm.blankscreen_cycles_begin) * pm.cycle_size) + 300
-        print("reaction time: " + str(reaction_time) + " ms")
-        print("end of trial")
+        print(f"\n reaction time: {str(reaction_time)} ms")
+        print(f"\n reaction time formula: (({recog_cycle} + 1 - {pm.blankscreen_cycles_begin} ) * {pm.cycle_size} )+ 300")
+        print("\n End of trial")
         print("----------------")
         print("\n")
 
         trial_data['attend width'] = attend_width
-        trial_data['reactiown time'] = reaction_time
+        trial_data['reaction time'] = reaction_time
         trial_data['matched slots'] = stimulus_matched_slots
         trial_data['target recognized'] = recognized
         trial_data['false guess'] = false_guess
@@ -516,7 +539,7 @@ def word_recognition(pm,word_inhibition_matrix,lexicon_word_ngrams,lexicon_word_
 
         for key,value in trial_data.items():
             print(key, ': ',value)
-        if trial > 1: exit()
+        #if trial > 1: exit()
 
     return all_data
 
@@ -526,6 +549,7 @@ def simulate_experiment(pm):
 
     if verbose: print('\nPreparing simulation(s)...')
     logger.info('\nPreparing simulation(s)...')
+
     tokens = [token for stimulus in pm.stim_all for token in stimulus.split(' ') if token != '']
 
     if pm.is_priming_task:
@@ -534,6 +558,7 @@ def simulate_experiment(pm):
     tokens = [pre_process_string(token) for token in tokens]
     # remove empty strings which were once punctuations
     tokens = [token for token in tokens if token != '']
+    print(tokens)
     word_frequencies = get_word_freq(pm, set(tokens), n_high_freq_words=500)
     max_frequency = max(word_frequencies.values())
 
@@ -541,11 +566,11 @@ def simulate_experiment(pm):
     if os.path.exists(lexicon_filename):
         with open(lexicon_filename, 'rb') as infile:
             lexicon = pickle.load(infile)
-        word_predictions = get_pred_dict(pm, lexicon)
+        # word_predictions = get_pred_dict(pm, lexicon)
     else:
         lexicon = list(set(tokens) | set(word_frequencies.keys()))
         lexicon = [pre_process_string(word) for word in lexicon]
-        word_predictions = get_pred_dict(pm, lexicon)
+        # word_predictions = get_pred_dict(pm, lexicon)
         # add unknown words predicted to lexicon
         if pm.results_identifier == 'prediction_flag':
             unknown_tokens = add_predicted_tokens_to_vocab(pm)

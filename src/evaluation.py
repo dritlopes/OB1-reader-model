@@ -6,11 +6,13 @@ import scipy.stats as stats
 import statsmodels.formula.api as smf
 import matplotlib.pyplot as plt
 import seaborn as sb
+import ptitprince as pt
 from utils import get_pred_dict, get_word_freq, pre_process_string
 import math
 import os
 import warnings
 from collections import Counter
+import itertools
 
 # ---------------- Simulation eye-movement measures ------------------
 def pre_process_eye_tracking(eye_tracking: pd.DataFrame, eye_tracking_filepath: str, stimuli):
@@ -616,7 +618,6 @@ def compute_root_mean_squared_error(true_values:list, simulated_values:list):
 def compute_error(measures, true, pred):
 
     mean2errors = defaultdict(list)
-
     for measure in measures:
         # excluding words with nan value, e.g. skipped words of prob 1. Should words that are always skipped be included in the equation?
         values = drop_nan_values(true[measure], pred[measure])
@@ -848,50 +849,46 @@ def test_difference(sim_values1, sim_values2, filepath):
               'result': [test.statistic, test.pvalue]}
     # Wilcoxon statistic: the sum of the ranks of the differences above zero
     df = pd.DataFrame.from_dict(t_test)
+    print(df)
+    print(filepath)
     df.to_csv(filepath, sep='\t', index=False)
 
-def compare_conditions(parameters_list, data_log):
+def compare_conditions(measures, data_log):
 
-    if data_log:
-        measures = parameters_list[0].evaluation_measures
+    conditions = ['baseline', 'cloze', 'gpt2', 'llama']
 
-        for measure in measures:
-            sim_values1, sim_values2, error_values, raw_values, conditions_raw, conditions_error = [], [], [], [], [], []
-            for condition in ['Provo', 'baseline', 'cloze', 'gpt2']:
-                for data_name, data in data_log.items():
-                    if 'mean' in data_name and condition in data_name:
-                        if 'simulation' in data_name or 'last_sim' in data_name:
-                            raw_values.extend(data[measure].tolist())
-                            conditions_raw.extend([condition.lower() for value in data[measure].tolist()])
-                    if 'RM2E' in data_name and condition in data_name:
-                        if 'mean' in data_name:
-                            measure_value = \
-                            data.loc[data["eye_tracking_measure"] == measure]['norm_mean_squared_error'].tolist()[0]
-                            error_values.append(float(measure_value))
-                            conditions_error.append(condition)
-                        elif condition == 'cloze':
-                            sim_values1 = data[measure].tolist()
-                        elif condition == 'gpt2':
-                            sim_values2 = data[measure].tolist()
+    for measure in measures:
+        lists_to_compare = dict()
+        for condition in conditions:
+            for data_name, data in data_log.items():
+                if condition in data_name and 'RM2E' in data_name and 'mean' not in data_name:
+                    results_dir = os.path.dirname(data_name).replace('model_output', 'analysed')
+                    lists_to_compare[condition] = data[measure].tolist()
 
-            # ----------- Plot errors each condition per measure -----------
-            filepath = parameters_list[0].results_filepath.replace('model_output', 'analysed').replace('cloze','').replace('gpt2', '')
-            filepath = create_new_directory(filepath, 'plots')
-            # if len(error_values) > 0:
-            #     plot_error(error_values, conditions_error, measure, filepath)
-            if len(raw_values) > 0:
-                plot_raw_measures(raw_values, conditions_raw, measure, filepath)
+        for combi in itertools.combinations(lists_to_compare.keys(), 2):
+            # filepath = parameters_list[0].results_filepath.replace('cloze', '').replace('gpt2', '').replace('llama', '')
+            filepath = f'{results_dir}/t-test_{measure}_{combi}.csv'
+            test_difference(lists_to_compare[combi[0]], lists_to_compare[combi[1]], filepath)
 
-            # ----------- Test significance of difference in mean2error between conditions -----------
-            if len(sim_values1) > 0 and len(sim_values2) > 0:
-                filepath = parameters_list[0].results_filepath.replace('cloze', '').replace('gpt2', '')
-                filepath = filepath.replace('__', f'_{measure}_t-test_').replace('model_output', 'analysed')
-                filepath = create_new_directory(filepath, 't-test')
-                test_difference(sim_values1, sim_values2, filepath)
+    # add average over measures
+    lists_to_compare = dict()
+    for condition in conditions:
+        for data_name, data in data_log.items():
+            if condition in data_name and 'RM2E' in data_name and 'mean' not in data_name:
+                errors_per_measure, mean_rmse = [], []
+                for measure in measures:
+                    errors_per_measure.append(data[measure].tolist())
+                for simulation_id in range(len(errors_per_measure[0])):
+                    mean_rmse.append(np.mean([measure_errors[simulation_id] for measure_errors in errors_per_measure]))
+                lists_to_compare[condition] = mean_rmse
+    for combi in itertools.combinations(lists_to_compare.keys(), 2):
+        print(combi)
+        # filepath = parameters_list[0].results_filepath.replace('cloze', '').replace('gpt2', '').replace('llama', '')
+        filepath = f'{results_dir}/t-test_mean_{combi}.csv'
+        test_difference(lists_to_compare[combi[0]], lists_to_compare[combi[1]], filepath)
 
 def plot_RMSE(eye_measures, data_log, conditions, weights):
 
-    predictors, rmse_scores, measures = [], [], []
     rmse_per_condition = defaultdict()
 
     for predictor in conditions:
@@ -900,52 +897,121 @@ def plot_RMSE(eye_measures, data_log, conditions, weights):
             rmse_per_weight = dict()
             for weight in weights:
                 for data_name, data in data_log.items():
-                    if predictor in data_name and 'RM2E' in data_name and 'mean' not in data_name:
+                    if predictor in data_name and weight in data_name and 'RM2E' in data_name and 'mean' not in data_name:
                     # if predictor in data_name and 'RM2E' in data_name:
-                        if predictor != 'baseline':
-                            results_dir = os.path.dirname(data_name).replace('model_output', 'analysed').replace('RM2E', 'plots')
+                        results_dir = os.path.dirname(data_name).replace('model_output', 'analysed').replace('RM2E', 'plots')
                         # rmse = data.loc[data['eye_tracking_measure'] == measure]['norm_mean_squared_error'].tolist()[0]
                         rmse = data[measure].tolist()
                         # rmse_per_weight[weight] = float(rmse)
-                        rmse_per_weight[weight] = rmse
+                        if predictor == 'baseline':
+                            rmse_per_weight['baseline'] = rmse
+                        else:
+                            rmse_per_weight[weight] = rmse
             rmse_per_measure[measure] = rmse_per_weight
         rmse_per_condition[predictor] = rmse_per_measure
+        # add mean over eye movement measures
+        rmse_per_weight = dict()
+        if predictor == 'baseline':
+            rmse_all_measures, mean_rmse = [], []
+            for measure in eye_measures:
+                rmse_all_measures.append(rmse_per_condition[predictor][measure]['baseline'])
+            for simulation_id in range(len(rmse_all_measures[0])):
+                mean_rmse.append(np.mean([measure_errors[simulation_id] for measure_errors in rmse_all_measures]))
+            rmse_per_weight['baseline'] = mean_rmse
+            rmse_per_condition[predictor]['mean'] = rmse_per_weight
+        else:
+            for weight in weights:
+                rmse_all_measures, mean_rmse = [], []
+                for measure in eye_measures:
+                    rmse_all_measures.append(rmse_per_condition[predictor][measure][weight])
+                for simulation_id in range(len(rmse_all_measures[0])):
+                    mean_rmse.append(np.mean([measure_errors[simulation_id] for measure_errors in rmse_all_measures]))
+                rmse_per_weight[weight] = mean_rmse
+            rmse_per_condition[predictor]['mean'] = rmse_per_weight
 
+    predictors, rmse_scores, weights, measures = [], [], [], []
+    weight_mapping = {'0.05': 'low',
+                      '0.1': 'medium',
+                      '0.2': 'high',
+                      'baseline': 'baseline'}
     for condition, measure_dict in rmse_per_condition.items():
+        for measure, weight_dict in measure_dict.items():
+            for weight, rmse_per_simulation in weight_dict.items():
+                for rmse in rmse_per_simulation:
+                    weights.append(weight_mapping[weight])
+                    predictors.append(condition)
+                    rmse_scores.append(rmse)
+                    measures.append(measure.replace('_', ' '))
+    df = pd.DataFrame({'condition': predictors, 'normalized error': rmse_scores, 'measure': measures, 'weights': weights})
+
+    for measure in set(measures):
+        df_measure = df.loc[df['measure'] == measure]
+        # plt.rcParams.update({'font.size': 18})
+        plt.figure(figsize=(13, 6))
+        plot = sb.violinplot(data=df_measure, x='weights', y='normalized error', hue='condition', order=['baseline','low','medium','high'])
+        sb.move_legend(plot, "upper left", bbox_to_anchor=(1, 1))
+        # remove xlabel to avoid crowdness in x axis
+        plot.set(xlabel=None)
+        # plot.set(title=f'Error between {measure} in each model simulation and in eye-tracking data')
+        if not os.path.isdir(results_dir): os.makedirs(results_dir)
+        plot.figure.savefig(f'{results_dir}/plot_RMSE_{measure}.png')
+        plt.close()
+
+    predictors, rmse_scores, measures = [], [], []
+    measure_name = {'skip': 'SK',
+                    'first_fix_duration': 'FFD',
+                    'gaze_duration': 'GD',
+                    'total_reading_time': 'TRT',
+                    'regression_in': 'RG'}
+    for condition, measure_dict in rmse_per_condition.items():
+        for measure, weight_dict in measure_dict.items():
+            if measure in measure_name.keys():
+                mean_rmse = []
+                if weight_dict.keys():
+                    # mean_rmse = sum(weight_dict.values())/len(weight_dict.keys())
+                    # rmse_scores.append(mean_rmse)
+                    # predictors.append(condition)
+                    # measures.append(measure.replace('_', ' '))
+                    for sim_id in range(len(list(weight_dict.values())[0])):
+                        score = []
+                        for weight in weight_dict.keys():
+                            score.append(weight_dict[weight][sim_id])
+                        mean_rmse.append(sum(score)/len(score))
+                for rmse in mean_rmse:
+                    rmse_scores.append(rmse)
+                    predictors.append(condition)
+                    measures.append(measure_name[measure])
+    df = pd.DataFrame({'condition': predictors, 'normalized error': rmse_scores, 'measure': measures})
+    plt.figure(figsize=(12, 10))
+    plot = pt.RainCloud(x='measure', y='normalized error', hue='condition', data=df, orient='h', alpha =.65)
+    plot.set_ylabel(None)
+    plot.set_xlabel('RMSE', fontsize=18)
+    plt.tick_params(axis='both', which='major', labelsize=18)
+    if not os.path.isdir(results_dir): os.makedirs(results_dir)
+    plot.figure.savefig(f'{results_dir}/plot_RMSE.png', format='png', bbox_inches='tight', dpi=500)
+    plt.close()
+
+    rmse_df = defaultdict(list)
+    for condition, measure_dict in rmse_per_condition.items():
+        measure_rmse = dict()
         for measure, weight_dict in measure_dict.items():
             mean_rmse = []
             if weight_dict.keys():
-                # mean_rmse = sum(weight_dict.values())/len(weight_dict.keys())
-                # rmse_scores.append(mean_rmse)
-                # predictors.append(condition)
-                # measures.append(measure.replace('_', ' '))
                 for sim_id in range(len(list(weight_dict.values())[0])):
                     score = []
                     for weight in weight_dict.keys():
                         score.append(weight_dict[weight][sim_id])
                     mean_rmse.append(sum(score)/len(score))
-            for rmse in mean_rmse:
-                rmse_scores.append(rmse)
-                predictors.append(condition)
-                measures.append(measure.replace('_', ' '))
-
-    df = pd.DataFrame({'condition': predictors, 'normalized error': rmse_scores, 'measure': measures})
-    plt.rcParams.update({'font.size': 18})
-    plot = sb.catplot(data=df, x='measure', y='normalized error', hue='condition', kind='bar', errorbar='sd', errwidth=0.75, height=7, aspect=4, palette="Blues")
-    # add values to top of bars
-    ax = plot.facet_axis(0, 0)
-    for c in ax.containers:
-        labels = [f'{round((v.get_height()),3)}' for v in c]
-        ax.bar_label(c, labels=labels, label_type='edge')
-    # remove xlabel to avoid crowdness in x axis
-    plot.set(xlabel=None)
-    # make sure there is some space between 1 and the beginning of y axis to add stripes later
-    plot.set(ylim=(0.75, 3))
-    # define y ticks according to start from 1 (no normalized error below 1, given the normalization technique used)
-    plot.set(yticks=[1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3])
-    if not os.path.isdir(results_dir): os.makedirs(results_dir)
-    plot.figure.savefig(f'{results_dir}/plot_RMSE.png')
-
+            measure_rmse[measure] = mean_rmse
+        for sim_id in range(len(list(weight_dict.values())[0])):
+            sim_rmse = [rmse_list[sim_id] for rmse_list in measure_rmse.values()]
+            rmse_df[condition].append(sum(sim_rmse)/len(sim_rmse))
+    df = pd.DataFrame(rmse_df)
+    plot = pt.RainCloud(data=df, bw=0.05, cut=0, orient='h')
+    plot.set_xticks(np.arange(2.2,2.7,step=.1))
+    plot.set_xlabel('RMSE')
+    plot.figure.savefig(f'{results_dir}/plot_RMSE_mean_over_measures.png', format='png')
+    plt.close()
 
 def evaluate_output (parameters_list: list, verbose=True):
 
@@ -990,24 +1056,25 @@ def evaluate_output (parameters_list: list, verbose=True):
             # ----------- Word recognition accuracy -----------
             compute_word_recog_acc(simulation_output_all, simulation_output, parameters, output_filepath, verbose)
 
-    # paths = [
-    #          "../data/analysed/_2023_12_05_09-57-49/RM2E/RM2E_eye_movements_Provo_Corpus_continuous_reading_baseline_0.1.csv",
+    # paths = ["../data/analysed/_2023_12_05_09-57-49/RM2E/RM2E_eye_movements_Provo_Corpus_continuous_reading_baseline_0.05.csv",
+    #          "../data/analysed/_2023_12_09_13-15-47/RM2E/RM2E_eye_movements_Provo_Corpus_continuous_reading_cloze_0.2.csv",
+    #          "../data/analysed/_2023_12_09_13-15-47/RM2E/RM2E_eye_movements_Provo_Corpus_continuous_reading_gpt2_0.2.csv",
+    #          "../data/analysed/_2023_12_09_13-15-47/RM2E/RM2E_eye_movements_Provo_Corpus_continuous_reading_llama_0.2.csv",
+    #          "../data/analysed/_2023_12_05_09-57-49/RM2E/RM2E_eye_movements_Provo_Corpus_continuous_reading_cloze_0.05.csv",
+    #          "../data/analysed/_2023_12_05_09-57-49/RM2E/RM2E_eye_movements_Provo_Corpus_continuous_reading_gpt2_0.05.csv",
+    #          "../data/analysed/_2023_12_05_09-57-49/RM2E/RM2E_eye_movements_Provo_Corpus_continuous_reading_llama_0.05.csv",
     #          "../data/analysed/_2023_12_07_22-32-42/RM2E/RM2E_eye_movements_Provo_Corpus_continuous_reading_cloze_0.1.csv",
     #          "../data/analysed/_2023_12_07_22-32-42/RM2E/RM2E_eye_movements_Provo_Corpus_continuous_reading_gpt2_0.1.csv",
     #          "../data/analysed/_2023_12_07_22-32-42/RM2E/RM2E_eye_movements_Provo_Corpus_continuous_reading_llama_0.1.csv"]
-    # # "../data/processed/Provo_Corpus_eye_tracking_mean.csv",
-    # # "../data/analysed/_2023_12_05_09-57-49/simulation_eye_movements_mean_Provo_Corpus_continuous_reading_None_0.1.csv",
-    # # "../data/analysed/_2023_12_05_09-57-49/simulation_eye_movements_mean_Provo_Corpus_continuous_reading_cloze_0.05.csv",
-    # # "../data/analysed/_2023_12_05_09-57-49/simulation_eye_movements_mean_Provo_Corpus_continuous_reading_gpt2_0.05.csv",
-    # # "../data/analysed/_2023_12_05_09-57-49/simulation_eye_movements_mean_Provo_Corpus_continuous_reading_llama_0.05.csv",
-
+    #
+    #
     # for path in paths:
     #     df = pd.read_csv(path, sep='\t')
     #     data_log[path] = df
 
-    compare_conditions(parameters_list, data_log)
+    # compare_conditions(['skip', 'first_fix_duration', "gaze_duration", "total_reading_time", "regression_in"], data_log)
     # plot eye movement measures from human data vs. simulations in all pred conditions
-    plot_RMSE(['skip', 'single_fix', 'first_fix_duration', "gaze_duration", "total_reading_time", "regression_in"], data_log, ['baseline', 'cloze', 'gpt2', 'llama'], ['0.1'])
+    plot_RMSE(['skip', 'first_fix_duration', "gaze_duration", "total_reading_time", "regression_in"], data_log, ['baseline', 'gpt2', 'cloze', 'llama'], ['0.05', '0.1', '0.2'])
 
 
 

@@ -11,7 +11,7 @@ from evaluation import evaluate_output
 import json
 from types import SimpleNamespace
 
-# will create a new file everytime, stamped with date and time. #TODO; build system to keep only last X logs
+# will create a new file everytime, stamped with date and time
 now = datetime.now()
 dt_string = now.strftime("_%Y_%m_%d_%H-%M-%S")
 filename = f'logs/logfile{dt_string}.log'
@@ -90,7 +90,7 @@ def simulate_reading(global_parameters):
 
 def main():
 
-    useparser=False
+    useparser=True
     if useparser:
         parser = argparse.ArgumentParser()
         parser.add_argument('stimuli_filepath')
@@ -129,22 +129,22 @@ def main():
         }
     else:
         global_parameters = {
-            "task_to_run": 'continuous_reading',
-            "stimuli_filepath": "../data/processed/Provo_Corpus.csv",
-            "stimuli_separator": "\t",
+            "task_to_run": 'continuous_reading', # Flanker
+            "stimuli_filepath": "../data/processed/Provo_Corpus.csv", # "../data/raw/stimuli_en.csv"
+            "stimuli_separator": ",",
             "language": 'english',
             "run_exp": False,
             "analyze_results": True,
-            # "results_filepath": "",
-            # "parameters_filepath": "",
-            "results_filepath": ["../data/model_output/_2023_12_07_22-32-42/simulation_Provo_Corpus_continuous_reading_cloze_0.1.csv",
-                                 "../data/model_output/_2023_12_07_22-32-42/simulation_Provo_Corpus_continuous_reading_gpt2_0.1.csv",
-                                 "../data/model_output/_2023_12_07_22-32-42/simulation_Provo_Corpus_continuous_reading_llama_0.1.csv"],
-            "parameters_filepath": ["../data/model_output/_2023_12_07_22-32-42/parameters_Provo_Corpus_continuous_reading_cloze_0.1.pkl",
-                                    "../data/model_output/_2023_12_07_22-32-42/parameters_Provo_Corpus_continuous_reading_gpt2_0.1.pkl",
-                                    "../data/model_output/_2023_12_07_22-32-42/parameters_Provo_Corpus_continuous_reading_llama_0.1.pkl"],
-            "eye_tracking_filepath": '../data/raw/Provo_Corpus-Eyetracking_Data.csv',
-            "results_identifier": 'prediction_flag',
+            "results_filepath": "",
+            "parameters_filepath": "",
+            # "results_filepath": ["../data/model_output/_2023_12_07_22-32-42/simulation_Provo_Corpus_continuous_reading_cloze_0.1.csv",
+            #                      "../data/model_output/_2023_12_07_22-32-42/simulation_Provo_Corpus_continuous_reading_gpt2_0.1.csv",
+            #                      "../data/model_output/_2023_12_07_22-32-42/simulation_Provo_Corpus_continuous_reading_llama_0.1.csv"],
+            # "parameters_filepath": ["../data/model_output/_2023_12_07_22-32-42/parameters_Provo_Corpus_continuous_reading_cloze_0.1.pkl",
+            #                         "../data/model_output/_2023_12_07_22-32-42/parameters_Provo_Corpus_continuous_reading_gpt2_0.1.pkl",
+            #                         "../data/model_output/_2023_12_07_22-32-42/parameters_Provo_Corpus_continuous_reading_llama_0.1.pkl"],
+            "eye_tracking_filepath": '', # '../data/raw/Provo_Corpus-Eyetracking_Data.csv',
+            "results_identifier": '', # 'prediction_flag',
             "experiment_parameters_filepath": 'experiment_parameters.json',
             "optimize": False,
             "print_process": False,

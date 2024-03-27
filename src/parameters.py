@@ -98,7 +98,7 @@ def return_attributes(task_to_run, language, stimuli_filepath, file_separator):
             stim_name,
             stim_data,
             list(stim_data['stimulus']),
-            language='french',
+            language=language,
             stimcycles=8,
             blankscreen_cycles_begin=8,
             blankscreen_cycles_end=16,
@@ -109,16 +109,15 @@ def return_attributes(task_to_run, language, stimuli_filepath, file_separator):
     elif task_to_run == 'Flanker':
         # NV: extra assignments needed for this task
         stim_data['stimulus'] = stim_data['stimulus'].astype('unicode')
-        stim = stim_data[stim_data['condition'].str.startswith(('word'))].reset_index()
         return TaskAttributes(
             task_to_run,
             stim_name,
-            stim,
-            list(stim['stimulus']),
-            language='french',
-            stimcycles=6,
-            blankscreen_cycles_begin=8,
-            blankscreen_cycles_end=18,
+            stim_data,
+            list(stim_data['stimulus']),
+            language=language,
+            stimcycles=7,
+            blankscreen_cycles_begin=40,
+            blankscreen_cycles_end=40,
             POS_implemented=False,
             affix_implemented=True
         )

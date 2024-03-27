@@ -16,8 +16,8 @@ from collections import defaultdict
 import warnings
 from string import punctuation
 
-logger = logging.getLogger(__name__)
-print = logger.info
+# logger = logging.getLogger(__name__)
+# print = logger.info
 
 def get_stimulus_text_from_file(filepath, sep='\t'):
 
@@ -32,7 +32,9 @@ def get_stimulus_text_from_file(filepath, sep='\t'):
             data = {'all': [text]}
 
     else:
-        data = pd.read_csv(filepath, sep=sep, encoding="ISO-8859-1")
+        # encoding = chardet.detect(open(filepath, "rb").read())['encoding']
+        # data = pd.read_csv(filepath, sep=sep, encoding=encoding)
+        data = pd.read_csv(filepath, sep=sep)
 
         if stim_name == 'Provo_Corpus-Predictability_Norms':
             ids, texts, words, word_ids = [], [], [], []
@@ -100,14 +102,13 @@ def create_freq_dict(language, task_words, output_file_frequency_map = "", freq_
             word_col = 'Word'
 
         elif language == 'dutch':
-            filepath = '../data/raw/SUBTLEX-NL.txt'
+            filepath = '../data/raw/SUBTLEX-NL.txt' # first delete rows with noisy encoding! otherwise encoding error
             columns_to_use = [0, 7]
             freq_type = 'Zipf'
             word_col = 'Word'
 
         else:
             raise NotImplementedError(language + " is not implemented yet!")
-
         # create dict of word frequencies from resource/corpus file
         freq_df = pd.read_csv(filepath, usecols=columns_to_use, dtype={word_col: np.dtype(str)},
                               encoding=chardet.detect(open(filepath, "rb").read())['encoding'], delimiter="\t")
@@ -155,7 +156,6 @@ def create_freq_dict(language, task_words, output_file_frequency_map = "", freq_
 def get_word_freq(pm, unique_words, n_high_freq_words = 500, freq_threshold = 1, verbose=True):
 
     output_word_frequency_map = f"../data/processed/frequency_map_{pm.stim_name}_{pm.task_to_run}_{pm.language}.json"
-
     # AL: in case freq file needs to be created from original files
     if not os.path.exists(output_word_frequency_map):
         create_freq_dict(pm.language, unique_words, output_word_frequency_map, freq_threshold, n_high_freq_words, pm.task_to_run, verbose)
@@ -430,7 +430,6 @@ def set_up_inhibition_matrix(pm, lexicon, lexicon_word_ngrams):
                                                               pm,
                                                               matrix_filepath,
                                                               matrix_parameters_filepath)
-
     return word_inhibition_matrix
 
 def write_out_simulation_data(simulation_data, outfile_sim_data):

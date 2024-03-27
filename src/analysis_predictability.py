@@ -306,15 +306,15 @@ def plot_sim_results_pred(filepaths, measures):
                     predictors.extend([predictor for bin in x_bins])
 
         if len(data_type) > 0:
+            measure = measure.replace('_', ' ')
             # seaborn lmplot function requires dataframe
             df = pd.DataFrame({'predictability': x, measure: y, 'predictor': data_type, 'condition': predictors})
-
             plt.rcParams.update({'font.size': 18})
             plot = sb.lmplot(data=df, x='predictability', y=measure, hue='predictor', col='condition')
-            if measure in ['first_fix_duration', 'gaze_duration', 'total_reading_time']:
+            if measure in ['first fix duration', 'gaze duration', 'total reading time']:
                 plot.set(ylim=(50, 350))
                 plot.set(yticks=[100, 150, 200, 250, 300, 350])
-            elif measure in ['skip', 'single_fix', 'regression']:
+            elif measure in ['skip', 'single fix', 'regression']:
                 plot.set(ylim=(0, 1.01))
             results_dir = f'{results_dir}/plots'
             if not os.path.isdir(results_dir): os.makedirs(results_dir)
@@ -322,10 +322,11 @@ def plot_sim_results_pred(filepaths, measures):
             plt.close()
 
             plot = sb.relplot(data=df, x='predictability', y=measure, hue='predictor', col='condition', kind="line")
-            if measure in ['first_fix_duration', 'gaze_duration', 'total_reading_time']:
+            plot.set(xlabel=None)
+            if measure in ['first fix duration', 'gaze duration', 'total reading time']:
                 plot.set(ylim=(50, 350))
-                plot.set(yticks=[100,150,200,250,300,350])
-            elif measure in ['skip', 'single_fix', 'regression']:
+                plot.set(yticks=[100, 150, 200, 250, 300, 350])
+            elif measure in ['skip', 'single fix', 'regression']:
                 plot.set(ylim=(0, 1.01))
             plot.figure.savefig(f'{results_dir}/plot_pred_line_{measure}.png')
             plt.close()
@@ -340,29 +341,46 @@ def test_correlation(x, y, filepath):
     df = pd.DataFrame.from_dict(corr_results)
     df.to_csv(filepath, sep='\t', index=False)
 
-def test_correlation_pred(eye_movement_filepath, measures, pred_maps):
+def test_correlation_pred(eye_movement_filepath, measures, pred_maps, frequency_filepath=None):
 
     eye_movement_data = pd.read_csv(eye_movement_filepath, sep='\t')
     all_pred_values = dict()
 
+    if frequency_filepath:
+        with open(frequency_filepath, 'rb') as infile:
+            freq_dict = json.load(infile)
+
     for predictor, data in pred_maps.items():
-        pred_values = []
+        
+        pred_values, length_values, freq_values = [], [], []
+        
         for id, row in eye_movement_data.groupby(['text_id', 'word_id', 'word']):
             predictability = 0.0
-            # if text in pred map
-            if str(id[0]) in data.keys():
-                # if word position in pred map
-                if str(id[1]) in data[str(id[0])].keys():
-                    # if text word among predictions
-                    if id[2] in data[str(id[0])][str(id[1])]['predictions'].keys():
-                        predictability = data[str(id[0])][str(id[1])]['predictions'][id[2]]
+            text_id, word_id, word = str(id[0]), str(id[1]), str(id[2])
+            if text_id in data.keys():
+                if word_id in data[text_id].keys():
+                    if word in data[text_id][word_id]['predictions'].keys():
+                        predictability = data[text_id][word_id]['predictions'][word]
+            length_values.append(len(word))
             pred_values.append(predictability)
+            if frequency_filepath:
+                frequency = 0.0
+                if word in freq_dict.keys():
+                    frequency = freq_dict[word]
+                freq_values.append(frequency)
+
+        # correlation between pred and length, and pred and freq for each predictor
+        test_correlation(pred_values, length_values, f'../data/processed/pearson_corr_pred_length_{predictor}.csv')
+        if freq_values:
+            test_correlation(pred_values, freq_values, f'../data/processed/pearson_corr_pred_freq_{predictor}.csv')
+        
+        # correlation between eye movement and pred for each predictor
         for measure in measures:
             filepath = f'../data/processed/pearson_corr_{measure}_{predictor}.csv'
             test_correlation(pred_values, eye_movement_data[measure].tolist(), filepath)
         all_pred_values[predictor] = pred_values
 
-    # test correlation between predictability conditions
+    # correlation between predictability conditions
     for combi in itertools.combinations(list(all_pred_values.keys()), 2):
         filepath = f'../data/processed/pearson_corr_{combi[0]}_{combi[1]}.csv'
         test_correlation(all_pred_values[combi[0]], all_pred_values[combi[1]], filepath)
@@ -375,31 +393,6 @@ def plot_pred_dist(predictions):
                        'text_word': predictions['text_word']})
     plot = sb.displot(df, x="prediction", stat='probability', col='predictor', common_norm=False)
     plot.figure.savefig('../data/processed/distribution_pred_values.jpg')
-
-
-def test_correlation_with_fixed_factors(pred_maps, frequency_filepath=None):
-
-    if frequency_filepath:
-        with open(frequency_filepath, 'rb') as infile:
-            freq_dict = json.load(infile)
-
-    for predictor, data in pred_maps.items():
-        pred_values, length_values, freq_values = [],[],[]
-        for text_id, text in data.items():
-            for pos, info in text.items():
-                predictability = 0.0
-                if info["target"] in info['predictions'].keys():
-                   predictability = info['predictions'][info['target']]
-                pred_values.append(predictability)
-                length_values.append(len(info['target']))
-                if frequency_filepath:
-                    frequency = 0.0
-                    if info['target'] in freq_dict.keys():
-                        frequency = freq_dict[info['target']]
-                    freq_values.append(frequency)
-        test_correlation(pred_values, length_values, f'../data/processed/pearson_corr_pred_length_{predictor}.csv')
-        if freq_values:
-            test_correlation(pred_values, freq_values, f'../data/processed/pearson_corr_pred_freq_{predictor}.csv')
 
 def main():
 
@@ -422,8 +415,14 @@ def main():
                 'total_reading_time',
                 'regression_in']
 
+    # lexicon_filename = '../data/processed/lexicon.pkl'
+    # if os.path.exists(lexicon_filename):
+    #     with open(lexicon_filename, 'rb') as infile:
+    #         lexicon = pickle.load(infile)
+    #     print(len(lexicon))
+
     # read in predictions
-    pred_maps = read_in_pred_files(pred_map_filepaths)
+    # pred_maps = read_in_pred_files(pred_map_filepaths)
 
     # # write out mappings in csv to visualise it more easily
     # write_out_mappings_csv(pred_maps, pred_map_filepaths)
@@ -457,8 +456,7 @@ def main():
     # plot_sim_results_pred(results_filepaths, measures)
 
     # test correlation between predictability and eye movements
-    # test_correlation_pred(eye_movement_filepath, measures, pred_maps)
-    test_correlation_with_fixed_factors(pred_maps, frequency_filepath)
+    # test_correlation_pred(eye_movement_filepath, measures, pred_maps, frequency_filepath)
 
 
 if __name__ == '__main__':
