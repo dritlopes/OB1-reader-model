@@ -397,11 +397,11 @@ def plot_pred_dist(predictions):
 def main():
 
     pred_map_filepaths = {'cloze':'../data/processed/prediction_map_Provo_Corpus_cloze_continuous_reading_english.json',
-                          'GPT2': '../data/processed/prediction_map_Provo_Corpus_gpt2_continuous_reading_english_topkall.json',
-                          'LLAMA': '../data/processed/prediction_map_Provo_Corpus_llama_continuous_reading_english_topkall.json'}
+                          'GPT2': '../data/processed/prediction_map_Provo_Corpus_gpt2_continuous_reading_english_topkall_0.01.json',
+                          'LLAMA': '../data/processed/prediction_map_Provo_Corpus_llama_continuous_reading_english_topkal_0.01.json'}
     unknown_map_filepaths = {'cloze': '../data/processed/prediction_map_Provo_Corpus_cloze_continuous_reading_english_unknown.json',
-                             'GPT2': '../data/processed/prediction_map_Provo_Corpus_gpt2_continuous_reading_english_topkall_unknown.json',
-                             'LLAMA': '../data/processed/prediction_map_Provo_Corpus_llama_continuous_reading_english_topkall_unknown.json'}
+                             'GPT2': '../data/processed/prediction_map_Provo_Corpus_gpt2_continuous_reading_english_topkall_0.01_unknown.json',
+                             'LLAMA': '../data/processed/prediction_map_Provo_Corpus_llama_continuous_reading_english_topkall_0.01_unknown.json'}
     results_filepaths = ["../data/analysed/_2023_12_05_09-57-49/simulation_eye_movements_mean_Provo_Corpus_continuous_reading_cloze_0.05.csv",
                          "../data/analysed/_2023_12_05_09-57-49/simulation_eye_movements_mean_Provo_Corpus_continuous_reading_gpt2_0.05.csv",
                          "../data/analysed/_2023_12_05_09-57-49/simulation_eye_movements_mean_Provo_Corpus_continuous_reading_llama_0.05.csv",

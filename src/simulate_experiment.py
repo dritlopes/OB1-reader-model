@@ -558,7 +558,6 @@ def simulate_experiment(pm):
     tokens = [pre_process_string(token) for token in tokens]
     # remove empty strings which were once punctuations
     tokens = [token for token in tokens if token != '']
-    print(tokens)
     word_frequencies = get_word_freq(pm, set(tokens), n_high_freq_words=500)
     max_frequency = max(word_frequencies.values())
 
@@ -566,11 +565,11 @@ def simulate_experiment(pm):
     if os.path.exists(lexicon_filename):
         with open(lexicon_filename, 'rb') as infile:
             lexicon = pickle.load(infile)
-        # word_predictions = get_pred_dict(pm, lexicon)
+        word_predictions = get_pred_dict(pm, lexicon)
     else:
         lexicon = list(set(tokens) | set(word_frequencies.keys()))
         lexicon = [pre_process_string(word) for word in lexicon]
-        # word_predictions = get_pred_dict(pm, lexicon)
+        word_predictions = get_pred_dict(pm, lexicon)
         # add unknown words predicted to lexicon
         if pm.results_identifier == 'prediction_flag':
             unknown_tokens = add_predicted_tokens_to_vocab(pm)

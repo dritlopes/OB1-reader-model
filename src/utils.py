@@ -185,7 +185,7 @@ def create_pred_file(pm, output_file_pred_map, lexicon):
             # torch_dtype=torch.float16 is important to load model directly on gpu and to decrease the needed ram
             # https://huggingface.co/decapoda-research/llama-7b-hf/discussions/2
             # https://discuss.huggingface.co/t/llama-7b-gpu-memory-requirement/34323
-            language_model = LlamaForCausalLM.from_pretrained("decapoda-research/llama-7b-hf", torch_dtype=torch.float16).to(device)
+            language_model = LlamaForCausalLM.from_pretrained("decapoda-research/llama-7b-hf", torch_dtype=torch.float16).to(device) # decapoda-research/llama-7b-hf
             # !!! after downloading the tokenizer, please go to where downloaded model is located
             # ($HOME/<username>/.cache/huggingface/<...>) and change tokenizer config file as done here:
             # https://huggingface.co/decapoda-research/llama-7b-hf/discussions/103/files
@@ -345,7 +345,7 @@ def get_pred_dict(pm, lexicon):
     output_word_pred_map = f"../data/processed/prediction_map_{pm.stim_name}_{pm.prediction_flag}_{pm.task_to_run}_{pm.language}.json"
 
     if pm.prediction_flag in ['gpt2', 'llama']:
-        output_word_pred_map = output_word_pred_map.replace('.json', f'_topk{pm.topk}.json')
+        output_word_pred_map = output_word_pred_map.replace('.json', f'_topk{pm.topk}_{pm.pred_threshold}.json')
 
     # AL: in case pred file needs to be created from original files
     if not os.path.exists(output_word_pred_map):

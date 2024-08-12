@@ -14,7 +14,7 @@ module load shared 2022
 module load PyTorch/1.12.1-foss-2021a-CUDA-11.3.1
 
 # cd to directory with program
- cd $HOME/OB1-reader-model/src
+cd $HOME/OB1-reader-model/src
 
 # Run program(s)
 #python main.py

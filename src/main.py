@@ -90,7 +90,7 @@ def simulate_reading(global_parameters):
 
 def main():
 
-    useparser=True
+    useparser=False
     if useparser:
         parser = argparse.ArgumentParser()
         parser.add_argument('stimuli_filepath')
@@ -131,7 +131,7 @@ def main():
         global_parameters = {
             "task_to_run": 'continuous_reading', # Flanker
             "stimuli_filepath": "../data/processed/Provo_Corpus.csv", # "../data/raw/stimuli_en.csv"
-            "stimuli_separator": ",",
+            "stimuli_separator": "\t",
             "language": 'english',
             "run_exp": False,
             "analyze_results": True,
@@ -144,8 +144,8 @@ def main():
             #                         "../data/model_output/_2023_12_07_22-32-42/parameters_Provo_Corpus_continuous_reading_gpt2_0.1.pkl",
             #                         "../data/model_output/_2023_12_07_22-32-42/parameters_Provo_Corpus_continuous_reading_llama_0.1.pkl"],
             "eye_tracking_filepath": '', # '../data/raw/Provo_Corpus-Eyetracking_Data.csv',
-            "results_identifier": '', # 'prediction_flag',
-            "experiment_parameters_filepath": 'experiment_parameters.json',
+            "results_identifier": 'prediction_flag', # 'prediction_flag',
+            "experiment_parameters_filepath": '', # 'experiment_parameters.json',
             "optimize": False,
             "print_process": False,
             "plotting": False

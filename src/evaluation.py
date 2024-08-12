@@ -296,7 +296,6 @@ def aggregate_fixations_per_word(simulation_output, first_pass, stimuli, measure
 def get_word_factors(pm, eye_movements_df):
 
     if 'predictability' in pm.fixed_factors:
-
         pred_map = get_pred_dict(pm,None)
         pred_column = []
         for i, item in eye_movements_df.iterrows():
@@ -339,8 +338,6 @@ def drop_nan_values(true_values:pd.Series, simulated_values:pd.Series):
             values['pred'].append(simulated_value)
         counter += 1
     return values
-
-
 
 def word_recognition_acc_to_factor(accuracy, word_factor, recog_cycles):
 
@@ -982,36 +979,39 @@ def plot_RMSE(eye_measures, data_log, conditions, weights):
                     predictors.append(condition)
                     measures.append(measure_name[measure])
     df = pd.DataFrame({'condition': predictors, 'normalized error': rmse_scores, 'measure': measures})
-    plt.figure(figsize=(12, 10))
+    plt.figure(figsize=(9, 5))
     plot = pt.RainCloud(x='measure', y='normalized error', hue='condition', data=df, orient='h', alpha =.65)
     plot.set_ylabel(None)
-    plot.set_xlabel('RMSE', fontsize=18)
-    plt.tick_params(axis='both', which='major', labelsize=18)
+    plot.set_xlabel('RMSE', fontsize=12)
+    plt.tick_params(axis='both', which='major', labelsize=12)
+    plt.legend('', frameon=False)
     if not os.path.isdir(results_dir): os.makedirs(results_dir)
-    plot.figure.savefig(f'{results_dir}/plot_RMSE.png', format='png', bbox_inches='tight', dpi=500)
+    plot.figure.savefig(f'{results_dir}/plot_RMSE.png', format='png', bbox_inches='tight', dpi=300)
     plt.close()
 
-    rmse_df = defaultdict(list)
-    for condition, measure_dict in rmse_per_condition.items():
-        measure_rmse = dict()
-        for measure, weight_dict in measure_dict.items():
-            mean_rmse = []
-            if weight_dict.keys():
-                for sim_id in range(len(list(weight_dict.values())[0])):
-                    score = []
-                    for weight in weight_dict.keys():
-                        score.append(weight_dict[weight][sim_id])
-                    mean_rmse.append(sum(score)/len(score))
-            measure_rmse[measure] = mean_rmse
-        for sim_id in range(len(list(weight_dict.values())[0])):
-            sim_rmse = [rmse_list[sim_id] for rmse_list in measure_rmse.values()]
-            rmse_df[condition].append(sum(sim_rmse)/len(sim_rmse))
-    df = pd.DataFrame(rmse_df)
-    plot = pt.RainCloud(data=df, bw=0.05, cut=0, orient='h')
-    plot.set_xticks(np.arange(2.2,2.7,step=.1))
-    plot.set_xlabel('RMSE')
-    plot.figure.savefig(f'{results_dir}/plot_RMSE_mean_over_measures.png', format='png')
-    plt.close()
+    # rmse_df = defaultdict(list)
+    # for condition, measure_dict in rmse_per_condition.items():
+    #     measure_rmse = dict()
+    #     for measure, weight_dict in measure_dict.items():
+    #         mean_rmse = []
+    #         if weight_dict.keys():
+    #             for sim_id in range(len(list(weight_dict.values())[0])):
+    #                 score = []
+    #                 for weight in weight_dict.keys():
+    #                     score.append(weight_dict[weight][sim_id])
+    #                 mean_rmse.append(sum(score)/len(score))
+    #         measure_rmse[measure] = mean_rmse
+    #     for sim_id in range(len(list(weight_dict.values())[0])):
+    #         sim_rmse = [rmse_list[sim_id] for rmse_list in measure_rmse.values()]
+    #         rmse_df[condition].append(sum(sim_rmse)/len(sim_rmse))
+    # df = pd.DataFrame(rmse_df)
+    # plt.figure(figsize=(7.5, 5))
+    # plot = pt.RainCloud(data=df, bw=0.05, cut=0, orient='h')
+    # plot.set_xticks(np.arange(2.2,2.7,step=.1))
+    # plot.set_xlabel('RMSE', fontsize=12)
+    # plt.tick_params(labelsize=12)
+    # plot.figure.savefig(f'{results_dir}/plot_RMSE_mean_over_measures.png', format='png', dpi=300)
+    # plt.close()
 
 def evaluate_output (parameters_list: list, verbose=True):
 
